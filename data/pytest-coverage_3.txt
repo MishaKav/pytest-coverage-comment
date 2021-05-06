@@ -1,0 +1,45 @@
+----------- coverage: platform linux, python 3.8.3-final-0 -----------
+Name                                                                 Stmts   Miss  Cover   Missing
+--------------------------------------------------------------------------------------------------
+functions/accounts/accounts.py                                          97     97     0%   1-140
+functions/common/aws_policy_transform.py                                16      1    94%   9
+functions/common/db/account.py                                          15      3    80%   21-23
+functions/common/utils.py                                               21      1    95%   23
+functions/containers/containers.py                                      60     60     0%   1-89
+functions/discovery/discovery.py                                        19     19     0%   1-22
+functions/discovery/lambda_info_collector/aws_utils.py                 105     17    84%   25-27, 33-40, 128, 137-139, 148-150
+functions/discovery/lambda_info_collector/lambda_info_collector.py     142     57    60%   26-49, 72-73, 83, 92-94, 97-98, 102-105, 111-112, 117-123, 135-144, 147-148, 165, 170-173, 177-178, 187-188
+functions/discovery/lambda_info_collector/process_lambda.py            175     72    59%   19, 27-39, 50-51, 65-66, 87-89, 99-101, 106, 118-120, 129-131, 150-151, 162-168, 181-203, 213-223, 233-240, 244-246
+functions/discovery/lambda_info_collector/scope_rules.py                29      1    97%   22
+functions/discovery/resources_base_collector.py                         50     28    44%   18, 22, 26-27, 31-46, 50-62
+functions/discovery/resources_collector_factory.py                      17      5    71%   15, 18-22
+functions/discovery/s3_info_collector/bucket_info_collector.py         117     55    53%   28-30, 39-41, 50-52, 61-62, 67-79, 85-105, 113-122, 130-139
+functions/discovery/s3_info_collector/s3_info_collector.py              72     52    28%   23-51, 54-83, 86-98
+functions/discovery/step_function_handlers.py                           31     18    42%   10-16, 25-26, 30-39
+functions/events_gateway/aws_events.py                                  66     50    24%   34, 55-109, 116-133, 137
+functions/events_gateway/ce_internal_events.py                          33     19    42%   18-23, 32-54
+functions/events_gateway/db.py                                          33     15    55%   22-33, 37-45
+functions/events_gateway/events_gateway.py                             111     59    47%   22-27, 45-52, 70, 86-140, 146-162
+functions/functions/functions.py                                        60     60     0%   1-90
+functions/least_privilege/least_privilege.py                           197      3    98%   243-245
+functions/least_privilege/validator.py                                 288     27    91%   51, 119, 126-127, 134-135, 205-233, 321-322, 365-367, 469-470
+functions/onboarding/account_handler.py                                133     62    53%   41, 46-50, 69-72, 76-85, 97-112, 156-159, 164-184, 194, 198, 224, 230, 241-244, 249-261
+functions/onboarding/cloudformation_handler.py                          42     13    69%   20-24, 39-42, 61-66, 71
+functions/onboarding/offboarding.py                                     40     28    30%   17-39, 44-66, 86-95
+functions/onboarding/onboarding.py                                      88     25    72%   63, 98, 101-103, 108-129, 133-147
+functions/onboarding/onboarding_completed.py                            24      2    92%   31-32
+functions/providers/providers.py                                        15     15     0%   1-41
+functions/resources/resources.py                                        55     55     0%   1-81
+functions/scans/scans.py                                               103     15    85%   36-41, 61, 65, 68, 81, 95-97, 123, 126-127
+functions/utils/fixer_plugin.py                                         94     94     0%   1-155
+functions/utils/get_function.py                                         45     45     0%   1-62
+functions/utils/get_log.py                                              55     55     0%   1-81
+functions/utils/update_agent.py                                         73     73     0%   1-116
+functions/utils/utils.py                                                16     16     0%   1-19
+--------------------------------------------------------------------------------------------------
+TOTAL                                                                 2538   1217    52%
+
+15 files skipped due to complete coverage.
+
+
+============================= 60 passed in 24.68s ==============================

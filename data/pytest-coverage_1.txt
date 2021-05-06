@@ -1,0 +1,36 @@
+----------- coverage: platform linux, python 3.8.3-final-0 -----------
+Name                                                        Stmts   Miss  Cover   Missing
+-----------------------------------------------------------------------------------------
+functions/common/db_utils/scanned_resources.py                 56     18    68%   32-34, 52-54, 69-71, 76-85
+functions/common/db_utils/scans.py                             87     50    43%   28-34, 38, 85-114, 120-168, 205-207, 212-223
+functions/common/scan_cleanup.py                               27     18    33%   13-40
+functions/common/scan_dynamic.py                               44      1    98%   46
+functions/common/scan_handler.py                               69     11    84%   31-33, 40, 58-69, 74-76, 99-100
+functions/connector/agent_helper.py                            40     40     0%   1-64
+functions/connector/connector.py                              107    107     0%   1-163
+functions/connector/profiler/mappers/map_dynamodb.py           17     17     0%   1-24
+functions/connector/profiler/mappers/map_generic.py            15     15     0%   1-20
+functions/connector/profiler/mappers/map_rest_api.py           66     66     0%   1-107
+functions/connector/profiler/mappers/map_s3.py                 28     28     0%   1-31
+functions/connector/profiler/profiler.py                       80     80     0%   1-120
+functions/connector/profiler/triggers/trigger_apigw.py         80     80     0%   1-129
+functions/connector/profiler/triggers/trigger_dynamodb.py      29     29     0%   1-46
+functions/connector/profiler/triggers/trigger_s3.py            29     29     0%   1-40
+functions/connector/profiler/triggers/trigger_sns.py           21     21     0%   1-38
+functions/connector/profiler/triggers/trigger_sqs.py           11     11     0%   1-22
+functions/resources/resources.py                               26     26     0%   1-37
+functions/scan_completed/scan_completed.py                     64     19    70%   33, 39-45, 48-51, 55-58, 65-70, 91-92
+functions/scan_manager/scan_manager.py                         44     11    75%   31-33, 49-55, 67-69
+functions/scan_manager/scan_static.py                          40      2    95%   60-61
+functions/scans/scan.py                                        20     20     0%   1-31
+functions/scans/scans.py                                       40     40     0%   1-55
+-----------------------------------------------------------------------------------------
+TOTAL                                                        1055    739    30%
+
+14 files skipped due to complete coverage.
+
+=========================== short test summary info ============================
+FAILED tests/test_scans.py::TestScans::test_get_scan_completed_event - Assert...
+FAILED tests/test_scans.py::TestScans::test_scans_multiple_batches - Assertio...
+FAILED tests/test_scans.py::TestScans::test_send_cleanup_event - botocore.err...
+========================= 3 failed, 1 passed in 31.17s =========================

@@ -1,0 +1,26 @@
+name: 'Pytest Coverage Comment'
+description: 'Comments a pull request with the pytest code coverage badge and full report'
+author: 'Misha Kav'
+branding:
+  icon: 'message-circle'
+  color: 'blue'
+inputs:
+  github-token:
+    description: 'GitHub API Access Token'
+    default: ${{ github.token }}
+    required: true
+  pytest-coverage:
+    description: 'The location of the txt output of pytest-coverage'
+    default: 'pytest-coverage.txt'
+    required: false
+  title:
+    description: 'Title for the coverage report. Useful for monorepo projects'
+    default: 'Coverage Report'
+    required: false
+  badge-title:
+    description: 'Title for the badge icon'
+    default: 'Coverage'
+    required: false
+runs:
+  using: 'node12'
+  main: 'dist/index.js'

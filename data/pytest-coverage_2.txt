@@ -1,0 +1,63 @@
+============================= test session starts ==============================
+platform linux -- Python 3.8.3, pytest-6.2.3, py-1.10.0, pluggy-0.13.1
+rootdir: /usr/app/tests, configfile: pytest.ini
+plugins: env-0.6.2, cov-2.11.1
+collected 4 items
+
+tests/test_scans.py::TestScans::test_get_failed_cleanup_event 
+-------------------------------- live log setup --------------------------------
+2021-04-22 16:49:25,616 INFO     [credentials.py:1100] Found credentials in environment variables.
+PASSED                                                                   [ 25%]
+tests/test_scans.py::TestScans::test_get_scan_completed_event PASSED     [ 50%]
+tests/test_scans.py::TestScans::test_scans_multiple_batches PASSED       [ 75%]
+tests/test_scans.py::TestScans::test_send_cleanup_event 
+-------------------------------- live log call ---------------------------------
+2021-04-22 16:49:27,808 INFO     [__init__.py:107] Event scanInit/v1 uploaded to S3. File name: e4387f18-e1b7-401a-af9c-307cb7f7762c-arn:aws:lambda:eu-central-1:472949936327:function:DVSA-CREATE-RECEIPT-472949936327#69bcf9b7-e695-47ec-a529-efd6098aa6eb.json
+PASSED                                                                   [100%]
+
+----------------- generated xml file: /tmp/cn-scans-pytest.xml -----------------
+
+----------- coverage: platform linux, python 3.8.3-final-0 -----------
+Name                                                        Stmts   Miss  Cover
+-------------------------------------------------------------------------------
+functions/__init__.py                                           0      0   100%
+functions/common/__init__.py                                    0      0   100%
+functions/common/db_utils/__init__.py                           0      0   100%
+functions/common/db_utils/scanned_resources.py                 56     18    68%
+functions/common/db_utils/scans.py                             87     43    51%
+functions/common/scan_cleanup.py                               27      2    93%
+functions/common/scan_dynamic.py                               44      3    93%
+functions/common/scan_handler.py                               69     11    84%
+functions/connector/__init__.py                                 0      0   100%
+functions/connector/agent_helper.py                            40     40     0%
+functions/connector/connector.py                              106    106     0%
+functions/connector/profiler/__init__.py                        0      0   100%
+functions/connector/profiler/mappers/__init__.py                0      0   100%
+functions/connector/profiler/mappers/map_dynamodb.py           17     17     0%
+functions/connector/profiler/mappers/map_generic.py            15     15     0%
+functions/connector/profiler/mappers/map_http_api.py            0      0   100%
+functions/connector/profiler/mappers/map_rest_api.py           66     66     0%
+functions/connector/profiler/mappers/map_s3.py                 28     28     0%
+functions/connector/profiler/profiler.py                       80     80     0%
+functions/connector/profiler/templates/__init__.py              0      0   100%
+functions/connector/profiler/triggers/__init__.py               0      0   100%
+functions/connector/profiler/triggers/trigger_apigw.py         80     80     0%
+functions/connector/profiler/triggers/trigger_dynamodb.py      29     29     0%
+functions/connector/profiler/triggers/trigger_s3.py            29     29     0%
+functions/connector/profiler/triggers/trigger_sns.py           21     21     0%
+functions/connector/profiler/triggers/trigger_sqs.py           11     11     0%
+functions/resources/__init__.py                                 0      0   100%
+functions/resources/resources.py                               26     26     0%
+functions/scan_completed/__init__.py                            0      0   100%
+functions/scan_completed/scan_completed.py                     64     17    73%
+functions/scan_manager/__init__.py                              0      0   100%
+functions/scan_manager/scan_handler.py                         15      0   100%
+functions/scan_manager/scan_manager.py                         44     11    75%
+functions/scan_manager/scan_static.py                          40      4    90%
+functions/scans/__init__.py                                     0      0   100%
+functions/scans/scan.py                                        20     20     0%
+functions/scans/scans.py                                       40     40     0%
+-------------------------------------------------------------------------------
+TOTAL                                                        1054    717    32%
+
+============================== 4 passed in 2.84s ===============================

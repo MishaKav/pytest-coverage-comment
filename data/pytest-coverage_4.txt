@@ -1,0 +1,12 @@
+----------- coverage: platform linux, python 3.8.3-final-0 -----------
+Name                                                        Stmts   Miss  Cover   Missing
+-----------------------------------------------------------------------------------------
+functions/resources/resources.py                                26    26     0%   1-37
+functions/example_completed/example_completed.py                64    19    70%   33, 39-45, 48-51, 55-58, 65-70, 91-92
+functions/example_manager/example_manager.py                    44    11    75%   31-33, 49-55, 67-69
+functions/example_manager/example_static.py                     40     2    95%   60-61
+functions/my_exampels/example.py                                20    20     0%   1-31
+-----------------------------------------------------------------------------------------
+TOTAL                                                        1055    739    30%
+
+14 files skipped due to complete coverage.

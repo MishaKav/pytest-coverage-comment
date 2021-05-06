@@ -1,0 +1,13 @@
+name: my-pytest-coverage-comment
+on:
+  push:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Pytest coverage comment
+        uses: MishaKav/pytest-coverage-comment@v1.0
+        with:
+          pytest-coverage: /../data/pytest-coverage_1.txt
