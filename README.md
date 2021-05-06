@@ -8,7 +8,7 @@ You can add this action to your GitHub workflow for Ubuntu runners (e.g. runs-on
 
 ```yaml
 - name: Pytest coverage comment
-  uses: MishaKav/pytest-coverage-comment@v1.4
+  uses: MishaKav/pytest-coverage-comment@v1.0
   with:
     pytest-coverage: pytest-coverage.txt
 ```
@@ -56,8 +56,7 @@ jobs:
           pytest --cache-clear --cov=app --cov-report xml test/
 
       - name: Pytest coverage comment
-        uses: MishaKav/pytest-coverage-comment@v1.4
+        uses: MishaKav/pytest-coverage-comment@v1.0
         with:
           pytest-coverage: pytest-coverage.txt
 ```
- 
