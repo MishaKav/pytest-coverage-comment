@@ -13,7 +13,7 @@ const main = async () => {
     head: 'feat/test',
     base: 'main',
     title: 'Coverage Report',
-    badgeTitle: 'Coverage'
+    badgeTitle: 'Coverage',
   };
 
   const content = fs.readFileSync(__dirname + file, 'utf8');
@@ -24,7 +24,7 @@ const main = async () => {
   console.log(resultFile);
 };
 
-main().catch(function(err) {
+main().catch(function (err) {
   console.log(err);
   process.exit(1);
 });

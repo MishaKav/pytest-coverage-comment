@@ -1,27 +1,27 @@
 // get onlu actual lines with coverage from coverage-file
-const generateBadgeLink = percentage => {
+const generateBadgeLink = (percentage) => {
   // https://shields.io/category/coverage
   const rangeColors = [
     {
       color: 'red',
-      range: [0, 40]
+      range: [0, 40],
     },
     {
       color: 'orange',
-      range: [40, 60]
+      range: [40, 60],
     },
     {
       color: 'yellow',
-      range: [60, 80]
+      range: [60, 80],
     },
     {
       color: 'green',
-      range: [80, 90]
+      range: [80, 90],
     },
     {
       color: 'brightgreen',
-      range: [90, 101]
-    }
+      range: [90, 101],
+    },
   ];
 
   const num = parseFloat(percentage);
@@ -34,15 +34,15 @@ const generateBadgeLink = percentage => {
 };
 
 // get actual lines from coverage-file
-const getActualLines = data => {
+const getActualLines = (data) => {
   if (!data || !data.length) {
     return null;
   }
 
   console.log(`Parsing coverage file`);
   const lines = data.split('\n');
-  const startIndex = lines.findIndex(l => l.includes('coverage: platform'));
-  const endIndex = lines.findIndex(l => l.includes('TOTAL '));
+  const startIndex = lines.findIndex((l) => l.includes('coverage: platform'));
+  const endIndex = lines.findIndex((l) => l.includes('TOTAL '));
   if (startIndex === -1) {
     return null;
   }
@@ -51,24 +51,24 @@ const getActualLines = data => {
 };
 
 // get total line from coverage-file
-const getTotal = data => {
+const getTotal = (data) => {
   if (!data || !data.length) {
     return null;
   }
 
   const lines = data.split('\n');
-  const line = lines.find(l => l.includes('TOTAL '));
+  const line = lines.find((l) => l.includes('TOTAL '));
 
   return parseOneLine(line);
 };
 
 // parse one line from coverage-file
-const parseOneLine = line => {
+const parseOneLine = (line) => {
   if (!line) {
     return null;
   }
 
-  const parsedLine = line.split('   ').filter(l => l);
+  const parsedLine = line.split('   ').filter((l) => l);
 
   if (parsedLine.length < 4) {
     return null;
@@ -79,12 +79,12 @@ const parseOneLine = line => {
     stmts: parsedLine[1].trimStart(),
     miss: parsedLine[2].trimStart(),
     cover: parsedLine[3].trimStart(),
-    missing: parsedLine[4] && parsedLine[4].split(', ')
+    missing: parsedLine[4] && parsedLine[4].split(', '),
   };
 };
 
 // parse coverage-file
-const parse = data => {
+const parse = (data) => {
   const actualLines = getActualLines(data);
 
   if (!actualLines) {
@@ -110,7 +110,7 @@ const makeFolders = (coverage, options) => {
 };
 
 // gets summary line
-const getSummaryLine = data => {
+const getSummaryLine = (data) => {
   const total = getTotal(data);
 
   return `Founded ${total.cover} coverage`;
@@ -135,7 +135,7 @@ const toTable = (data, options) => {
     return null;
   }
   const totalLine = getTotal(data);
-  options.hasMissing = coverage.some(c => c.missing);
+  options.hasMissing = coverage.some((c) => c.missing);
 
   console.log(`Generating coverage report`);
   const headTr = toHeadRow(options);
@@ -150,7 +150,7 @@ const toTable = (data, options) => {
       (acc, key) => [
         ...acc,
         toFolderTd(key),
-        ...folders[key].map(file => toRow(file, key !== '', options))
+        ...folders[key].map((file) => toRow(file, key !== '', options)),
       ],
       []
     );
@@ -159,7 +159,7 @@ const toTable = (data, options) => {
 };
 
 // make html head row - th
-const toHeadRow = options => {
+const toHeadRow = (options) => {
   const lastTd = options.hasMissing ? '<th>Missing</th>' : '';
 
   return `<tr><th>File</th><th>Stmts</th><th>Miss</th><th>Cover</th>${lastTd}</tr>`;
@@ -177,7 +177,7 @@ const toRow = (item, indent = false, options) => {
 };
 
 // make summary row - tr
-const toTotalRow = item => {
+const toTotalRow = (item) => {
   const { name, stmts, miss, cover } = item;
 
   return `<tr><td><b>${name}</b></td><td><b>${stmts}</b></td><td><b>${miss}</b></td><td><b>${cover}</b></td><td>&nbsp;</td></tr>`;
@@ -195,7 +195,7 @@ const toFileNameTd = (item, indent = false, options) => {
 };
 
 // make folder row - tr
-const toFolderTd = path => {
+const toFolderTd = (path) => {
   if (path === '') {
     return '';
   }
@@ -210,7 +210,7 @@ const toMissingTd = (item, options) => {
   }
 
   return item.missing
-    .map(range => {
+    .map((range) => {
       const [start, end = start] = range.split('-');
       const fragment = start === end ? `L${start}` : `L${start}-L${end}`;
       const relative = item.name;

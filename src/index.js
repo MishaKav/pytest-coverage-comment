@@ -20,7 +20,7 @@ const main = async () => {
     repository: context.payload.repository.full_name,
     prefix: `${process.env.GITHUB_WORKSPACE}/`,
     title,
-    badgeTitle
+    badgeTitle,
   };
 
   if (context.eventName === 'pull_request') {
@@ -42,21 +42,21 @@ const main = async () => {
       repo: context.repo.repo,
       owner: context.repo.owner,
       issue_number: context.payload.pull_request.number,
-      body: coverageHtml
+      body: coverageHtml,
     });
   } else if (context.eventName === 'push') {
     await octokit.repos.createCommitComment({
       repo: context.repo.repo,
       owner: context.repo.owner,
       commit_sha: options.commit,
-      body: coverageHtml
+      body: coverageHtml,
     });
   }
 
   console.log(`Published ${title}. ${summary}.`);
 };
 
-main().catch(err => {
+main().catch((err) => {
   console.log(err);
   core.setFailed(err.message);
 });
