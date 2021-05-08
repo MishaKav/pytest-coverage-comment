@@ -10,7 +10,12 @@ const main = async () => {
   const covFile = core.getInput('pytest-coverage') || '/pytest-coverage.txt';
   const { context } = github;
 
-  const content = fs.readFileSync(__dirname + covFile, 'utf8');
+  // suports absolute path like '/tmp/pytest-coverage.txt'
+  const covFilePath = covFile.startsWith('/')
+    ? covFile
+    : `${process.env.GITHUB_WORKSPACE}/${covFile}`;
+
+  const content = fs.readFileSync(covFilePath, 'utf8');
   if (!content) {
     console.log(`No coverage report found at '${covFile}', exiting...`);
     return;
