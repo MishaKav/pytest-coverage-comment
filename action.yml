@@ -11,7 +11,7 @@ inputs:
     required: true
   pytest-coverage:
     description: 'The location of the txt output of pytest-coverage'
-    default: 'pytest-coverage.txt'
+    default: './pytest-coverage.txt'
     required: false
   title:
     description: 'Title for the coverage report. Useful for monorepo projects'
@@ -21,6 +21,23 @@ inputs:
     description: 'Title for the badge icon'
     default: 'Coverage'
     required: false
+  hide-badge:
+    description: 'Hide badge with percentage'
+    default: 'false'
+    required: false
+  hide-report:
+    description: 'Hide coverage report'
+    default: 'false'
+    required: false
+  junitxml-path:
+    description: 'The location of the junitxml path'
+    default: './pytest.xml'
+    required: false
+  junitxml-title:
+    description: 'Title for summary for junitxml'
+    default: 'JUnit Tests Results'
+    required: false
+
 runs:
   using: 'node12'
   main: 'dist/index.js'

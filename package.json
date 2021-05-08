@@ -24,9 +24,11 @@
   },
   "dependencies": {
     "@actions/core": "^1.2.7",
-    "@actions/github": "^4.0.0"
+    "@actions/github": "^4.0.0",
+    "xml2js": "^0.4.23"
   },
   "devDependencies": {
+    "@vercel/ncc": "^0.28.5",
     "eslint": "^7.25.0",
     "prettier": "^2.2.1"
   },

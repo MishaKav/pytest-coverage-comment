@@ -2,15 +2,25 @@ const fs = require('fs');
 const core = require('@actions/core');
 const github = require('@actions/github');
 const { toHtml, getSummaryLine } = require('./parse');
+const { toMarkdown } = require('./junitXml');
 
 const main = async () => {
   const token = core.getInput('github-token');
   const title = core.getInput('title') || 'Coverage Report';
   const badgeTitle = core.getInput('badge-title') || 'Coverage';
-  const covFile = core.getInput('pytest-coverage') || '/pytest-coverage.txt';
+  const hideBadge = core.getInput('hide-badge') || false;
+  const hideReport = core.getInput('hide-report') || false;
+  const covFile = core.getInput('pytest-coverage') || './pytest-coverage.txt';
+  const xmlFile = core.getInput('junitxml-path') || './pytest.xml';
+  const xmlTitle = core.getInput('junitxml-title') || 'JUnit Tests Results';
   const { context } = github;
 
-  const content = fs.readFileSync(__dirname + covFile, 'utf8');
+  // suports absolute path like '/tmp/pytest-coverage.txt'
+  const covFilePath = covFile.startsWith('/')
+    ? covFile
+    : `${process.env.GITHUB_WORKSPACE}${covFile}`;
+
+  const content = fs.readFileSync(covFilePath, 'utf8');
   if (!content) {
     console.log(`No coverage report found at '${covFile}', exiting...`);
     return;
@@ -21,6 +31,9 @@ const main = async () => {
     prefix: `${process.env.GITHUB_WORKSPACE}/`,
     title,
     badgeTitle,
+    hideBadge,
+    hideReport,
+    xmlTitle,
   };
 
   if (context.eventName === 'pull_request') {
@@ -32,8 +45,20 @@ const main = async () => {
     options.head = context.ref;
   }
 
-  const coverageHtml = toHtml(content, options);
-  const summary = getSummaryLine(content);
+  let finalHtml = toHtml(content, options);
+
+  // suports absolute path like '/tmp/pytest.xml'
+  const xmlFilePath = covFile.startsWith('/')
+    ? xmlFile
+    : `${process.env.GITHUB_WORKSPACE}${xmlFile}`;
+
+  const contentXml = fs.readFileSync(xmlFilePath, 'utf8');
+  if (contentXml) {
+    const summary = toMarkdown(contentXml, options);
+    finalHtml += summary;
+  } else {
+    console.log(`No junitxml file found at '${xmlFile}', skipping...`);
+  }
 
   const octokit = github.getOctokit(token);
 
@@ -42,18 +67,19 @@ const main = async () => {
       repo: context.repo.repo,
       owner: context.repo.owner,
       issue_number: context.payload.pull_request.number,
-      body: coverageHtml,
+      body: finalHtml,
     });
   } else if (context.eventName === 'push') {
     await octokit.repos.createCommitComment({
       repo: context.repo.repo,
       owner: context.repo.owner,
       commit_sha: options.commit,
-      body: coverageHtml,
+      body: finalHtml,
     });
   }
 
-  console.log(`Published ${title}. ${summary}.`);
+  const summaryLine = getSummaryLine(content);
+  console.log(`Published ${title}. ${summaryLine}.`);
 };
 
 main().catch((err) => {
