@@ -28,22 +28,26 @@ You can add this action to your GitHub workflow for Ubuntu runners (e.g. runs-on
 
 ## Example usage
 
-The following is an example GitHub Action workflow that uses the Pytest Coverage Comment to extract the coverage to comment at pull request:
+The following is an example GitHub Action workflow that uses the Pytest Coverage Comment to extract the coverage report to comment at pull request:
 
 ```yaml
+# This workflow will install dependencies, create coverage tests and run Pytest Coverage Comment
+# For more information see: https://github.com/MishaKav/pytest-coverage-comment/
 name: pytest-coverage-comment
 on:
   pull_request:
+    branches:
+      - '*'
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
-      - name: Set up Python 3.9
+      - name: Set up Python 3.8
         uses: actions/setup-python@v2
         with:
-          python-version: 3.9
+          python-version: 3.8
 
       - name: Install dependencies
         run: |
@@ -53,10 +57,19 @@ jobs:
 
       - name: Build coverage file
         run: |
-          pytest --cache-clear --cov=app --cov-report xml test/
+          pytest --cov=app tests/ | tee pytest-coverage.txt
 
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@v1.0
-        with:
-          pytest-coverage: pytest-coverage.txt
+```
+
+Exmaple GitHub Action workflow that passes all params to Pytest Coverage Comment
+
+```yaml
+- name: Pytest coverage comment
+  uses: MishaKav/pytest-coverage-comment@v1.0
+  with:
+    pytest-coverage: ./path-to-file/pytest-coverage.txt
+    title: My Coverage Report Title
+    badge-title: My Badge Coverage Title
 ```
