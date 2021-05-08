@@ -77,4 +77,16 @@ Exmaple GitHub Action workflow that passes all params to Pytest Coverage Comment
 
 ## Result example
 
-![image](https://user-images.githubusercontent.com/289035/117533805-720a6980-aff7-11eb-902e-4fbf4d727590.png)
+![Result example](https://user-images.githubusercontent.com/289035/117533805-720a6980-aff7-11eb-902e-4fbf4d727590.png)
+
+## Badges colors
+
+![Coverage 0-40](https://img.shields.io/badge/Coverage-20%25-red.svg) [0, 40]
+
+![Coverage 40-60](https://img.shields.io/badge/Coverage-50%25-orange.svg) [40, 60]
+
+![Coverage 60-80](https://img.shields.io/badge/Coverage-70%25-yellow.svg) [60, 80]
+
+![Coverage 80-90](https://img.shields.io/badge/Coverage-85%25-green.svg) [80, 90]
+
+![Coverage 90-100](https://img.shields.io/badge/Coverage-95%25-brightgreen.svg) [90, 100]
