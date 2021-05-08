@@ -8,6 +8,7 @@ const main = async () => {
   const title = core.getInput('title') || 'Coverage Report';
   const badgeTitle = core.getInput('badge-title') || 'Coverage';
   const hideBadge = core.getInput('hide-badge') || false;
+  const hideReport = core.getInput('hide-report') || false;
   const covFile = core.getInput('pytest-coverage') || '/pytest-coverage.txt';
   const { context } = github;
 
@@ -28,6 +29,7 @@ const main = async () => {
     title,
     badgeTitle,
     hideBadge,
+    hideReport,
   };
 
   if (context.eventName === 'pull_request') {

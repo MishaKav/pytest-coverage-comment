@@ -118,15 +118,18 @@ const getSummaryLine = (data) => {
 
 // convert all data to html output
 const toHtml = (data, options) => {
-  const { badgeTitle, title, hideBadge } = options;
-  const table = toTable(data, options);
+  const { badgeTitle, title, hideBadge, hideReport } = options;
+  const table = hideReport ? '' : toTable(data, options);
   const total = getTotal(data);
   const color = generateBadgeLink(total.cover);
-  const totalLine = hideBadge
+  const badgeHtml = hideBadge
     ? ''
     : `<img alt="${badgeTitle}" src="https://img.shields.io/badge/${badgeTitle}-${total.cover}25-${color}.svg" /><br/>`;
+  const reportHtml = hideReport
+    ? ''
+    : `<details><summary>${title}</summary>${table}</details>`;
 
-  return `${totalLine}<details><summary>${title}</summary>${table}</details>`;
+  return `${badgeHtml}${reportHtml}`;
 };
 
 // make html table from coverage-file

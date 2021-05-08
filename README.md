@@ -22,6 +22,7 @@ You can add this action to your GitHub workflow for Ubuntu runners (e.g. runs-on
 | `badge-title`     |          | `Coverage`            | Title for the badge icon                                                              |
 | `github-token`    | ✓        | `${{github.token}}`   | An alternative GitHub token, other than the default provided by GitHub Actions runner |
 | `hide-badge`      |          | false                 | Hide badge with percentage                                                            |
+| `hide-report`     |          | false                 | Hide coverage report                                                                  |
 
 ## Output example
 
@@ -73,6 +74,8 @@ Exmaple GitHub Action workflow that passes all params to Pytest Coverage Comment
     pytest-coverage: ./path-to-file/pytest-coverage.txt
     title: My Coverage Report Title
     badge-title: My Badge Coverage Title
+    hide-badge: false
+    hide-report: false
 ```
 
 ## Result example
