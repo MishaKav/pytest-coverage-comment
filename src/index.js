@@ -7,6 +7,7 @@ const main = async () => {
   const token = core.getInput('github-token');
   const title = core.getInput('title') || 'Coverage Report';
   const badgeTitle = core.getInput('badge-title') || 'Coverage';
+  const hideBadge = core.getInput('hide-badge') || false;
   const covFile = core.getInput('pytest-coverage') || '/pytest-coverage.txt';
   const { context } = github;
 
@@ -26,6 +27,7 @@ const main = async () => {
     prefix: `${process.env.GITHUB_WORKSPACE}/`,
     title,
     badgeTitle,
+    hideBadge,
   };
 
   if (context.eventName === 'pull_request') {

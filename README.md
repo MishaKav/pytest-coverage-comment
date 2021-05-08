@@ -21,6 +21,7 @@ You can add this action to your GitHub workflow for Ubuntu runners (e.g. runs-on
 | `title`           |          | `Coverage Report`     | Title for the coverage report. Useful for monorepo projects                           |
 | `badge-title`     |          | `Coverage`            | Title for the badge icon                                                              |
 | `github-token`    | ✓        | `${{github.token}}`   | An alternative GitHub token, other than the default provided by GitHub Actions runner |
+| `hide-badge`      |          | false                 | Hide badge with percentage                                                            |
 
 ## Output example
 

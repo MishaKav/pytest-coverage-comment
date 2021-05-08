@@ -14,6 +14,7 @@ const main = async () => {
     base: 'main',
     title: 'Coverage Report',
     badgeTitle: 'Coverage',
+    hideBadge: false,
   };
 
   const content = fs.readFileSync(__dirname + file, 'utf8');
