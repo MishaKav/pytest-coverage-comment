@@ -100,4 +100,3 @@ Exmaple GitHub Action workflow that passes all params to Pytest Coverage Comment
 ![Coverage 80-90](https://img.shields.io/badge/Coverage-85%25-green.svg) [80, 90]
 
 ![Coverage 90-100](https://img.shields.io/badge/Coverage-95%25-brightgreen.svg) [90, 100]
- 

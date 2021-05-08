@@ -12975,7 +12975,7 @@ const main = async () => {
   // suports absolute path like '/tmp/pytest-coverage.txt'
   const covFilePath = covFile.startsWith('/')
     ? covFile
-    : `${process.env.GITHUB_WORKSPACE}${covFile}`;
+    : `${process.env.GITHUB_WORKSPACE}/${covFile}`;
 
   const content = fs.readFileSync(covFilePath, 'utf8');
   if (!content) {
@@ -13007,7 +13007,7 @@ const main = async () => {
   // suports absolute path like '/tmp/pytest.xml'
   const xmlFilePath = covFile.startsWith('/')
     ? xmlFile
-    : `${process.env.GITHUB_WORKSPACE}${xmlFile}`;
+    : `${process.env.GITHUB_WORKSPACE}/${xmlFile}`;
 
   const contentXml = fs.readFileSync(xmlFilePath, 'utf8');
   if (contentXml) {
