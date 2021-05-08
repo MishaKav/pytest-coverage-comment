@@ -3,8 +3,8 @@ const path = require('path');
 const { toHtml } = require('./parse');
 
 const main = async () => {
-  const file = process.argv[2];
-  const prefix = path.dirname(path.dirname(path.resolve(file))) + '/';
+  const covFile = process.argv[2];
+  const prefix = path.dirname(path.dirname(path.resolve(covFile))) + '/';
 
   const options = {
     repository: 'MishaKav/pytest-coverage-comment',
@@ -18,7 +18,11 @@ const main = async () => {
     hideReport: false,
   };
 
-  const content = fs.readFileSync(__dirname + file, 'utf8');
+  // suports absolute path like '/tmp/pytest-coverage.txt'
+  const covFilePath = covFile.startsWith('/')
+    ? covFile
+    : `${__dirname}/${covFile}`;
+  const content = fs.readFileSync(covFilePath, 'utf8');
   const result = toHtml(content, options);
 
   const resultFile = __dirname + '/tmp/comment.md';

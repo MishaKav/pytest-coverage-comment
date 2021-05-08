@@ -10,7 +10,7 @@
       "request": "launch",
       "skipFiles": ["<node_internals>/**"],
       "program": "src/cli.js",
-      "args": ["/../data/pytest-coverage_4.txt"],
+      "args": ["./../data/pytest-coverage_4.txt"],
       "console": "integratedTerminal",
       "outputCapture": "std"
     }
