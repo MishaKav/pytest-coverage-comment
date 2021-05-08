@@ -15,14 +15,19 @@ You can add this action to your GitHub workflow for Ubuntu runners (e.g. runs-on
 
 ## Inputs
 
-| Name              | Required | Default               | Description                                                                           |
-| ----------------- | -------- | --------------------- | ------------------------------------------------------------------------------------- |
-| `pytest-coverage` |          | `pytest-coverage.txt` | The location of the txt output of pytest-coverage. Used to generate the comment       |
-| `title`           |          | `Coverage Report`     | Title for the coverage report. Useful for monorepo projects                           |
-| `badge-title`     |          | `Coverage`            | Title for the badge icon                                                              |
-| `github-token`    | ✓        | `${{github.token}}`   | An alternative GitHub token, other than the default provided by GitHub Actions runner |
-| `hide-badge`      |          | false                 | Hide badge with percentage                                                            |
-| `hide-report`     |          | false                 | Hide coverage report                                                                  |
+| Name              | Required | Default                 | Description                                                                           |
+| ----------------- | -------- | ----------------------- | ------------------------------------------------------------------------------------- |
+| `github-token`    | ✓        | `${{github.token}}`     | An alternative GitHub token, other than the default provided by GitHub Actions runner |
+| `pytest-coverage` |          | `./pytest-coverage.txt` | The location of the txt output of pytest-coverage. Used to generate the comment       |
+| `title`           |          | `Coverage Report`       | Title for the coverage report. Useful for monorepo projects                           |
+| `badge-title`     |          | `Coverage`              | Title for the badge icon                                                              |
+| `hide-badge`      |          | false                   | Hide badge with percentage                                                            |
+| `hide-report`     |          | false                   | Hide coverage report                                                                  |
+| `junitxml-path`   |          | `./pytest.xml`          | The location of the junitxml path                                                     |
+| `junitxml-title`  |          | `JUnit Tests Results`   | TTitle for summary for junitxml                                                       |
+
+junitxml-title:
+description: 'Title for summary for junitxml'
 
 ## Output example
 
@@ -76,6 +81,8 @@ Exmaple GitHub Action workflow that passes all params to Pytest Coverage Comment
     badge-title: My Badge Coverage Title
     hide-badge: false
     hide-report: false
+    junitxml-path: ./path-to-file/pytest.xml
+    junitxml-title: 'My JUnit Xml Summary Title'
 ```
 
 ## Result example
