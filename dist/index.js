@@ -12806,6 +12806,10 @@ const getPathToFile = (pathToFile) => {
 };
 
 const getContentFile = (pathToFile) => {
+  if (!pathToFile) {
+    return null;
+  }
+
   console.log(`Try reading file '${pathToFile}'`);
   const fileExists = fs.existsSync(pathToFile);
 
@@ -13041,12 +13045,19 @@ const main = async () => {
     finalHtml = toHtml(content, options);
   }
 
-  const xmlFilePath = getPathToFile(xmlFile);
-  const contentXml = getContentFile(xmlFilePath);
+  try {
+    const xmlFilePath = getPathToFile(xmlFile);
 
-  if (contentXml) {
-    const summary = toMarkdown(contentXml, options);
-    finalHtml += finalHtml.length ? `\n\n${summary}` : summary;
+    if (xmlFilePath) {
+      const contentXml = getContentFile(xmlFilePath);
+
+      if (contentXml) {
+        const summary = toMarkdown(contentXml, options);
+        finalHtml += finalHtml.length ? `\n\n${summary}` : summary;
+      }
+    }
+  } catch (error) {
+    console.log(error);
   }
 
   if (!finalHtml) {

@@ -12,6 +12,10 @@ const getPathToFile = (pathToFile) => {
 };
 
 const getContentFile = (pathToFile) => {
+  if (!pathToFile) {
+    return null;
+  }
+
   console.log(`Try reading file '${pathToFile}'`);
   const fileExists = fs.existsSync(pathToFile);
 
