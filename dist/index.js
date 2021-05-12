@@ -13063,6 +13063,7 @@ const main = async () => {
   const xmlFile = core.getInput('junitxml-path') || '';
   const xmlTitle = core.getInput('junitxml-title') || 'JUnit Tests Results';
   const { context } = github;
+  const { repo, owner } = context.repo;
   let finalHtml = '';
 
   const options = {
@@ -13096,23 +13097,53 @@ const main = async () => {
     console.log('Nothing to report');
     return;
   }
-
+  const body = WATERMARK + finalHtml;
   const octokit = github.getOctokit(token);
 
-  if (context.eventName === 'pull_request') {
-    await octokit.issues.createComment({
-      repo: context.repo.repo,
-      owner: context.repo.owner,
-      issue_number: context.payload.pull_request.number,
-      body: WATERMARK + finalHtml,
-    });
-  } else if (context.eventName === 'push') {
+  const issue_number = context.payload.pull_request
+    ? context.payload.pull_request.number
+    : 0;
+
+  if (context.eventName === 'push') {
+    console.log('Create commit comment');
     await octokit.repos.createCommitComment({
-      repo: context.repo.repo,
-      owner: context.repo.owner,
+      repo,
+      owner,
       commit_sha: options.commit,
-      body: WATERMARK + finalHtml,
+      body,
     });
+  }
+
+  if (context.eventName === 'pull_request') {
+    // Now decide if we should issue a new comment or edit an old one
+    const { data: comments } = await octokit.issues.listComments({
+      repo,
+      owner,
+      issue_number,
+    });
+
+    const comment = comments.find(
+      (c) =>
+        c.user.login === 'github-actions[bot]' && c.body.startsWith(WATERMARK)
+    );
+
+    if (comment) {
+      console.log('Founded previous commit, updating');
+      await octokit.issues.updateComment({
+        repo,
+        owner,
+        comment_id: comment.id,
+        body,
+      });
+    } else {
+      console.log('No previous commit founded, creating a new one');
+      await octokit.issues.createComment({
+        repo,
+        owner,
+        issue_number,
+        body,
+      });
+    }
   }
 
   if (coverage) {
