@@ -123,4 +123,4 @@ Exmaple GitHub Action workflow that passes all params to Pytest Coverage Comment
 ![Coverage 90-100](https://img.shields.io/badge/Coverage-95%25-brightgreen.svg) [90, 100]
 
 Test Auto Updating Bagde
-[![Auto Updating Bagde](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/MishaKav/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/raw/pytest-coverage-comment__heads_main.json)]
+[![Auto Updating Bagde](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/MishaKav/5e90d640f8c212ab7bbac38f72323f80/raw/pytest-coverage-comment__heads_main.json)]
