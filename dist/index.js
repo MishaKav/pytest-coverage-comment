@@ -13005,7 +13005,7 @@ const main = async () => {
   let finalHtml = toHtml(content, options);
 
   // suports absolute path like '/tmp/pytest.xml'
-  const xmlFilePath = covFile.startsWith('/')
+  const xmlFilePath = xmlFile.startsWith('/')
     ? xmlFile
     : `${process.env.GITHUB_WORKSPACE}/${xmlFile}`;
 

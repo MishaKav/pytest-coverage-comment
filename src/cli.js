@@ -33,7 +33,7 @@ const main = async () => {
   console.log(resultFile);
 
   // suports absolute path like '/tmp/pytest-coverage.txt'
-  const xmlFilePath = covFile.startsWith('/')
+  const xmlFilePath = xmlFile.startsWith('/')
     ? xmlFile
     : `${__dirname}/${xmlFile}`;
 
