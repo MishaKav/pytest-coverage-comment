@@ -3,6 +3,8 @@ const github = require('@actions/github');
 const { getCoverageReport } = require('./parse');
 const { getSummaryReport } = require('./junitXml');
 
+const WATERMARK = '<!-- Pytest Coverage Comment -->\n';
+
 const main = async () => {
   const token = core.getInput('github-token');
   const title = core.getInput('title') || 'Coverage Report';
@@ -55,14 +57,14 @@ const main = async () => {
       repo: context.repo.repo,
       owner: context.repo.owner,
       issue_number: context.payload.pull_request.number,
-      body: finalHtml,
+      body: WATERMARK + finalHtml,
     });
   } else if (context.eventName === 'push') {
     await octokit.repos.createCommitComment({
       repo: context.repo.repo,
       owner: context.repo.owner,
       commit_sha: options.commit,
-      body: finalHtml,
+      body: WATERMARK + finalHtml,
     });
   }
 

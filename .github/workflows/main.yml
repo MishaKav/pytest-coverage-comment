@@ -9,7 +9,7 @@ jobs:
 
       - name: Pytest coverage comment
         id: coverage-comment
-        uses: MishaKav/pytest-coverage-comment@v1.13
+        uses: MishaKav/pytest-coverage-comment@v1.14
         with:
           pytest-coverage-path: ./data/pytest-coverage_4.txt
           junitxml-path: ./data/pytest_1.xml

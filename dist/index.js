@@ -13050,6 +13050,8 @@ const github = __nccwpck_require__(5438);
 const { getCoverageReport } = __nccwpck_require__(3248);
 const { getSummaryReport } = __nccwpck_require__(9670);
 
+const WATERMARK = '<!-- Pytest Coverage Comment -->\n';
+
 const main = async () => {
   const token = core.getInput('github-token');
   const title = core.getInput('title') || 'Coverage Report';
@@ -13102,14 +13104,14 @@ const main = async () => {
       repo: context.repo.repo,
       owner: context.repo.owner,
       issue_number: context.payload.pull_request.number,
-      body: finalHtml,
+      body: WATERMARK + finalHtml,
     });
   } else if (context.eventName === 'push') {
     await octokit.repos.createCommitComment({
       repo: context.repo.repo,
       owner: context.repo.owner,
       commit_sha: options.commit,
-      body: finalHtml,
+      body: WATERMARK + finalHtml,
     });
   }
 
