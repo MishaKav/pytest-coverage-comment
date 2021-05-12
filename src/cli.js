@@ -1,17 +1,36 @@
 const fs = require('fs');
 const path = require('path');
-const { toHtml } = require('./parse');
-const { toMarkdown } = require('./junitXml');
+const { getCoverageReport } = require('./parse');
+const { getSummaryReport } = require('./junitXml');
+
+/*  
+  Usefull git commands
+  git tag -a -m "fisrt alpha release" v1.0 && git push --follow-tags 
+  git tag -d v1.0 
+  git tag -d origin v1.0  
+*/
+
+const getPathToFile = (pathToFile) => {
+  if (!pathToFile) {
+    return null;
+  }
+
+  // suports absolute path like '/tmp/pytest-coverage.txt'
+  return pathToFile.startsWith('/') ? pathToFile : `${__dirname}/${pathToFile}`;
+};
 
 const main = async () => {
   const covFile = process.argv[2];
   const xmlFile = process.argv[3];
   const prefix = path.dirname(path.dirname(path.resolve(covFile))) + '/';
+  let finalHtml = '';
 
   const options = {
     repository: 'MishaKav/pytest-coverage-comment',
     commit: 'f9d42291812ed03bb197e48050ac38ac6befe4e5',
     prefix,
+    covFile: getPathToFile(covFile),
+    xmlFile: getPathToFile(xmlFile),
     head: 'feat/test',
     base: 'main',
     title: 'Coverage Report',
@@ -21,28 +40,22 @@ const main = async () => {
     xmlTitle: 'JUnit Tests Results2',
   };
 
-  // suports absolute path like '/tmp/pytest-coverage.txt'
-  const covFilePath = covFile.startsWith('/')
-    ? covFile
-    : `${__dirname}/${covFile}`;
-  const content = fs.readFileSync(covFilePath, 'utf8');
-  const result = toHtml(content, options);
+  const { html, coverage } = getCoverageReport(options);
+  const summaryReport = getSummaryReport(options);
 
-  const resultFile = __dirname + '/tmp/coverage.md';
-  fs.writeFileSync(resultFile, result);
+  finalHtml += html;
+  finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
+
+  if (!finalHtml) {
+    console.log('Nothing to report');
+    return;
+  }
+
+  const resultFile = __dirname + '/../tmp/result.md';
+  fs.promises.mkdir(__dirname + '/../tmp').catch(console.error);
+  fs.writeFileSync(resultFile, finalHtml);
+  console.log(`Published ${options.title}. Total coverage ${coverage}.`);
   console.log(resultFile);
-
-  // suports absolute path like '/tmp/pytest-coverage.txt'
-  const xmlFilePath = covFile.startsWith('/')
-    ? xmlFile
-    : `${__dirname}/${xmlFile}`;
-
-  const contentXml = fs.readFileSync(xmlFilePath, 'utf8');
-  const summary = toMarkdown(contentXml, options);
-
-  const resultXmlFile = __dirname + '/tmp/junitxml.md';
-  fs.writeFileSync(resultXmlFile, summary);
-  console.log(resultXmlFile);
 };
 
 main().catch(function (err) {

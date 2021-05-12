@@ -9,7 +9,7 @@ inputs:
     description: 'GitHub API Access Token'
     default: ${{ github.token }}
     required: true
-  pytest-coverage:
+  pytest-coverage-path:
     description: 'The location of the txt output of pytest-coverage'
     default: './pytest-coverage.txt'
     required: false
@@ -31,13 +31,15 @@ inputs:
     required: false
   junitxml-path:
     description: 'The location of the junitxml path'
-    default: './pytest.xml'
+    default: ''
     required: false
   junitxml-title:
     description: 'Title for summary for junitxml'
     default: 'JUnit Tests Results'
     required: false
-
+outputs:
+  coverage:
+    description: 'value indicating the coverage percentage of your report based on pytest, example 30%'
 runs:
   using: 'node12'
   main: 'dist/index.js'

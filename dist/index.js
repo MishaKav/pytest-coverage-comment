@@ -12516,6 +12516,28 @@ function wrappy (fn, cb) {
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const xml2js = __nccwpck_require__(6189);
+const { getPathToFile, getContentFile } = __nccwpck_require__(1608);
+
+// return summary report in markdown format
+const getSummaryReport = (options) => {
+  const { xmlFile } = options;
+
+  try {
+    const xmlFilePath = getPathToFile(xmlFile);
+
+    if (xmlFilePath) {
+      const content = getContentFile(xmlFilePath);
+
+      if (content) {
+        return toMarkdown(content, options);
+      }
+    }
+  } catch (error) {
+    console.log(`Error: on generating summary report`, error);
+  }
+
+  return '';
+};
 
 // get summary from junitxml
 const getSummary = (data) => {
@@ -12528,6 +12550,7 @@ const getSummary = (data) => {
   const parsed = parser.parseString(data);
   if (!parsed) {
     console.log(`JUnitXml file is not XML or not well formed`);
+    return '';
   }
 
   return parser.resultObject.testsuites.testsuite[0]['$'];
@@ -12546,15 +12569,37 @@ const toMarkdown = (data, options) => {
 | ${tests} | ${skipped} :zzz: | ${failures} :x: | ${errors} :fire: | ${time}s :stopwatch: |`;
 };
 
-module.exports = { toMarkdown };
+module.exports = { getSummaryReport };
 
 
 /***/ }),
 
 /***/ 3248:
-/***/ ((module) => {
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
-// get onlu actual lines with coverage from coverage-file
+const { getPathToFile, getContentFile } = __nccwpck_require__(1608);
+
+// return full html coverage report and coverage percenatge
+const getCoverageReport = (options) => {
+  const { covFile } = options;
+
+  try {
+    const covFilePath = getPathToFile(covFile);
+    const content = getContentFile(covFilePath);
+    const coverage = getTotalCoverage(content);
+
+    if (content) {
+      const html = toHtml(content, options);
+      return { html, coverage };
+    }
+  } catch (error) {
+    console.log(`Error: on generating coverage report`, error);
+  }
+
+  return { html: '', coverage: '0' };
+};
+
+// get only actual lines with coverage from coverage-file
 const generateBadgeLink = (percentage) => {
   // https://shields.io/category/coverage
   const rangeColors = [
@@ -12595,7 +12640,6 @@ const getActualLines = (data) => {
     return null;
   }
 
-  console.log(`Parsing coverage file`);
   const lines = data.split('\n');
   const startIndex = lines.findIndex((l) => l.includes('coverage: platform'));
   const endIndex = lines.findIndex((l) => l.includes('TOTAL '));
@@ -12665,11 +12709,11 @@ const makeFolders = (coverage, options) => {
   return folders;
 };
 
-// gets summary line
-const getSummaryLine = (data) => {
+// gets total coverage in percentage
+const getTotalCoverage = (data) => {
   const total = getTotal(data);
 
-  return `Founded ${total.cover} coverage`;
+  return total ? total.cover : '0';
 };
 
 // convert all data to html output
@@ -12691,6 +12735,7 @@ const toHtml = (data, options) => {
 // make html table from coverage-file
 const toTable = (data, options) => {
   const coverage = parse(data);
+
   if (!coverage) {
     console.log(`Coverage file not well formed`);
     return null;
@@ -12783,7 +12828,52 @@ const toMissingTd = (item, options) => {
     .join(', ');
 };
 
-module.exports = { toHtml, getSummaryLine };
+module.exports = { getCoverageReport };
+
+
+/***/ }),
+
+/***/ 1608:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const fs = __nccwpck_require__(5747);
+
+const getPathToFile = (pathToFile) => {
+  if (!pathToFile) {
+    return null;
+  }
+
+  // suports absolute path like '/tmp/pytest-coverage.txt'
+  return pathToFile.startsWith('/')
+    ? pathToFile
+    : `${process.env.GITHUB_WORKSPACE}/${pathToFile}`;
+};
+
+const getContentFile = (pathToFile) => {
+  if (!pathToFile) {
+    return null;
+  }
+
+  console.log(`Try reading file '${pathToFile}'`);
+  const fileExists = fs.existsSync(pathToFile);
+
+  if (!fileExists) {
+    console.log(`File '${pathToFile}' doesn't exist`);
+    return null;
+  }
+
+  const content = fs.readFileSync(pathToFile, 'utf8');
+
+  if (!content) {
+    console.log(`No content found in file '${pathToFile}'`);
+    return null;
+  }
+
+  console.log(`File read successfully '${pathToFile}'`);
+  return content;
+};
+
+module.exports = { getPathToFile, getContentFile };
 
 
 /***/ }),
@@ -12955,41 +13045,36 @@ module.exports = require("zlib");;
 var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
-const fs = __nccwpck_require__(5747);
 const core = __nccwpck_require__(2186);
 const github = __nccwpck_require__(5438);
-const { toHtml, getSummaryLine } = __nccwpck_require__(3248);
-const { toMarkdown } = __nccwpck_require__(9670);
+const { getCoverageReport } = __nccwpck_require__(3248);
+const { getSummaryReport } = __nccwpck_require__(9670);
+
+const WATERMARK = '<!-- Pytest Coverage Comment -->\n';
 
 const main = async () => {
   const token = core.getInput('github-token');
   const title = core.getInput('title') || 'Coverage Report';
   const badgeTitle = core.getInput('badge-title') || 'Coverage';
-  const hideBadge = core.getInput('hide-badge') || false;
-  const hideReport = core.getInput('hide-report') || false;
-  const covFile = core.getInput('pytest-coverage') || './pytest-coverage.txt';
-  const xmlFile = core.getInput('junitxml-path') || './pytest.xml';
+  const hideBadge = core.getInput('hide-badge') || 'false';
+  const hideReport = core.getInput('hide-report') || 'false';
+  const covFile =
+    core.getInput('pytest-coverage-path') || './pytest-coverage.txt';
+  const xmlFile = core.getInput('junitxml-path') || '';
   const xmlTitle = core.getInput('junitxml-title') || 'JUnit Tests Results';
   const { context } = github;
-
-  // suports absolute path like '/tmp/pytest-coverage.txt'
-  const covFilePath = covFile.startsWith('/')
-    ? covFile
-    : `${process.env.GITHUB_WORKSPACE}/${covFile}`;
-
-  const content = fs.readFileSync(covFilePath, 'utf8');
-  if (!content) {
-    console.log(`No coverage report found at '${covFile}', exiting...`);
-    return;
-  }
+  const { repo, owner } = context.repo;
+  let finalHtml = '';
 
   const options = {
     repository: context.payload.repository.full_name,
     prefix: `${process.env.GITHUB_WORKSPACE}/`,
+    covFile,
+    xmlFile,
     title,
     badgeTitle,
-    hideBadge,
-    hideReport,
+    hideBadge: hideBadge == 'true',
+    hideReport: hideReport == 'true',
     xmlTitle,
   };
 
@@ -13002,41 +13087,69 @@ const main = async () => {
     options.head = context.ref;
   }
 
-  let finalHtml = toHtml(content, options);
+  const { html, coverage } = getCoverageReport(options);
+  const summaryReport = getSummaryReport(options);
 
-  // suports absolute path like '/tmp/pytest.xml'
-  const xmlFilePath = covFile.startsWith('/')
-    ? xmlFile
-    : `${process.env.GITHUB_WORKSPACE}/${xmlFile}`;
+  finalHtml += html;
+  finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
 
-  const contentXml = fs.readFileSync(xmlFilePath, 'utf8');
-  if (contentXml) {
-    const summary = toMarkdown(contentXml, options);
-    finalHtml += summary;
-  } else {
-    console.log(`No junitxml file found at '${xmlFile}', skipping...`);
+  if (!finalHtml) {
+    console.log('Nothing to report');
+    return;
   }
-
+  const body = WATERMARK + finalHtml;
   const octokit = github.getOctokit(token);
 
-  if (context.eventName === 'pull_request') {
-    await octokit.issues.createComment({
-      repo: context.repo.repo,
-      owner: context.repo.owner,
-      issue_number: context.payload.pull_request.number,
-      body: finalHtml,
-    });
-  } else if (context.eventName === 'push') {
+  const issue_number = context.payload.pull_request
+    ? context.payload.pull_request.number
+    : 0;
+
+  if (context.eventName === 'push') {
+    console.log('Create commit comment');
     await octokit.repos.createCommitComment({
-      repo: context.repo.repo,
-      owner: context.repo.owner,
+      repo,
+      owner,
       commit_sha: options.commit,
-      body: finalHtml,
+      body,
     });
   }
 
-  const summaryLine = getSummaryLine(content);
-  console.log(`Published ${title}. ${summaryLine}.`);
+  if (context.eventName === 'pull_request') {
+    // Now decide if we should issue a new comment or edit an old one
+    const { data: comments } = await octokit.issues.listComments({
+      repo,
+      owner,
+      issue_number,
+    });
+
+    const comment = comments.find(
+      (c) =>
+        c.user.login === 'github-actions[bot]' && c.body.startsWith(WATERMARK)
+    );
+
+    if (comment) {
+      console.log('Founded previous commit, updating');
+      await octokit.issues.updateComment({
+        repo,
+        owner,
+        comment_id: comment.id,
+        body,
+      });
+    } else {
+      console.log('No previous commit founded, creating a new one');
+      await octokit.issues.createComment({
+        repo,
+        owner,
+        issue_number,
+        body,
+      });
+    }
+  }
+
+  if (coverage) {
+    core.setOutput('coverage', coverage);
+    console.log(`Published ${title}. Total coverage ${coverage}.`);
+  }
 };
 
 main().catch((err) => {

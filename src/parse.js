@@ -1,4 +1,26 @@
-// get onlu actual lines with coverage from coverage-file
+const { getPathToFile, getContentFile } = require('./utils');
+
+// return full html coverage report and coverage percenatge
+const getCoverageReport = (options) => {
+  const { covFile } = options;
+
+  try {
+    const covFilePath = getPathToFile(covFile);
+    const content = getContentFile(covFilePath);
+    const coverage = getTotalCoverage(content);
+
+    if (content) {
+      const html = toHtml(content, options);
+      return { html, coverage };
+    }
+  } catch (error) {
+    console.log(`Error: on generating coverage report`, error);
+  }
+
+  return { html: '', coverage: '0' };
+};
+
+// get only actual lines with coverage from coverage-file
 const generateBadgeLink = (percentage) => {
   // https://shields.io/category/coverage
   const rangeColors = [
@@ -39,7 +61,6 @@ const getActualLines = (data) => {
     return null;
   }
 
-  console.log(`Parsing coverage file`);
   const lines = data.split('\n');
   const startIndex = lines.findIndex((l) => l.includes('coverage: platform'));
   const endIndex = lines.findIndex((l) => l.includes('TOTAL '));
@@ -109,11 +130,11 @@ const makeFolders = (coverage, options) => {
   return folders;
 };
 
-// gets summary line
-const getSummaryLine = (data) => {
+// gets total coverage in percentage
+const getTotalCoverage = (data) => {
   const total = getTotal(data);
 
-  return `Founded ${total.cover} coverage`;
+  return total ? total.cover : '0';
 };
 
 // convert all data to html output
@@ -135,6 +156,7 @@ const toHtml = (data, options) => {
 // make html table from coverage-file
 const toTable = (data, options) => {
   const coverage = parse(data);
+
   if (!coverage) {
     console.log(`Coverage file not well formed`);
     return null;
@@ -227,4 +249,4 @@ const toMissingTd = (item, options) => {
     .join(', ');
 };
 
-module.exports = { toHtml, getSummaryLine };
+module.exports = { getCoverageReport };

@@ -1,38 +1,33 @@
-const fs = require('fs');
 const core = require('@actions/core');
 const github = require('@actions/github');
-const { toHtml, getSummaryLine } = require('./parse');
-const { toMarkdown } = require('./junitXml');
+const { getCoverageReport } = require('./parse');
+const { getSummaryReport } = require('./junitXml');
+
+const WATERMARK = '<!-- Pytest Coverage Comment -->\n';
 
 const main = async () => {
   const token = core.getInput('github-token');
   const title = core.getInput('title') || 'Coverage Report';
   const badgeTitle = core.getInput('badge-title') || 'Coverage';
-  const hideBadge = core.getInput('hide-badge') || false;
-  const hideReport = core.getInput('hide-report') || false;
-  const covFile = core.getInput('pytest-coverage') || './pytest-coverage.txt';
-  const xmlFile = core.getInput('junitxml-path') || './pytest.xml';
+  const hideBadge = core.getInput('hide-badge') || 'false';
+  const hideReport = core.getInput('hide-report') || 'false';
+  const covFile =
+    core.getInput('pytest-coverage-path') || './pytest-coverage.txt';
+  const xmlFile = core.getInput('junitxml-path') || '';
   const xmlTitle = core.getInput('junitxml-title') || 'JUnit Tests Results';
   const { context } = github;
-
-  // suports absolute path like '/tmp/pytest-coverage.txt'
-  const covFilePath = covFile.startsWith('/')
-    ? covFile
-    : `${process.env.GITHUB_WORKSPACE}/${covFile}`;
-
-  const content = fs.readFileSync(covFilePath, 'utf8');
-  if (!content) {
-    console.log(`No coverage report found at '${covFile}', exiting...`);
-    return;
-  }
+  const { repo, owner } = context.repo;
+  let finalHtml = '';
 
   const options = {
     repository: context.payload.repository.full_name,
     prefix: `${process.env.GITHUB_WORKSPACE}/`,
+    covFile,
+    xmlFile,
     title,
     badgeTitle,
-    hideBadge,
-    hideReport,
+    hideBadge: hideBadge == 'true',
+    hideReport: hideReport == 'true',
     xmlTitle,
   };
 
@@ -45,41 +40,69 @@ const main = async () => {
     options.head = context.ref;
   }
 
-  let finalHtml = toHtml(content, options);
+  const { html, coverage } = getCoverageReport(options);
+  const summaryReport = getSummaryReport(options);
 
-  // suports absolute path like '/tmp/pytest.xml'
-  const xmlFilePath = covFile.startsWith('/')
-    ? xmlFile
-    : `${process.env.GITHUB_WORKSPACE}/${xmlFile}`;
+  finalHtml += html;
+  finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
 
-  const contentXml = fs.readFileSync(xmlFilePath, 'utf8');
-  if (contentXml) {
-    const summary = toMarkdown(contentXml, options);
-    finalHtml += summary;
-  } else {
-    console.log(`No junitxml file found at '${xmlFile}', skipping...`);
+  if (!finalHtml) {
+    console.log('Nothing to report');
+    return;
   }
-
+  const body = WATERMARK + finalHtml;
   const octokit = github.getOctokit(token);
 
-  if (context.eventName === 'pull_request') {
-    await octokit.issues.createComment({
-      repo: context.repo.repo,
-      owner: context.repo.owner,
-      issue_number: context.payload.pull_request.number,
-      body: finalHtml,
-    });
-  } else if (context.eventName === 'push') {
+  const issue_number = context.payload.pull_request
+    ? context.payload.pull_request.number
+    : 0;
+
+  if (context.eventName === 'push') {
+    console.log('Create commit comment');
     await octokit.repos.createCommitComment({
-      repo: context.repo.repo,
-      owner: context.repo.owner,
+      repo,
+      owner,
       commit_sha: options.commit,
-      body: finalHtml,
+      body,
     });
   }
 
-  const summaryLine = getSummaryLine(content);
-  console.log(`Published ${title}. ${summaryLine}.`);
+  if (context.eventName === 'pull_request') {
+    // Now decide if we should issue a new comment or edit an old one
+    const { data: comments } = await octokit.issues.listComments({
+      repo,
+      owner,
+      issue_number,
+    });
+
+    const comment = comments.find(
+      (c) =>
+        c.user.login === 'github-actions[bot]' && c.body.startsWith(WATERMARK)
+    );
+
+    if (comment) {
+      console.log('Founded previous commit, updating');
+      await octokit.issues.updateComment({
+        repo,
+        owner,
+        comment_id: comment.id,
+        body,
+      });
+    } else {
+      console.log('No previous commit founded, creating a new one');
+      await octokit.issues.createComment({
+        repo,
+        owner,
+        issue_number,
+        body,
+      });
+    }
+  }
+
+  if (coverage) {
+    core.setOutput('coverage', coverage);
+    console.log(`Published ${title}. Total coverage ${coverage}.`);
+  }
 };
 
 main().catch((err) => {
