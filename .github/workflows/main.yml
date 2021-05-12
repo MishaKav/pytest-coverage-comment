@@ -7,12 +7,18 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Run command
+        run: |
+          ls -l
+          cd ./data
+          ls -l
+
       - name: Pytest coverage comment
         id: coverage-comment
         uses: MishaKav/pytest-coverage-comment@v1.5
         with:
-          pytest-coverage: ./../data/pytest-coverage_1.txt
-          # junitxml-path: ./data/pytest_1.xml
+          pytest-coverage: ./data/pytest-coverage_1.txt
+          junitxml-path: ./data/pytest_1.xml
 
       - name: Check the output coverage
         run: echo "${{ steps.coverage-comment.outputs.coverage }}"
