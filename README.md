@@ -122,5 +122,7 @@ Exmaple GitHub Action workflow that passes all params to Pytest Coverage Comment
 
 ![Coverage 90-100](https://img.shields.io/badge/Coverage-95%25-brightgreen.svg) [90, 100]
 
-Test Auto Updating Bagde
-[![Auto Updating Bagde](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/MishaKav/5e90d640f8c212ab7bbac38f72323f80/raw/pytest-coverage-comment__heads_main.json)]
+## Auto updating badge on README
+
+If you want auto update the coverage badge on your Readme, you can see the [workflow](../blob/main/.github/workflows/main.yml)
+![Auto Updating Bagde](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/MishaKav/5e90d640f8c212ab7bbac38f72323f80/raw/pytest-coverage-comment__main.json)
