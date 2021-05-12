@@ -13,6 +13,7 @@ jobs:
         with:
           pytest-coverage-path: ./data/pytest-coverage_4.txt
           junitxml-path: ./data/pytest_1.xml
+          hide-badge: true
 
       - name: Check the output coverage
         run: echo "Coverage Report - ${{ steps.coverage-comment.outputs.coverage }}"
