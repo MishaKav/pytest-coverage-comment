@@ -3,6 +3,13 @@ const path = require('path');
 const { getCoverageReport } = require('./parse');
 const { getSummaryReport } = require('./junitXml');
 
+/*  
+  Usefull git commands
+  git tag -a -m "fisrt alpha release" v1.0 && git push --follow-tags 
+  git tag -d v1.0 
+  git tag -d origin v1.0  
+*/
+
 const getPathToFile = (pathToFile) => {
   if (!pathToFile) {
     return null;
