@@ -1,4 +1,26 @@
-// get onlu actual lines with coverage from coverage-file
+const { getPathToFile, getContentFile } = require('./utils');
+
+// return full html coverage report and coverage percenatge
+const getCoverageReport = (options) => {
+  const { covFile } = options;
+
+  try {
+    const covFilePath = getPathToFile(covFile);
+    const content = getContentFile(covFilePath);
+    const coverage = getTotalCoverage(content);
+
+    if (content) {
+      const html = toHtml(content, options);
+      return { html, coverage };
+    }
+  } catch (error) {
+    console.log(`Error: on generating coverage report`, error);
+  }
+
+  return { html: '', coverage: '0' };
+};
+
+// get only actual lines with coverage from coverage-file
 const generateBadgeLink = (percentage) => {
   // https://shields.io/category/coverage
   const rangeColors = [
@@ -227,4 +249,4 @@ const toMissingTd = (item, options) => {
     .join(', ');
 };
 
-module.exports = { toHtml, getTotalCoverage };
+module.exports = { getCoverageReport };

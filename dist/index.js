@@ -12516,6 +12516,28 @@ function wrappy (fn, cb) {
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const xml2js = __nccwpck_require__(6189);
+const { getPathToFile, getContentFile } = __nccwpck_require__(1608);
+
+// return summary report in markdown format
+const getSummaryReport = (options) => {
+  const { xmlFile } = options;
+
+  try {
+    const xmlFilePath = getPathToFile(xmlFile);
+
+    if (xmlFilePath) {
+      const content = getContentFile(xmlFilePath);
+
+      if (content) {
+        return toMarkdown(content, options);
+      }
+    }
+  } catch (error) {
+    console.log(`Error: on generating summary report`, error);
+  }
+
+  return '';
+};
 
 // get summary from junitxml
 const getSummary = (data) => {
@@ -12547,15 +12569,37 @@ const toMarkdown = (data, options) => {
 | ${tests} | ${skipped} :zzz: | ${failures} :x: | ${errors} :fire: | ${time}s :stopwatch: |`;
 };
 
-module.exports = { toMarkdown };
+module.exports = { getSummaryReport };
 
 
 /***/ }),
 
 /***/ 3248:
-/***/ ((module) => {
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
-// get onlu actual lines with coverage from coverage-file
+const { getPathToFile, getContentFile } = __nccwpck_require__(1608);
+
+// return full html coverage report and coverage percenatge
+const getCoverageReport = (options) => {
+  const { covFile } = options;
+
+  try {
+    const covFilePath = getPathToFile(covFile);
+    const content = getContentFile(covFilePath);
+    const coverage = getTotalCoverage(content);
+
+    if (content) {
+      const html = toHtml(content, options);
+      return { html, coverage };
+    }
+  } catch (error) {
+    console.log(`Error: on generating coverage report`, error);
+  }
+
+  return { html: '', coverage: '0' };
+};
+
+// get only actual lines with coverage from coverage-file
 const generateBadgeLink = (percentage) => {
   // https://shields.io/category/coverage
   const rangeColors = [
@@ -12784,7 +12828,7 @@ const toMissingTd = (item, options) => {
     .join(', ');
 };
 
-module.exports = { toHtml, getTotalCoverage };
+module.exports = { getCoverageReport };
 
 
 /***/ }),
@@ -13003,48 +13047,8 @@ var __webpack_exports__ = {};
 (() => {
 const core = __nccwpck_require__(2186);
 const github = __nccwpck_require__(5438);
-const { toHtml, getTotalCoverage } = __nccwpck_require__(3248);
-const { toMarkdown } = __nccwpck_require__(9670);
-const { getPathToFile, getContentFile } = __nccwpck_require__(1608);
-
-const getCoverageReport = (options) => {
-  const { covFile } = options;
-
-  try {
-    const covFilePath = getPathToFile(covFile);
-    const content = getContentFile(covFilePath);
-    const coverage = getTotalCoverage(content);
-
-    if (content) {
-      const html = toHtml(content, options);
-      return { html, coverage };
-    }
-  } catch (error) {
-    console.log(`Error: on generating coverage report`, error);
-  }
-
-  return { html: '', coverage: '0' };
-};
-
-const getSummaryReport = (options) => {
-  const { xmlFile } = options;
-
-  try {
-    const xmlFilePath = getPathToFile(xmlFile);
-
-    if (xmlFilePath) {
-      const content = getContentFile(xmlFilePath);
-
-      if (content) {
-        return toMarkdown(content, options);
-      }
-    }
-  } catch (error) {
-    console.log(`Error: on generating summary report`, error);
-  }
-
-  return '';
-};
+const { getCoverageReport } = __nccwpck_require__(3248);
+const { getSummaryReport } = __nccwpck_require__(9670);
 
 const main = async () => {
   const token = core.getInput('github-token');

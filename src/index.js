@@ -1,47 +1,7 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
-const { toHtml, getTotalCoverage } = require('./parse');
-const { toMarkdown } = require('./junitXml');
-const { getPathToFile, getContentFile } = require('./utils');
-
-const getCoverageReport = (options) => {
-  const { covFile } = options;
-
-  try {
-    const covFilePath = getPathToFile(covFile);
-    const content = getContentFile(covFilePath);
-    const coverage = getTotalCoverage(content);
-
-    if (content) {
-      const html = toHtml(content, options);
-      return { html, coverage };
-    }
-  } catch (error) {
-    console.log(`Error: on generating coverage report`, error);
-  }
-
-  return { html: '', coverage: '0' };
-};
-
-const getSummaryReport = (options) => {
-  const { xmlFile } = options;
-
-  try {
-    const xmlFilePath = getPathToFile(xmlFile);
-
-    if (xmlFilePath) {
-      const content = getContentFile(xmlFilePath);
-
-      if (content) {
-        return toMarkdown(content, options);
-      }
-    }
-  } catch (error) {
-    console.log(`Error: on generating summary report`, error);
-  }
-
-  return '';
-};
+const { getCoverageReport } = require('./parse');
+const { getSummaryReport } = require('./junitXml');
 
 const main = async () => {
   const token = core.getInput('github-token');

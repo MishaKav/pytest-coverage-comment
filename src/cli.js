@@ -1,8 +1,7 @@
 const fs = require('fs');
 const path = require('path');
-const { toHtml } = require('./parse');
-const { toMarkdown } = require('./junitXml');
-const { getContentFile } = require('./utils');
+const { getCoverageReport } = require('./parse');
+const { getSummaryReport } = require('./junitXml');
 
 const getPathToFile = (pathToFile) => {
   if (!pathToFile) {
@@ -23,6 +22,8 @@ const main = async () => {
     repository: 'MishaKav/pytest-coverage-comment',
     commit: 'f9d42291812ed03bb197e48050ac38ac6befe4e5',
     prefix,
+    covFile: getPathToFile(covFile),
+    xmlFile: getPathToFile(xmlFile),
     head: 'feat/test',
     base: 'main',
     title: 'Coverage Report',
@@ -32,22 +33,21 @@ const main = async () => {
     xmlTitle: 'JUnit Tests Results2',
   };
 
-  const covFilePath = getPathToFile(covFile);
-  const content = getContentFile(covFilePath);
-  if (content) {
-    finalHtml = toHtml(content, options);
-  }
+  const { html, coverage } = getCoverageReport(options);
+  const summaryReport = getSummaryReport(options);
 
-  if (xmlFile) {
-    const xmlFilePath = getPathToFile(xmlFile);
-    const contentXml = getContentFile(xmlFilePath);
-    const summary = toMarkdown(contentXml, options);
-    finalHtml += finalHtml.length ? `\n\n${summary}` : summary;
+  finalHtml += html;
+  finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
+
+  if (!finalHtml) {
+    console.log('Nothing to report');
+    return;
   }
 
   const resultFile = __dirname + '/../tmp/result.md';
   fs.promises.mkdir(__dirname + '/../tmp').catch(console.error);
   fs.writeFileSync(resultFile, finalHtml);
+  console.log(`Published ${options.title}. Total coverage ${coverage}.`);
   console.log(resultFile);
 };
 
