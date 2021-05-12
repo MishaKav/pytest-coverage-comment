@@ -37,7 +37,9 @@ inputs:
     description: 'Title for summary for junitxml'
     default: 'JUnit Tests Results'
     required: false
-
+outputs:
+  coverage:
+    description: 'value indicating the coverage percentage of your report based on pytest, example 30%'
 runs:
   using: 'node12'
   main: 'dist/index.js'

@@ -8,7 +8,11 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Pytest coverage comment
-        uses: MishaKav/pytest-coverage-comment@v1.4
+        id: coverage-comment
+        uses: MishaKav/pytest-coverage-comment@v1.5
         with:
           pytest-coverage: ./data/pytest-coverage_1.txt
           # junitxml-path: ./data/pytest_1.xml
+
+      - name: Check the output coverage
+        run: echo "${{ steps.coverage-comment.outputs.coverage }}"

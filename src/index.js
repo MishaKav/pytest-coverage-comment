@@ -1,8 +1,47 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
-const { toHtml, getSummaryLine } = require('./parse');
+const { toHtml, getTotalCoverage } = require('./parse');
 const { toMarkdown } = require('./junitXml');
 const { getPathToFile, getContentFile } = require('./utils');
+
+const getCoverageReport = (options) => {
+  const { covFile } = options;
+
+  try {
+    const covFilePath = getPathToFile(covFile);
+    const content = getContentFile(covFilePath);
+    const coverage = getTotalCoverage(content);
+
+    if (content) {
+      const html = toHtml(content, options);
+      return { html, coverage };
+    }
+  } catch (error) {
+    console.log(`Error: on generating coverage report`, error);
+  }
+
+  return { html: '', coverage: '0' };
+};
+
+const getSummaryReport = (options) => {
+  const { xmlFile } = options;
+
+  try {
+    const xmlFilePath = getPathToFile(xmlFile);
+
+    if (xmlFilePath) {
+      const content = getContentFile(xmlFilePath);
+
+      if (content) {
+        return toMarkdown(content, options);
+      }
+    }
+  } catch (error) {
+    console.log(`Error: on generating summary report`, error);
+  }
+
+  return '';
+};
 
 const main = async () => {
   const token = core.getInput('github-token');
@@ -15,11 +54,12 @@ const main = async () => {
   const xmlTitle = core.getInput('junitxml-title') || 'JUnit Tests Results';
   const { context } = github;
   let finalHtml = '';
-  let content;
 
   const options = {
     repository: context.payload.repository.full_name,
     prefix: `${process.env.GITHUB_WORKSPACE}/`,
+    covFile,
+    xmlFile,
     title,
     badgeTitle,
     hideBadge,
@@ -36,34 +76,15 @@ const main = async () => {
     options.head = context.ref;
   }
 
-  try {
-    const covFilePath = getPathToFile(covFile);
-    const content = getContentFile(covFilePath);
+  const { html, coverage } = getCoverageReport(options);
+  const summaryReport = getSummaryReport(options);
 
-    if (content) {
-      finalHtml = toHtml(content, options);
-    }
-  } catch (error) {
-    console.log(`Error: on generating coverage report`, error);
-  }
-
-  try {
-    const xmlFilePath = getPathToFile(xmlFile);
-
-    if (xmlFilePath) {
-      const contentXml = getContentFile(xmlFilePath);
-
-      if (contentXml) {
-        const summary = toMarkdown(contentXml, options);
-        finalHtml += finalHtml.length ? `\n\n${summary}` : summary;
-      }
-    }
-  } catch (error) {
-    console.log(`Error: on generating summary report`, error);
-  }
+  finalHtml += html;
+  finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
 
   if (!finalHtml) {
     console.log('Nothing to report');
+    return;
   }
 
   const octokit = github.getOctokit(token);
@@ -84,9 +105,9 @@ const main = async () => {
     });
   }
 
-  if (content) {
-    const summaryLine = getSummaryLine(content);
-    console.log(`Published ${title}. ${summaryLine}.`);
+  if (coverage) {
+    core.setOutput('coverage', coverage);
+    console.log(`Published ${title}. Total coverage ${coverage}.`);
   }
 };
 

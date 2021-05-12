@@ -12666,11 +12666,11 @@ const makeFolders = (coverage, options) => {
   return folders;
 };
 
-// gets summary line
-const getSummaryLine = (data) => {
+// gets total coverage in percentage
+const getTotalCoverage = (data) => {
   const total = getTotal(data);
 
-  return total ? `Founded ${total.cover} coverage` : '';
+  return total ? total.cover : '0';
 };
 
 // convert all data to html output
@@ -12784,7 +12784,7 @@ const toMissingTd = (item, options) => {
     .join(', ');
 };
 
-module.exports = { toHtml, getSummaryLine };
+module.exports = { toHtml, getTotalCoverage };
 
 
 /***/ }),
@@ -13003,9 +13003,48 @@ var __webpack_exports__ = {};
 (() => {
 const core = __nccwpck_require__(2186);
 const github = __nccwpck_require__(5438);
-const { toHtml, getSummaryLine } = __nccwpck_require__(3248);
+const { toHtml, getTotalCoverage } = __nccwpck_require__(3248);
 const { toMarkdown } = __nccwpck_require__(9670);
 const { getPathToFile, getContentFile } = __nccwpck_require__(1608);
+
+const getCoverageReport = (options) => {
+  const { covFile } = options;
+
+  try {
+    const covFilePath = getPathToFile(covFile);
+    const content = getContentFile(covFilePath);
+    const coverage = getTotalCoverage(content);
+
+    if (content) {
+      const html = toHtml(content, options);
+      return { html, coverage };
+    }
+  } catch (error) {
+    console.log(`Error: on generating coverage report`, error);
+  }
+
+  return { html: '', coverage: '0' };
+};
+
+const getSummaryReport = (options) => {
+  const { xmlFile } = options;
+
+  try {
+    const xmlFilePath = getPathToFile(xmlFile);
+
+    if (xmlFilePath) {
+      const content = getContentFile(xmlFilePath);
+
+      if (content) {
+        return toMarkdown(content, options);
+      }
+    }
+  } catch (error) {
+    console.log(`Error: on generating summary report`, error);
+  }
+
+  return '';
+};
 
 const main = async () => {
   const token = core.getInput('github-token');
@@ -13018,11 +13057,12 @@ const main = async () => {
   const xmlTitle = core.getInput('junitxml-title') || 'JUnit Tests Results';
   const { context } = github;
   let finalHtml = '';
-  let content;
 
   const options = {
     repository: context.payload.repository.full_name,
     prefix: `${process.env.GITHUB_WORKSPACE}/`,
+    covFile,
+    xmlFile,
     title,
     badgeTitle,
     hideBadge,
@@ -13039,34 +13079,15 @@ const main = async () => {
     options.head = context.ref;
   }
 
-  try {
-    const covFilePath = getPathToFile(covFile);
-    const content = getContentFile(covFilePath);
+  const { html, coverage } = getCoverageReport(options);
+  const summaryReport = getSummaryReport(options);
 
-    if (content) {
-      finalHtml = toHtml(content, options);
-    }
-  } catch (error) {
-    console.log(`Error: on generating coverage report`, error);
-  }
-
-  try {
-    const xmlFilePath = getPathToFile(xmlFile);
-
-    if (xmlFilePath) {
-      const contentXml = getContentFile(xmlFilePath);
-
-      if (contentXml) {
-        const summary = toMarkdown(contentXml, options);
-        finalHtml += finalHtml.length ? `\n\n${summary}` : summary;
-      }
-    }
-  } catch (error) {
-    console.log(`Error: on generating summary report`, error);
-  }
+  finalHtml += html;
+  finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
 
   if (!finalHtml) {
     console.log('Nothing to report');
+    return;
   }
 
   const octokit = github.getOctokit(token);
@@ -13087,9 +13108,9 @@ const main = async () => {
     });
   }
 
-  if (content) {
-    const summaryLine = getSummaryLine(content);
-    console.log(`Published ${title}. ${summaryLine}.`);
+  if (coverage) {
+    core.setOutput('coverage', coverage);
+    console.log(`Published ${title}. Total coverage ${coverage}.`);
   }
 };
 

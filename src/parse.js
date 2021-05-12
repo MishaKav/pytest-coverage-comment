@@ -109,11 +109,11 @@ const makeFolders = (coverage, options) => {
   return folders;
 };
 
-// gets summary line
-const getSummaryLine = (data) => {
+// gets total coverage in percentage
+const getTotalCoverage = (data) => {
   const total = getTotal(data);
 
-  return total ? `Founded ${total.cover} coverage` : '';
+  return total ? total.cover : '0';
 };
 
 // convert all data to html output
@@ -227,4 +227,4 @@ const toMissingTd = (item, options) => {
     .join(', ');
 };
 
-module.exports = { toHtml, getSummaryLine };
+module.exports = { toHtml, getTotalCoverage };
