@@ -12528,6 +12528,7 @@ const getSummary = (data) => {
   const parsed = parser.parseString(data);
   if (!parsed) {
     console.log(`JUnitXml file is not XML or not well formed`);
+    return '';
   }
 
   return parser.resultObject.testsuites.testsuite[0]['$'];
@@ -12669,7 +12670,7 @@ const makeFolders = (coverage, options) => {
 const getSummaryLine = (data) => {
   const total = getTotal(data);
 
-  return `Founded ${total.cover} coverage`;
+  return total ? `Founded ${total.cover} coverage` : '';
 };
 
 // convert all data to html output
@@ -12784,6 +12785,45 @@ const toMissingTd = (item, options) => {
 };
 
 module.exports = { toHtml, getSummaryLine };
+
+
+/***/ }),
+
+/***/ 1608:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const fs = __nccwpck_require__(5747);
+
+const getPathToFile = (pathToFile) => {
+  if (!pathToFile) {
+    return null;
+  }
+
+  // suports absolute path like '/tmp/pytest-coverage.txt'
+  return pathToFile.startsWith('/')
+    ? pathToFile
+    : `${process.env.GITHUB_WORKSPACE}/${pathToFile}`;
+};
+
+const getContentFile = (pathToFile) => {
+  const fileExists = fs.existsSync(pathToFile);
+
+  if (!fileExists) {
+    console.log(`File '${pathToFile}' doesn't exist`);
+    return null;
+  }
+
+  const content = fs.readFileSync(pathToFile, 'utf8');
+
+  if (!content) {
+    console.log(`No content found in file '${pathToFile}'`);
+    return null;
+  }
+
+  return content;
+};
+
+module.exports = { getPathToFile, getContentFile };
 
 
 /***/ }),
@@ -12955,11 +12995,11 @@ module.exports = require("zlib");;
 var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
-const fs = __nccwpck_require__(5747);
 const core = __nccwpck_require__(2186);
 const github = __nccwpck_require__(5438);
 const { toHtml, getSummaryLine } = __nccwpck_require__(3248);
 const { toMarkdown } = __nccwpck_require__(9670);
+const { getPathToFile, getContentFile } = __nccwpck_require__(1608);
 
 const main = async () => {
   const token = core.getInput('github-token');
@@ -12968,20 +13008,10 @@ const main = async () => {
   const hideBadge = core.getInput('hide-badge') || false;
   const hideReport = core.getInput('hide-report') || false;
   const covFile = core.getInput('pytest-coverage') || './pytest-coverage.txt';
-  const xmlFile = core.getInput('junitxml-path') || './pytest.xml';
+  const xmlFile = core.getInput('junitxml-path') || '';
   const xmlTitle = core.getInput('junitxml-title') || 'JUnit Tests Results';
   const { context } = github;
-
-  // suports absolute path like '/tmp/pytest-coverage.txt'
-  const covFilePath = covFile.startsWith('/')
-    ? covFile
-    : `${process.env.GITHUB_WORKSPACE}/${covFile}`;
-
-  const content = fs.readFileSync(covFilePath, 'utf8');
-  if (!content) {
-    console.log(`No coverage report found at '${covFile}', exiting...`);
-    return;
-  }
+  let finalHtml = '';
 
   const options = {
     repository: context.payload.repository.full_name,
@@ -13002,19 +13032,23 @@ const main = async () => {
     options.head = context.ref;
   }
 
-  let finalHtml = toHtml(content, options);
+  const covFilePath = getPathToFile(covFile);
+  const content = getContentFile(covFilePath);
 
-  // suports absolute path like '/tmp/pytest.xml'
-  const xmlFilePath = xmlFile.startsWith('/')
-    ? xmlFile
-    : `${process.env.GITHUB_WORKSPACE}/${xmlFile}`;
+  if (content) {
+    finalHtml = toHtml(content, options);
+  }
 
-  const contentXml = fs.readFileSync(xmlFilePath, 'utf8');
+  const xmlFilePath = getPathToFile(xmlFile);
+  const contentXml = getContentFile(xmlFilePath);
+
   if (contentXml) {
     const summary = toMarkdown(contentXml, options);
-    finalHtml += summary;
-  } else {
-    console.log(`No junitxml file found at '${xmlFile}', skipping...`);
+    finalHtml += finalHtml.length ? `\n\n${summary}` : summary;
+  }
+
+  if (!finalHtml) {
+    console.log('Nothing to report');
   }
 
   const octokit = github.getOctokit(token);

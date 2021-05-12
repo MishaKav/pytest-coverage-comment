@@ -113,7 +113,7 @@ const makeFolders = (coverage, options) => {
 const getSummaryLine = (data) => {
   const total = getTotal(data);
 
-  return `Founded ${total.cover} coverage`;
+  return total ? `Founded ${total.cover} coverage` : '';
 };
 
 // convert all data to html output

@@ -31,7 +31,7 @@ inputs:
     required: false
   junitxml-path:
     description: 'The location of the junitxml path'
-    default: './pytest.xml'
+    default: ''
     required: false
   junitxml-title:
     description: 'Title for summary for junitxml'

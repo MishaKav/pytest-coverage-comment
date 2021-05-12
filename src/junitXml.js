@@ -11,6 +11,7 @@ const getSummary = (data) => {
   const parsed = parser.parseString(data);
   if (!parsed) {
     console.log(`JUnitXml file is not XML or not well formed`);
+    return '';
   }
 
   return parser.resultObject.testsuites.testsuite[0]['$'];

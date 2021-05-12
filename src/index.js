@@ -1,8 +1,8 @@
-const fs = require('fs');
 const core = require('@actions/core');
 const github = require('@actions/github');
 const { toHtml, getSummaryLine } = require('./parse');
 const { toMarkdown } = require('./junitXml');
+const { getPathToFile, getContentFile } = require('./utils');
 
 const main = async () => {
   const token = core.getInput('github-token');
@@ -11,20 +11,10 @@ const main = async () => {
   const hideBadge = core.getInput('hide-badge') || false;
   const hideReport = core.getInput('hide-report') || false;
   const covFile = core.getInput('pytest-coverage') || './pytest-coverage.txt';
-  const xmlFile = core.getInput('junitxml-path') || './pytest.xml';
+  const xmlFile = core.getInput('junitxml-path') || '';
   const xmlTitle = core.getInput('junitxml-title') || 'JUnit Tests Results';
   const { context } = github;
-
-  // suports absolute path like '/tmp/pytest-coverage.txt'
-  const covFilePath = covFile.startsWith('/')
-    ? covFile
-    : `${process.env.GITHUB_WORKSPACE}/${covFile}`;
-
-  const content = fs.readFileSync(covFilePath, 'utf8');
-  if (!content) {
-    console.log(`No coverage report found at '${covFile}', exiting...`);
-    return;
-  }
+  let finalHtml = '';
 
   const options = {
     repository: context.payload.repository.full_name,
@@ -45,19 +35,23 @@ const main = async () => {
     options.head = context.ref;
   }
 
-  let finalHtml = toHtml(content, options);
+  const covFilePath = getPathToFile(covFile);
+  const content = getContentFile(covFilePath);
 
-  // suports absolute path like '/tmp/pytest.xml'
-  const xmlFilePath = xmlFile.startsWith('/')
-    ? xmlFile
-    : `${process.env.GITHUB_WORKSPACE}/${xmlFile}`;
+  if (content) {
+    finalHtml = toHtml(content, options);
+  }
 
-  const contentXml = fs.readFileSync(xmlFilePath, 'utf8');
+  const xmlFilePath = getPathToFile(xmlFile);
+  const contentXml = getContentFile(xmlFilePath);
+
   if (contentXml) {
     const summary = toMarkdown(contentXml, options);
-    finalHtml += summary;
-  } else {
-    console.log(`No junitxml file found at '${xmlFile}', skipping...`);
+    finalHtml += finalHtml.length ? `\n\n${summary}` : summary;
+  }
+
+  if (!finalHtml) {
+    console.log('Nothing to report');
   }
 
   const octokit = github.getOctokit(token);

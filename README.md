@@ -23,8 +23,8 @@ You can add this action to your GitHub workflow for Ubuntu runners (e.g. runs-on
 | `badge-title`     |          | `Coverage`              | Title for the badge icon                                                              |
 | `hide-badge`      |          | false                   | Hide badge with percentage                                                            |
 | `hide-report`     |          | false                   | Hide coverage report                                                                  |
-| `junitxml-path`   |          | `./pytest.xml`          | The location of the junitxml path                                                     |
-| `junitxml-title`  |          | `JUnit Tests Results`   | TTitle for summary for junitxml                                                       |
+| `junitxml-path`   |          | ``                      | The location of the junitxml path                                                     |
+| `junitxml-title`  |          | `JUnit Tests Results`   | Title for summary for junitxml                                                        |
 
 junitxml-title:
 description: 'Title for summary for junitxml'

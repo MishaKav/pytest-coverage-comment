@@ -2,11 +2,22 @@ const fs = require('fs');
 const path = require('path');
 const { toHtml } = require('./parse');
 const { toMarkdown } = require('./junitXml');
+const { getContentFile } = require('./utils');
+
+const getPathToFile = (pathToFile) => {
+  if (!pathToFile) {
+    return null;
+  }
+
+  // suports absolute path like '/tmp/pytest-coverage.txt'
+  return pathToFile.startsWith('/') ? pathToFile : `${__dirname}/${pathToFile}`;
+};
 
 const main = async () => {
   const covFile = process.argv[2];
   const xmlFile = process.argv[3];
   const prefix = path.dirname(path.dirname(path.resolve(covFile))) + '/';
+  let finalHtml = '';
 
   const options = {
     repository: 'MishaKav/pytest-coverage-comment',
@@ -21,28 +32,23 @@ const main = async () => {
     xmlTitle: 'JUnit Tests Results2',
   };
 
-  // suports absolute path like '/tmp/pytest-coverage.txt'
-  const covFilePath = covFile.startsWith('/')
-    ? covFile
-    : `${__dirname}/${covFile}`;
-  const content = fs.readFileSync(covFilePath, 'utf8');
-  const result = toHtml(content, options);
+  const covFilePath = getPathToFile(covFile);
+  const content = getContentFile(covFilePath);
+  if (content) {
+    finalHtml = toHtml(content, options);
+  }
 
-  const resultFile = __dirname + '/tmp/coverage.md';
-  fs.writeFileSync(resultFile, result);
+  if (xmlFile) {
+    const xmlFilePath = getPathToFile(xmlFile);
+    const contentXml = getContentFile(xmlFilePath);
+    const summary = toMarkdown(contentXml, options);
+    finalHtml += finalHtml.length ? `\n\n${summary}` : summary;
+  }
+
+  const resultFile = __dirname + '/../tmp/result.md';
+  fs.promises.mkdir(__dirname + '/../tmp').catch(console.error);
+  fs.writeFileSync(resultFile, finalHtml);
   console.log(resultFile);
-
-  // suports absolute path like '/tmp/pytest-coverage.txt'
-  const xmlFilePath = xmlFile.startsWith('/')
-    ? xmlFile
-    : `${__dirname}/${xmlFile}`;
-
-  const contentXml = fs.readFileSync(xmlFilePath, 'utf8');
-  const summary = toMarkdown(contentXml, options);
-
-  const resultXmlFile = __dirname + '/tmp/junitxml.md';
-  fs.writeFileSync(resultXmlFile, summary);
-  console.log(resultXmlFile);
 };
 
 main().catch(function (err) {
