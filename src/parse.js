@@ -61,7 +61,6 @@ const getActualLines = (data) => {
     return null;
   }
 
-  console.log(`Parsing coverage file`);
   const lines = data.split('\n');
   const startIndex = lines.findIndex((l) => l.includes('coverage: platform'));
   const endIndex = lines.findIndex((l) => l.includes('TOTAL '));
@@ -108,7 +107,7 @@ const parseOneLine = (line) => {
 // parse coverage-file
 const parse = (data) => {
   const actualLines = getActualLines(data);
-  console.log('actualLines', actualLines);
+
   if (!actualLines) {
     return null;
   }
@@ -140,11 +139,8 @@ const getTotalCoverage = (data) => {
 
 // convert all data to html output
 const toHtml = (data, options) => {
-  console.log('#1 toHtml');
   const { badgeTitle, title, hideBadge, hideReport } = options;
-  console.log('#2 get options', options);
   const table = hideReport ? '' : toTable(data, options);
-  console.log('#3 table', table);
   const total = getTotal(data);
   const color = generateBadgeLink(total.cover);
   const badgeHtml = hideBadge
@@ -159,9 +155,8 @@ const toHtml = (data, options) => {
 
 // make html table from coverage-file
 const toTable = (data, options) => {
-  console.log('#2.1 toTable');
   const coverage = parse(data);
-  console.log('#2.2 coverage', coverage);
+
   if (!coverage) {
     console.log(`Coverage file not well formed`);
     return null;
