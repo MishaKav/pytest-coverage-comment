@@ -15,6 +15,7 @@ const main = async () => {
   const xmlTitle = core.getInput('junitxml-title') || 'JUnit Tests Results';
   const { context } = github;
   let finalHtml = '';
+  let content;
 
   const options = {
     repository: context.payload.repository.full_name,
@@ -35,11 +36,15 @@ const main = async () => {
     options.head = context.ref;
   }
 
-  const covFilePath = getPathToFile(covFile);
-  const content = getContentFile(covFilePath);
+  try {
+    const covFilePath = getPathToFile(covFile);
+    const content = getContentFile(covFilePath);
 
-  if (content) {
-    finalHtml = toHtml(content, options);
+    if (content) {
+      finalHtml = toHtml(content, options);
+    }
+  } catch (error) {
+    console.log(`Error: on generating coverage report`, error);
   }
 
   try {
@@ -54,7 +59,7 @@ const main = async () => {
       }
     }
   } catch (error) {
-    console.log(error);
+    console.log(`Error: on generating summary report`, error);
   }
 
   if (!finalHtml) {
@@ -79,8 +84,10 @@ const main = async () => {
     });
   }
 
-  const summaryLine = getSummaryLine(content);
-  console.log(`Published ${title}. ${summaryLine}.`);
+  if (content) {
+    const summaryLine = getSummaryLine(content);
+    console.log(`Published ${title}. ${summaryLine}.`);
+  }
 };
 
 main().catch((err) => {

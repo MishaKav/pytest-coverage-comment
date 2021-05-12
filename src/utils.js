@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 const getPathToFile = (pathToFile) => {
-  if (pathToFile == null) {
+  if (!pathToFile) {
     return null;
   }
 
