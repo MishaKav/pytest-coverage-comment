@@ -9,8 +9,7 @@ jobs:
 
       - name: Run command
         run: |
-          ls -l
-          cd ./data
+          cat ${{ github.workspace }}/./data/pytest-coverage_1.txt
           ls -l
 
       - name: Pytest coverage comment
