@@ -11,4 +11,4 @@ jobs:
         uses: MishaKav/pytest-coverage-comment@v1.0
         with:
           pytest-coverage: ./data/pytest-coverage_1.txt
-          junitxml-path: ./data/pytest_2.xml
+          junitxml-path: ./data/pytest_1.xml
