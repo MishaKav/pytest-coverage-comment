@@ -32,6 +32,7 @@ const getContentFile = (pathToFile) => {
   }
 
   console.log(`File read successfully '${pathToFile}'`);
+  console.log(`content '${content}'`);
   return content;
 };
 

@@ -12719,8 +12719,11 @@ const getTotalCoverage = (data) => {
 
 // convert all data to html output
 const toHtml = (data, options) => {
+  console.log('#1 toHtml');
   const { badgeTitle, title, hideBadge, hideReport } = options;
+  console.log('#2 get options', options);
   const table = hideReport ? '' : toTable(data, options);
+  console.log('#3 table', table);
   const total = getTotal(data);
   const color = generateBadgeLink(total.cover);
   const badgeHtml = hideBadge
@@ -12870,6 +12873,7 @@ const getContentFile = (pathToFile) => {
   }
 
   console.log(`File read successfully '${pathToFile}'`);
+  console.log(`content '${content}'`);
   return content;
 };
 
