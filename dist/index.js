@@ -12870,7 +12870,6 @@ const getContentFile = (pathToFile) => {
   }
 
   console.log(`File read successfully '${pathToFile}'`);
-  console.log(`content '${content}'`);
   return content;
 };
 
@@ -13057,7 +13056,8 @@ const main = async () => {
   const badgeTitle = core.getInput('badge-title') || 'Coverage';
   const hideBadge = core.getInput('hide-badge') || 'false';
   const hideReport = core.getInput('hide-report') || 'false';
-  const covFile = core.getInput('pytest-coverage') || './pytest-coverage.txt';
+  const covFile =
+    core.getInput('pytest-coverage-path') || './pytest-coverage.txt';
   const xmlFile = core.getInput('junitxml-path') || '';
   const xmlTitle = core.getInput('junitxml-title') || 'JUnit Tests Results';
   const { context } = github;

@@ -9,7 +9,7 @@ inputs:
     description: 'GitHub API Access Token'
     default: ${{ github.token }}
     required: true
-  pytest-coverage:
+  pytest-coverage-path:
     description: 'The location of the txt output of pytest-coverage'
     default: './pytest-coverage.txt'
     required: false
