@@ -15,4 +15,17 @@ jobs:
           junitxml-path: ./data/pytest_1.xml
 
       - name: Check the output coverage
-        run: echo "Coverage Report - ${{ steps.coverage-comment.outputs.coverage }}"
+        run: |
+          echo "Coverage Report - ${{ steps.coverage-comment.outputs.coverage }}"
+          echo "Coverage Color - ${{ steps.coverage-comment.outputs.color }}"
+
+      - name: Create the Badge
+        uses: schneegans/dynamic-badges-action@v1.0.0
+        with:
+          auth: ${{ secrets.PYTEST_COVERAGE_COMMENT }}
+          gistID: 5e90d640f8c212ab7bbac38f72323f80
+          filename: pytest-coverage-comment__main.json
+          label: Coverage Report
+          message: ${{ steps.coverage-comment.outputs.coverage }}
+          color: ${{ steps.coverage-comment.outputs.color }}
+          namedLogo: pytest
