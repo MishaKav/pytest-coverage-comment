@@ -108,7 +108,7 @@ const parseOneLine = (line) => {
 // parse coverage-file
 const parse = (data) => {
   const actualLines = getActualLines(data);
-
+  console.log('actualLines', actualLines);
   if (!actualLines) {
     return null;
   }
@@ -159,7 +159,9 @@ const toHtml = (data, options) => {
 
 // make html table from coverage-file
 const toTable = (data, options) => {
+  console.log('#2.1 toTable');
   const coverage = parse(data);
+  console.log('#2.2 coverage', coverage);
   if (!coverage) {
     console.log(`Coverage file not well formed`);
     return null;
