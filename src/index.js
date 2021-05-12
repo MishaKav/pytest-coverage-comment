@@ -7,8 +7,8 @@ const main = async () => {
   const token = core.getInput('github-token');
   const title = core.getInput('title') || 'Coverage Report';
   const badgeTitle = core.getInput('badge-title') || 'Coverage';
-  const hideBadge = core.getInput('hide-badge') || false;
-  const hideReport = core.getInput('hide-report') || false;
+  const hideBadge = core.getInput('hide-badge') || 'false';
+  const hideReport = core.getInput('hide-report') || 'false';
   const covFile = core.getInput('pytest-coverage') || './pytest-coverage.txt';
   const xmlFile = core.getInput('junitxml-path') || '';
   const xmlTitle = core.getInput('junitxml-title') || 'JUnit Tests Results';
@@ -22,8 +22,8 @@ const main = async () => {
     xmlFile,
     title,
     badgeTitle,
-    hideBadge,
-    hideReport,
+    hideBadge: hideBadge == 'true',
+    hideReport: hideReport == 'true',
     xmlTitle,
   };
 
