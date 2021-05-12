@@ -40,7 +40,7 @@ const main = async () => {
     options.head = context.ref;
   }
 
-  const { html, coverage } = getCoverageReport(options);
+  const { html, coverage, color } = getCoverageReport(options);
   const summaryReport = getSummaryReport(options);
 
   finalHtml += html;
@@ -101,6 +101,7 @@ const main = async () => {
 
   if (coverage) {
     core.setOutput('coverage', coverage);
+    core.setOutput('color', color);
     console.log(`Published ${title}. Total coverage ${coverage}.`);
   }
 };

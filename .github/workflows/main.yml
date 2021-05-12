@@ -9,10 +9,23 @@ jobs:
 
       - name: Pytest coverage comment
         id: coverage-comment
-        uses: MishaKav/pytest-coverage-comment@v1.0
+        uses: MishaKav/pytest-coverage-comment@v1.1
         with:
           pytest-coverage-path: ./data/pytest-coverage_4.txt
           junitxml-path: ./data/pytest_1.xml
 
       - name: Check the output coverage
-        run: echo "Coverage Report - ${{ steps.coverage-comment.outputs.coverage }}"
+        run: |
+          echo "Coverage Report - ${{ steps.coverage-comment.outputs.coverage }}"
+          echo "Coverage Color - ${{ steps.coverage-comment.outputs.color }}"
+
+      - name: Create the Badge
+        uses: schneegans/dynamic-badges-action@v1.0.0
+        with:
+          auth: ${{ secrets.PYTEST_COVERAGE_COMMENT }}
+          gistID: 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
+          filename: pytest-coverage-comment__main.json
+          label: Coverage Report
+          message: ${{ steps.coverage-comment.outputs.coverage }}
+          color: ${{ steps.coverage-comment.outputs.color }}
+          namedLogo: pytest

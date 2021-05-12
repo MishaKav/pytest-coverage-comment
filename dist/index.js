@@ -12590,13 +12590,16 @@ const getCoverageReport = (options) => {
 
     if (content) {
       const html = toHtml(content, options);
-      return { html, coverage };
+      const total = getTotal(content);
+      const color = generateBadgeLink(total ? total.cover : '0');
+
+      return { html, coverage, color };
     }
   } catch (error) {
     console.log(`Error: on generating coverage report`, error);
   }
 
-  return { html: '', coverage: '0' };
+  return { html: '', coverage: '0', color: 'red' };
 };
 
 // get only actual lines with coverage from coverage-file
@@ -13087,7 +13090,7 @@ const main = async () => {
     options.head = context.ref;
   }
 
-  const { html, coverage } = getCoverageReport(options);
+  const { html, coverage, color } = getCoverageReport(options);
   const summaryReport = getSummaryReport(options);
 
   finalHtml += html;
@@ -13148,6 +13151,7 @@ const main = async () => {
 
   if (coverage) {
     core.setOutput('coverage', coverage);
+    core.setOutput('color', color);
     console.log(`Published ${title}. Total coverage ${coverage}.`);
   }
 };
