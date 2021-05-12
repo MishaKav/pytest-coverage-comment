@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 const getPathToFile = (pathToFile) => {
-  if (!pathToFile) {
+  if (pathToFile == null) {
     return null;
   }
 
@@ -12,6 +12,7 @@ const getPathToFile = (pathToFile) => {
 };
 
 const getContentFile = (pathToFile) => {
+  console.log(`Try reading file '${pathToFile}'`);
   const fileExists = fs.existsSync(pathToFile);
 
   if (!fileExists) {
@@ -26,6 +27,7 @@ const getContentFile = (pathToFile) => {
     return null;
   }
 
+  console.log(`File read successfully '${pathToFile}'`);
   return content;
 };
 
