@@ -1,18 +1,22 @@
 name: Test Branch
 on:
-  push:
+  pull_request:
 jobs:
   test-branch:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [10, 12, 14]
     steps:
       - uses: actions/checkout@v2
 
       - name: Pytest coverage comment
         id: coverageComment
-        uses: MishaKav/pytest-coverage-comment@update-comment
+        uses: MishaKav/pytest-coverage-comment@live-test
         with:
           pytest-coverage-path: ./data/pytest-coverage_4.txt
           junitxml-path: ./data/pytest_1.xml
+          create-new-comment: true
 
       - name: Check the output coverage
         run: |
