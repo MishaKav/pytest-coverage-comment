@@ -7,14 +7,14 @@ const WATERMARK = '<!-- Pytest Coverage Comment -->\n';
 
 const main = async () => {
   const token = core.getInput('github-token');
-  const title = core.getInput('title') || 'Coverage Report';
-  const badgeTitle = core.getInput('badge-title') || 'Coverage';
-  const hideBadge = core.getInput('hide-badge') || 'false';
-  const hideReport = core.getInput('hide-report') || 'false';
-  const covFile =
-    core.getInput('pytest-coverage-path') || './pytest-coverage.txt';
-  const xmlFile = core.getInput('junitxml-path') || '';
-  const xmlTitle = core.getInput('junitxml-title') || 'JUnit Tests Results';
+  const title = core.getInput('title');
+  const badgeTitle = core.getInput('badge-title');
+  const hideBadge = core.getBooleanInput('hide-badge');
+  const hideReport = core.getBooleanInput('hide-report');
+  const covFile = core.getInput('pytest-coverage-path');
+  const xmlFile = core.getInput('junitxml-path');
+  const xmlTitle = core.getInput('junitxml-title');
+
   const { context } = github;
   const { repo, owner } = context.repo;
   let finalHtml = '';
@@ -26,8 +26,8 @@ const main = async () => {
     xmlFile,
     title,
     badgeTitle,
-    hideBadge: hideBadge == 'true',
-    hideReport: hideReport == 'true',
+    hideBadge,
+    hideReport,
     xmlTitle,
   };
 

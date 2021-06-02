@@ -24,14 +24,12 @@ You can add this action to your GitHub workflow for Ubuntu runners (e.g. runs-on
 | `badge-title`          |          | `Coverage`              | Title for the badge icon                                                              |
 | `hide-badge`           |          | false                   | Hide badge with percentage                                                            |
 | `hide-report`          |          | false                   | Hide coverage report                                                                  |
-| `junitxml-path`        |          | ``                      | The location of the junitxml path                                                     |
-| `junitxml-title`       |          | `JUnit Tests Results`   | Title for summary for junitxml                                                        |
+| `junitxml-path`        |          | ''                      | The location of the junitxml path                                                     |
+| `junitxml-title`       |          | ''                      | Title for summary for junitxml                                                        |
 
 ## Output example
 
 <img alt="Coverage" src="https://img.shields.io/badge/Coverage-30%25-red.svg" /><br/><details><summary>Coverage Report</summary><table><tr><th>File</th><th>Stmts</th><th>Miss</th><th>Cover</th><th>Missing</th></tr><tbody><tr><td colspan="5"><b>functions/example_completed</b></td></tr><tr><td>&nbsp; &nbsp;<a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_completed/example_completed.py">example_completed.py</a></td><td>64</td><td>19</td><td>70%</td><td><a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_completed/example_completed.py#L33">33</a>, <a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_completed/example_completed.py#L39-L45">39&ndash;45</a>, <a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_completed/example_completed.py#L48-L51">48&ndash;51</a>, <a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_completed/example_completed.py#L55-L58">55&ndash;58</a>, <a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_completed/example_completed.py#L65-L70">65&ndash;70</a>, <a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_completed/example_completed.py#L91-L92">91&ndash;92</a></td></tr><tr><td colspan="5"><b>functions/example_manager</b></td></tr><tr><td>&nbsp; &nbsp;<a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_manager/example_manager.py">example_manager.py</a></td><td>44</td><td>11</td><td>75%</td><td><a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_manager/example_manager.py#L31-L33">31&ndash;33</a>, <a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_manager/example_manager.py#L49-L55">49&ndash;55</a>, <a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_manager/example_manager.py#L67-L69">67&ndash;69</a></td></tr><tr><td>&nbsp; &nbsp;<a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_manager/example_static.py">example_static.py</a></td><td>40</td><td>2</td><td>95%</td><td><a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_manager/example_static.py#L60-L61">60&ndash;61</a></td></tr><tr><td colspan="5"><b>functions/my_exampels</b></td></tr><tr><td>&nbsp; &nbsp;<a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/my_exampels/example.py">example.py</a></td><td>20</td><td>20</td><td>0%</td><td><a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/my_exampels/example.py#L1-L31">1&ndash;31</a></td></tr><tr><td colspan="5"><b>functions/resources</b></td></tr><tr><td>&nbsp; &nbsp;<a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/resources/resources.py">resources.py</a></td><td>26</td><td>26</td><td>0%</td><td><a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/resources/resources.py#L1-L37">1&ndash;37</a></td></tr><tr><td><b>TOTAL</b></td><td><b>1055</b></td><td><b>739</b></td><td><b>30%</b></td><td>&nbsp;</td></tr></tbody></table></details>
-
-## JUnit Tests Results
 
 | Tests | Skipped | Failures | Errors   | Time               |
 | ----- | ------- | -------- | -------- | ------------------ |
@@ -81,14 +79,16 @@ Exmaple GitHub Action workflow that uses coverate percentage as output
 
 ```yaml
 - name: Pytest coverage comment
-  id: coverage-comment
+  id: coverageComment
   uses: MishaKav/pytest-coverage-comment@v1.0
   with:
     pytest-coverage-path: ./pytest-coverage.txt
     junitxml-path: ./pytest.xml
 
 - name: Check the output coverage
-  run: echo "Coverage Report - ${{ steps.coverage-comment.outputs.coverage }}"
+  run: |
+    echo "Coverage Report - ${{ steps.coverageComment.outputs.coverage }}"
+    echo "Coverage Report - ${{ steps.coverageComment.outputs.color }}"
 ```
 
 Exmaple GitHub Action workflow that passes all params to Pytest Coverage Comment
@@ -106,9 +106,28 @@ Exmaple GitHub Action workflow that passes all params to Pytest Coverage Comment
     junitxml-title: My JUnit Xml Summary Title
 ```
 
+Exmaple GitHub Action workflow that runs pytest inside **docker**
+It will generate `pytest-coverage.txt` and `pytest.xml` in `/tmp` directory inside docker and share `/tmp` directory with with github workspace.
+
+```yaml
+- name: Run unit tests (pytest)
+  run: |
+    docker run -v /tmp:/tmp $IMAGE_TAG python3 -m pytest --cov-report=term-missing:skip-covered --junitxml=/tmp/pytest.xml --cov=src tests/ | tee /tmp/pytest-coverage.txt
+
+- name: Pytest coverage comment
+  uses: MishaKav/pytest-coverage-comment@v1.0
+  with:
+    pytest-coverage-path: /tmp/pytest-coverage.txt
+    junitxml-path: /tmp/pytest.xml
+```
+
 ## Result example
 
-![Result Example](https://user-images.githubusercontent.com/289035/118040086-c9069a80-b379-11eb-82d8-dd977a4b0628.png)
+Collapsed comment
+![Result Collapse Example](https://user-images.githubusercontent.com/289035/120536428-c7664a80-c3ec-11eb-9cce-3ac53343fac4.png)
+
+Expanded comment
+![Result Expand Example](https://user-images.githubusercontent.com/289035/120536607-f8df1600-c3ec-11eb-9f49-c6d7571e43ac.png)
 
 ## Badges colors
 
