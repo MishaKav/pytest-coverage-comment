@@ -37,6 +37,10 @@ inputs:
     description: 'Title for summary for junitxml'
     default: ''
     required: false
+  create-new-comment:
+    description: 'When true, will update the same comment, otherwise will publish new comment on each run'
+    default: 'false'
+    required: false
 outputs:
   coverage:
     description: 'value indicating the coverage percentage of your report based on pytest, example 30%'

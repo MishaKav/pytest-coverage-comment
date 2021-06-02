@@ -1,6 +1,5 @@
-name: Test Branch
+name: My Pytest Coverage Comment
 on:
-  push:
   pull_request:
 jobs:
   live-test:
@@ -10,7 +9,7 @@ jobs:
 
       - name: Pytest coverage comment
         id: coverageComment
-        uses: MishaKav/pytest-coverage-comment@update-comment
+        uses: MishaKav/pytest-coverage-comment@latest
         with:
           pytest-coverage-path: ./data/pytest-coverage_4.txt
           junitxml-path: ./data/pytest_1.xml
