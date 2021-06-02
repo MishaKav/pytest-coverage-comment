@@ -37,7 +37,7 @@ const main = async () => {
     badgeTitle: 'Coverage',
     hideBadge: false,
     hideReport: false,
-    xmlTitle: 'JUnit Tests Results2',
+    xmlTitle: '',
   };
 
   const { html, coverage } = getCoverageReport(options);

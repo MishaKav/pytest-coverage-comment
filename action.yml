@@ -35,7 +35,7 @@ inputs:
     required: false
   junitxml-title:
     description: 'Title for summary for junitxml'
-    default: 'JUnit Tests Results'
+    default: ''
     required: false
 outputs:
   coverage:

@@ -44,12 +44,17 @@ const toMarkdown = (data, options) => {
   const summary = getSummary(data);
 
   const { errors, failures, skipped, tests, time } = summary;
-
-  return `## ${options.xmlTitle}
-
-| Tests | Skipped | Failures | Errors   | Time               |
+  const table = `| Tests | Skipped | Failures | Errors | Time |
 | ----- | ------- | -------- | -------- | ------------------ |
-| ${tests} | ${skipped} :zzz: | ${failures} :x: | ${errors} :fire: | ${time}s :stopwatch: |`;
+| ${tests} | ${skipped} :zzz: | ${failures} :x: | ${errors} :fire: | ${time}s :stopwatch: |
+`
+
+  if (options.xmlTitle) {
+    return `## ${options.xmlTitle}
+${table}`;
+  }
+
+  return table;
 };
 
 module.exports = { getSummaryReport };
