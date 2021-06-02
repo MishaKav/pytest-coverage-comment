@@ -13134,6 +13134,7 @@ const main = async () => {
   const badgeTitle = core.getInput('badge-title');
   const hideBadge = core.getBooleanInput('hide-badge');
   const hideReport = core.getBooleanInput('hide-report');
+  const createNewComment = core.getBooleanInput('create-new-comment');
   const covFile = core.getInput('pytest-coverage-path');
   const xmlFile = core.getInput('junitxml-path');
   const xmlTitle = core.getInput('junitxml-title');
@@ -13151,6 +13152,7 @@ const main = async () => {
     badgeTitle,
     hideBadge,
     hideReport,
+    createNewComment,
     xmlTitle,
   };
 
@@ -13191,34 +13193,45 @@ const main = async () => {
   }
 
   if (context.eventName === 'pull_request') {
-    // Now decide if we should issue a new comment or edit an old one
-    const { data: comments } = await octokit.issues.listComments({
-      repo,
-      owner,
-      issue_number,
-    });
+    if (createNewComment) {
+      console.log('Creating a new comment');
 
-    const comment = comments.find(
-      (c) =>
-        c.user.login === 'github-actions[bot]' && c.body.startsWith(WATERMARK)
-    );
-
-    if (comment) {
-      console.log('Founded previous commit, updating');
-      await octokit.issues.updateComment({
-        repo,
-        owner,
-        comment_id: comment.id,
-        body,
-      });
-    } else {
-      console.log('No previous commit founded, creating a new one');
       await octokit.issues.createComment({
         repo,
         owner,
         issue_number,
         body,
       });
+    } else {
+      // Now decide if we should issue a new comment or edit an old one
+      const { data: comments } = await octokit.issues.listComments({
+        repo,
+        owner,
+        issue_number,
+      });
+
+      const comment = comments.find(
+        (c) =>
+          c.user.login === 'github-actions[bot]' && c.body.startsWith(WATERMARK)
+      );
+
+      if (comment) {
+        console.log('Founded previous commit, updating');
+        await octokit.issues.updateComment({
+          repo,
+          owner,
+          comment_id: comment.id,
+          body,
+        });
+      } else {
+        console.log('No previous commit founded, creating a new one');
+        await octokit.issues.createComment({
+          repo,
+          owner,
+          issue_number,
+          body,
+        });
+      }
     }
   }
 
