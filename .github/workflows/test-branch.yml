@@ -3,7 +3,7 @@ on:
   push:
   pull_request:
 jobs:
-  live-test:
+  test-branch:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
