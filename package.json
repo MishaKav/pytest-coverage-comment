@@ -23,14 +23,14 @@
     "all": "npm run lint && npm run format && npm run build"
   },
   "dependencies": {
-    "@actions/core": "^1.2.7",
-    "@actions/github": "^4.0.0",
+    "@actions/core": "^1.3.0",
+    "@actions/github": "^5.0.0",
     "xml2js": "^0.4.23"
   },
   "devDependencies": {
-    "@vercel/ncc": "^0.28.5",
-    "eslint": "^7.25.0",
-    "prettier": "^2.2.1"
+    "@vercel/ncc": "^0.28.6",
+    "eslint": "^7.27.0",
+    "prettier": "^2.3.0"
   },
   "prettier": {
     "semi": true,
