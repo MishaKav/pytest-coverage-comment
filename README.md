@@ -106,9 +106,28 @@ Exmaple GitHub Action workflow that passes all params to Pytest Coverage Comment
     junitxml-title: My JUnit Xml Summary Title
 ```
 
+Exmaple GitHub Action workflow that runs pytest inside **docker**
+It will generate `pytest-coverage.txt` and `pytest.xml` in `/tmp` directory inside docker and share `/tmp` directory with with github workspace.
+
+```yaml
+- name: Run unit tests (pytest)
+  run: |
+    docker run -v /tmp:/tmp $IMAGE_TAG python3 -m pytest --cov-report=term-missing:skip-covered --junitxml=/tmp/pytest.xml --cov=src tests/ | tee /tmp/pytest-coverage.txt
+
+- name: Pytest coverage comment
+  uses: MishaKav/pytest-coverage-comment@v1.0
+  with:
+    pytest-coverage-path: /tmp/pytest-coverage.txt
+    junitxml-path: /tmp/pytest.xml
+```
+
 ## Result example
 
-![Result Example](https://user-images.githubusercontent.com/289035/118040086-c9069a80-b379-11eb-82d8-dd977a4b0628.png)
+Collapsed comment
+![Result Collapse Example](https://user-images.githubusercontent.com/289035/120536428-c7664a80-c3ec-11eb-9cce-3ac53343fac4.png)
+
+Expanded comment
+![Result Expand Example](https://user-images.githubusercontent.com/289035/120536607-f8df1600-c3ec-11eb-9f49-c6d7571e43ac.png)
 
 ## Badges colors
 
