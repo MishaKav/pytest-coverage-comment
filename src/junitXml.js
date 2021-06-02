@@ -47,7 +47,7 @@ const toMarkdown = (data, options) => {
   const table = `| Tests | Skipped | Failures | Errors | Time |
 | ----- | ------- | -------- | -------- | ------------------ |
 | ${tests} | ${skipped} :zzz: | ${failures} :x: | ${errors} :fire: | ${time}s :stopwatch: |
-`
+`;
 
   if (options.xmlTitle) {
     return `## ${options.xmlTitle}
