@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: [10, 12, 14]
+        ckan-version: [2.9, 2.8]
     steps:
       - uses: actions/checkout@v2
 
@@ -17,6 +17,8 @@ jobs:
           pytest-coverage-path: ./data/pytest-coverage_4.txt
           junitxml-path: ./data/pytest_1.xml
           create-new-comment: true
+          title: "CKAN ${{ matrix.ckan-version }}"
+          badge-title: "CKAN ${{ matrix.ckan-version }}"
 
       - name: Check the output coverage
         run: |
