@@ -9,9 +9,13 @@ const { getSummaryReport } = require('./junitXml');
   git tag -d v1.0 
   git tag -d origin v1.0  
 
-gh api repos/MishaKav/pytest-coverage-comment/actions/runs \
-| jq -r '.workflow_runs[] | select(.head_branch != "main") | "\(.id)"' \
-| gxargs -n1 -I '{}' gh api repos/MishaKav/pytest-coverage-comment/actions/runs/{} -X DELETE --silent
+  # remove all workflows from repo
+  gh api repos/MishaKav/pytest-coverage-comment/actions/runs \
+  | jq -r '.workflow_runs[] | select(.head_branch != "main") | "\(.id)"' \
+  | gxargs -n1 -I '{}' gh api repos/MishaKav/pytest-coverage-comment/actions/runs/{} -X DELETE --silent
+
+  # remove all local branches
+  git branch | grep -v "main" | xargs git branch -D
 */
 
 const getPathToFile = (pathToFile) => {
