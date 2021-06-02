@@ -1,7 +1,6 @@
 name: Test Branch
 on:
   push:
-  pull_request:
 jobs:
   test-branch:
     runs-on: ubuntu-latest
