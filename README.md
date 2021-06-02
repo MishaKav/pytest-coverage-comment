@@ -79,14 +79,16 @@ Exmaple GitHub Action workflow that uses coverate percentage as output
 
 ```yaml
 - name: Pytest coverage comment
-  id: coverage-comment
+  id: coverageComment
   uses: MishaKav/pytest-coverage-comment@v1.0
   with:
     pytest-coverage-path: ./pytest-coverage.txt
     junitxml-path: ./pytest.xml
 
 - name: Check the output coverage
-  run: echo "Coverage Report - ${{ steps.coverage-comment.outputs.coverage }}"
+  run: |
+    echo "Coverage Report - ${{ steps.coverageComment.outputs.coverage }}"
+    echo "Coverage Report - ${{ steps.coverageComment.outputs.color }}"
 ```
 
 Exmaple GitHub Action workflow that passes all params to Pytest Coverage Comment
