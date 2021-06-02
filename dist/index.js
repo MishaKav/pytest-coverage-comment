@@ -12797,9 +12797,10 @@ const toHtml = (data, options) => {
   const table = hideReport ? '' : toTable(data, options);
   const total = getTotal(data);
   const color = generateBadgeLink(total.cover);
+  const readmeHref = `https://github.com/${options.repository}/blob/${options.commit}/README.md`;
   const badgeHtml = hideBadge
     ? ''
-    : `<img alt="${badgeTitle}" src="https://img.shields.io/badge/${badgeTitle}-${total.cover}25-${color}.svg" /><br/>`;
+    : `<a href="${readmeHref}"><img alt="${badgeTitle}" src="https://img.shields.io/badge/${badgeTitle}-${total.cover}25-${color}.svg" /></a><br/>`;
   const reportHtml = hideReport
     ? ''
     : `<details><summary>${title}</summary>${table}</details>`;
