@@ -1,15 +1,15 @@
-name: my-pytest-coverage-comment
+name: My Pytest Coverage Comment
 on:
   pull_request:
 jobs:
-  test:
+  live-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
       - name: Pytest coverage comment
         id: coverageComment
-        uses: MishaKav/pytest-coverage-comment@v1.0
+        uses: MishaKav/pytest-coverage-comment@fixes
         with:
           pytest-coverage-path: ./data/pytest-coverage_4.txt
           junitxml-path: ./data/pytest_1.xml
