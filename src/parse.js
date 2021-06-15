@@ -12,7 +12,7 @@ const getCoverageReport = (options) => {
     if (content) {
       const html = toHtml(content, options);
       const total = getTotal(content);
-      const color = generateBadgeLink(total ? total.cover : '0');
+      const color = getCoverageColor(total ? total.cover : '0');
 
       return { html, coverage, color };
     }
@@ -23,8 +23,8 @@ const getCoverageReport = (options) => {
   return { html: '', coverage: '0', color: 'red' };
 };
 
-// get only actual lines with coverage from coverage-file
-const generateBadgeLink = (percentage) => {
+// get coverage color
+const getCoverageColor = (percentage) => {
   // https://shields.io/category/coverage
   const rangeColors = [
     {
@@ -145,7 +145,7 @@ const toHtml = (data, options) => {
   const { badgeTitle, title, hideBadge, hideReport } = options;
   const table = hideReport ? '' : toTable(data, options);
   const total = getTotal(data);
-  const color = generateBadgeLink(total.cover);
+  const color = getCoverageColor(total.cover);
   const readmeHref = `https://github.com/${options.repository}/blob/${options.commit}/README.md`;
   const badgeHtml = hideBadge
     ? ''
