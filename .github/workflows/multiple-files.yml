@@ -10,6 +10,6 @@ jobs:
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@multi-mode
         with:
-          multiple-files:
+          multiple-files: |
             My Title 1, ./data/pytest-coverage_3.txt, ./data/pytest_1.xml
             My Title 2, ./data/pytest-coverage_4.txt, ./data/pytest_2.xml
