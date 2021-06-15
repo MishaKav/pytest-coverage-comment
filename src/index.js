@@ -1,6 +1,6 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
-const { getCoverageReport, getMultiCoverageReport } = require('./parse');
+const { getCoverageReport } = require('./parse');
 const { getSummaryReport } = require('./junitXml');
 const { getMultipleReport } = require('./multiFiles');
 

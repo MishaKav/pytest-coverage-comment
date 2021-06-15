@@ -34,7 +34,9 @@ const main = async () => {
   const prefix = path.dirname(path.dirname(path.resolve(covFile))) + '/';
   const multipleFiles = [
     `My Title 1, ${getPathToFile(covFile)}, ${getPathToFile(xmlFile)}`,
-    `My Title 2, ${getPathToFile(covFile).replace('_4', '_3')}, ${getPathToFile(xmlFile).replace('_1', '_2')}`,
+    `My Title 2, ${getPathToFile(covFile).replace('_4', '_3')}, ${getPathToFile(
+      xmlFile
+    ).replace('_1', '_2')}`,
   ];
 
   let finalHtml = '';
