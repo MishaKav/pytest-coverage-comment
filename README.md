@@ -26,7 +26,7 @@ You can add this action to your GitHub workflow for Ubuntu runners (e.g. runs-on
 | `hide-report`          |          | false                   | Hide coverage report                                                                     |
 | `junitxml-path`        |          | ''                      | The location of the junitxml path                                                        |
 | `junitxml-title`       |          | ''                      | Title for summary for junitxml                                                           |
-| `create-new-comment`   |          | false                   | When true, will update the same comment, otherwise will publish new comment on each run. |
+| `create-new-comment`   |          | false                   | When false, will update the same comment, otherwise will publish new comment on each run. |
 
 ## Output example
 

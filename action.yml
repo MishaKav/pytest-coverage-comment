@@ -38,7 +38,7 @@ inputs:
     default: ''
     required: false
   create-new-comment:
-    description: 'When true, will update the same comment, otherwise will publish new comment on each run'
+    description: 'When false, will update the same comment, otherwise will publish new comment on each run'
     default: 'false'
     required: false
 outputs:
