@@ -1,18 +1,24 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
-const { getCoverageReport } = require('./parse');
+const { getCoverageReport, getMultiCoverageReport } = require('./parse');
 const { getSummaryReport } = require('./junitXml');
+const { getMultipleReport } = require('./multiFiles');
 
 const main = async () => {
-  const token = core.getInput('github-token');
-  const title = core.getInput('title');
-  const badgeTitle = core.getInput('badge-title');
-  const hideBadge = core.getBooleanInput('hide-badge');
-  const hideReport = core.getBooleanInput('hide-report');
-  const createNewComment = core.getBooleanInput('create-new-comment');
-  const covFile = core.getInput('pytest-coverage-path');
-  const xmlFile = core.getInput('junitxml-path');
-  const xmlTitle = core.getInput('junitxml-title');
+  const token = core.getInput('github-token', { required: true });
+  const title = core.getInput('title', { required: false });
+  const badgeTitle = core.getInput('badge-title', { required: false });
+  const hideBadge = core.getBooleanInput('hide-badge', { required: false });
+  const hideReport = core.getBooleanInput('hide-report', { required: false });
+  const createNewComment = core.getBooleanInput('create-new-comment', {
+    required: false,
+  });
+  const covFile = core.getInput('pytest-coverage-path', { required: false });
+  const xmlFile = core.getInput('junitxml-path', { required: false });
+  const xmlTitle = core.getInput('junitxml-title', { required: false });
+  const multipleFiles = core.getMultilineInput('multiple-files', {
+    required: false,
+  });
   const { context } = github;
   const { repo, owner } = context.repo;
   const WATERMARK = `<!-- Pytest Coverage Comment: ${context.job} -->\n`;
@@ -29,6 +35,7 @@ const main = async () => {
     hideReport,
     createNewComment,
     xmlTitle,
+    multipleFiles,
   };
 
   if (context.eventName === 'pull_request') {
@@ -40,11 +47,21 @@ const main = async () => {
     options.head = context.ref;
   }
 
-  const { html, coverage, color } = getCoverageReport(options);
-  const summaryReport = getSummaryReport(options);
+  if (multipleFiles && multipleFiles.length) {
+    finalHtml += getMultipleReport(options);
+  } else {
+    const { html, coverage, color } = getCoverageReport(options);
+    const summaryReport = getSummaryReport(options);
 
-  finalHtml += html;
-  finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
+    finalHtml += html;
+    finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
+
+    if (coverage) {
+      core.setOutput('coverage', coverage);
+      core.setOutput('color', color);
+      console.log(`Publishing ${title}. Total coverage ${coverage}.`);
+    }
+  }
 
   if (!finalHtml) {
     console.log('Nothing to report');
@@ -108,12 +125,6 @@ const main = async () => {
         });
       }
     }
-  }
-
-  if (coverage) {
-    core.setOutput('coverage', coverage);
-    core.setOutput('color', color);
-    console.log(`Published ${title}. Total coverage ${coverage}.`);
   }
 };
 
