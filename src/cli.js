@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { getCoverageReport } = require('./parse');
 const { getSummaryReport } = require('./junitXml');
+const { getMultipleReport } = require('./multiFiles');
 
 /*  
   Usefull git commands
@@ -28,9 +29,16 @@ const getPathToFile = (pathToFile) => {
 };
 
 const main = async () => {
-  const covFile = process.argv[2];
-  const xmlFile = process.argv[3];
+  const covFile = './../data/pytest-coverage_4.txt';
+  const xmlFile = './../data/pytest_1.xml';
   const prefix = path.dirname(path.dirname(path.resolve(covFile))) + '/';
+  const multipleFiles = [
+    `My Title 1, ${getPathToFile(covFile)}, ${getPathToFile(xmlFile)}`,
+    `My Title 2, ${getPathToFile(covFile).replace('_4', '_3')}, ${getPathToFile(
+      xmlFile
+    ).replace('_1', '_2')}`,
+  ];
+
   let finalHtml = '';
 
   const options = {
@@ -44,16 +52,21 @@ const main = async () => {
     title: 'Coverage Report',
     badgeTitle: 'Coverage',
     hideBadge: false,
-    hideReport: false,
+    hideReport: true,
     createNewComment: false,
     xmlTitle: '',
+    multipleFiles,
   };
 
-  const { html, coverage } = getCoverageReport(options);
-  const summaryReport = getSummaryReport(options);
+  if (multipleFiles && multipleFiles.length) {
+    finalHtml += getMultipleReport(options);
+  } else {
+    const { html } = getCoverageReport(options);
+    const summaryReport = getSummaryReport(options);
 
-  finalHtml += html;
-  finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
+    finalHtml += html;
+    finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
+  }
 
   if (!finalHtml) {
     console.log('Nothing to report');
@@ -63,7 +76,6 @@ const main = async () => {
   const resultFile = __dirname + '/../tmp/result.md';
   fs.promises.mkdir(__dirname + '/../tmp').catch(console.error);
   fs.writeFileSync(resultFile, finalHtml);
-  console.log(`Published ${options.title}. Total coverage ${coverage}.`);
   console.log(resultFile);
 };
 

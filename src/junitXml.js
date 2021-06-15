@@ -1,8 +1,8 @@
 const xml2js = require('xml2js');
 const { getPathToFile, getContentFile } = require('./utils');
 
-// return summary report in markdown format
-const getSummaryReport = (options) => {
+// return parsed xml
+const getParsedXml = (options) => {
   const { xmlFile } = options;
 
   try {
@@ -12,8 +12,23 @@ const getSummaryReport = (options) => {
       const content = getContentFile(xmlFilePath);
 
       if (content) {
-        return toMarkdown(content, options);
+        return getSummary(content);
       }
+    }
+  } catch (error) {
+    console.log(`Error: on generating summary report`, error);
+  }
+
+  return '';
+};
+
+// return summary report in markdown format
+const getSummaryReport = (options) => {
+  try {
+    const parsedXml = getParsedXml(options);
+
+    if (parsedXml) {
+      return toMarkdown(parsedXml, options);
     }
   } catch (error) {
     console.log(`Error: on generating summary report`, error);
@@ -40,9 +55,7 @@ const getSummary = (data) => {
 };
 
 // convert summary from junitxml to md
-const toMarkdown = (data, options) => {
-  const summary = getSummary(data);
-
+const toMarkdown = (summary, options) => {
   const { errors, failures, skipped, tests, time } = summary;
   const table = `| Tests | Skipped | Failures | Errors | Time |
 | ----- | ------- | -------- | -------- | ------------------ |
@@ -57,4 +70,4 @@ ${table}`;
   return table;
 };
 
-module.exports = { getSummaryReport };
+module.exports = { getSummaryReport, getParsedXml };

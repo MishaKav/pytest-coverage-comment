@@ -12600,8 +12600,8 @@ function wrappy (fn, cb) {
 const xml2js = __nccwpck_require__(6189);
 const { getPathToFile, getContentFile } = __nccwpck_require__(1608);
 
-// return summary report in markdown format
-const getSummaryReport = (options) => {
+// return parsed xml
+const getParsedXml = (options) => {
   const { xmlFile } = options;
 
   try {
@@ -12611,8 +12611,23 @@ const getSummaryReport = (options) => {
       const content = getContentFile(xmlFilePath);
 
       if (content) {
-        return toMarkdown(content, options);
+        return getSummary(content);
       }
+    }
+  } catch (error) {
+    console.log(`Error: on generating summary report`, error);
+  }
+
+  return '';
+};
+
+// return summary report in markdown format
+const getSummaryReport = (options) => {
+  try {
+    const parsedXml = getParsedXml(options);
+
+    if (parsedXml) {
+      return toMarkdown(parsedXml, options);
     }
   } catch (error) {
     console.log(`Error: on generating summary report`, error);
@@ -12639,9 +12654,7 @@ const getSummary = (data) => {
 };
 
 // convert summary from junitxml to md
-const toMarkdown = (data, options) => {
-  const summary = getSummary(data);
-
+const toMarkdown = (summary, options) => {
   const { errors, failures, skipped, tests, time } = summary;
   const table = `| Tests | Skipped | Failures | Errors | Time |
 | ----- | ------- | -------- | -------- | ------------------ |
@@ -12656,7 +12669,82 @@ ${table}`;
   return table;
 };
 
-module.exports = { getSummaryReport };
+module.exports = { getSummaryReport, getParsedXml };
+
+
+/***/ }),
+
+/***/ 4158:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const { getCoverageReport } = __nccwpck_require__(3248);
+const { getParsedXml } = __nccwpck_require__(9670);
+
+// parse oneline from multiple files to object
+const parseLine = (line) => {
+  if (!line || !line.includes(',')) {
+    return '';
+  }
+
+  const lineArr = line.split(',');
+
+  return {
+    title: lineArr[0].trim(),
+    covFile: lineArr[1].trim(),
+    xmlFile: lineArr.length > 1 ? lineArr[2].trim() : '',
+  };
+};
+
+// make internal options
+const getOptions = (options = {}, line = {}) => ({
+  ...options,
+  title: line.title,
+  covFile: line.covFile,
+  hideReport: true,
+  xmlFile: line.xmlFile,
+  xmlTitle: '',
+});
+
+// return multiple report in markdown format
+const getMultipleReport = (options) => {
+  const { multipleFiles } = options;
+
+  try {
+    const lineReports = multipleFiles.map(parseLine).filter((l) => l);
+    const hasXmlReports = lineReports.some((l) => l.xmlFile);
+    const miniTable = `| Title | Coverage |
+| ----- | ----- | ----- |
+`;
+    const fullTable = `| Title | Coverage | Tests | Skipped | Failures | Errors | Time |
+| ----- | ----- | ----- | ------- | -------- | -------- | ------------------ |
+`;
+    let table = hasXmlReports ? fullTable : miniTable;
+
+    lineReports.forEach((l) => {
+      const internalOptions = getOptions(options, l);
+      const coverage = getCoverageReport(internalOptions);
+      const summary = getParsedXml(internalOptions);
+
+      table += `| ${l.title} | ${coverage.html}`;
+      if (hasXmlReports) {
+        const { errors, failures, skipped, tests, time } = summary;
+        table += `| ${tests} | ${skipped} :zzz: | ${failures} :x: | ${errors} :fire: | ${time}s :stopwatch: |
+`;
+      } else {
+        table += `
+`;
+      }
+    });
+
+    return table;
+  } catch (error) {
+    console.log(`Error: on generating summary report`, error);
+  }
+
+  return '';
+};
+
+module.exports = { getMultipleReport };
 
 
 /***/ }),
@@ -12678,7 +12766,7 @@ const getCoverageReport = (options) => {
     if (content) {
       const html = toHtml(content, options);
       const total = getTotal(content);
-      const color = generateBadgeLink(total ? total.cover : '0');
+      const color = getCoverageColor(total ? total.cover : '0');
 
       return { html, coverage, color };
     }
@@ -12689,8 +12777,8 @@ const getCoverageReport = (options) => {
   return { html: '', coverage: '0', color: 'red' };
 };
 
-// get only actual lines with coverage from coverage-file
-const generateBadgeLink = (percentage) => {
+// get coverage color
+const getCoverageColor = (percentage) => {
   // https://shields.io/category/coverage
   const rangeColors = [
     {
@@ -12811,7 +12899,7 @@ const toHtml = (data, options) => {
   const { badgeTitle, title, hideBadge, hideReport } = options;
   const table = hideReport ? '' : toTable(data, options);
   const total = getTotal(data);
-  const color = generateBadgeLink(total.cover);
+  const color = getCoverageColor(total.cover);
   const readmeHref = `https://github.com/${options.repository}/blob/${options.commit}/README.md`;
   const badgeHtml = hideBadge
     ? ''
@@ -13140,17 +13228,23 @@ const core = __nccwpck_require__(2186);
 const github = __nccwpck_require__(5438);
 const { getCoverageReport } = __nccwpck_require__(3248);
 const { getSummaryReport } = __nccwpck_require__(9670);
+const { getMultipleReport } = __nccwpck_require__(4158);
 
 const main = async () => {
-  const token = core.getInput('github-token');
-  const title = core.getInput('title');
-  const badgeTitle = core.getInput('badge-title');
-  const hideBadge = core.getBooleanInput('hide-badge');
-  const hideReport = core.getBooleanInput('hide-report');
-  const createNewComment = core.getBooleanInput('create-new-comment');
-  const covFile = core.getInput('pytest-coverage-path');
-  const xmlFile = core.getInput('junitxml-path');
-  const xmlTitle = core.getInput('junitxml-title');
+  const token = core.getInput('github-token', { required: true });
+  const title = core.getInput('title', { required: false });
+  const badgeTitle = core.getInput('badge-title', { required: false });
+  const hideBadge = core.getBooleanInput('hide-badge', { required: false });
+  const hideReport = core.getBooleanInput('hide-report', { required: false });
+  const createNewComment = core.getBooleanInput('create-new-comment', {
+    required: false,
+  });
+  const covFile = core.getInput('pytest-coverage-path', { required: false });
+  const xmlFile = core.getInput('junitxml-path', { required: false });
+  const xmlTitle = core.getInput('junitxml-title', { required: false });
+  const multipleFiles = core.getMultilineInput('multiple-files', {
+    required: false,
+  });
   const { context } = github;
   const { repo, owner } = context.repo;
   const WATERMARK = `<!-- Pytest Coverage Comment: ${context.job} -->\n`;
@@ -13167,6 +13261,7 @@ const main = async () => {
     hideReport,
     createNewComment,
     xmlTitle,
+    multipleFiles,
   };
 
   if (context.eventName === 'pull_request') {
@@ -13178,11 +13273,21 @@ const main = async () => {
     options.head = context.ref;
   }
 
-  const { html, coverage, color } = getCoverageReport(options);
-  const summaryReport = getSummaryReport(options);
+  if (multipleFiles && multipleFiles.length) {
+    finalHtml += getMultipleReport(options);
+  } else {
+    const { html, coverage, color } = getCoverageReport(options);
+    const summaryReport = getSummaryReport(options);
 
-  finalHtml += html;
-  finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
+    finalHtml += html;
+    finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
+
+    if (coverage) {
+      core.setOutput('coverage', coverage);
+      core.setOutput('color', color);
+      console.log(`Publishing ${title}. Total coverage ${coverage}.`);
+    }
+  }
 
   if (!finalHtml) {
     console.log('Nothing to report');
@@ -13246,12 +13351,6 @@ const main = async () => {
         });
       }
     }
-  }
-
-  if (coverage) {
-    core.setOutput('coverage', coverage);
-    core.setOutput('color', color);
-    console.log(`Published ${title}. Total coverage ${coverage}.`);
   }
 };
 
