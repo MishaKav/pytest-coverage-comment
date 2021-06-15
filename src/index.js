@@ -18,6 +18,11 @@ const main = async () => {
   const { repo, owner } = context.repo;
   let finalHtml = '';
 
+  console.log('Misha0');
+  console.log(JSON.stringify(github));
+  console.log('Misha1');
+  console.log(JSON.stringify(context));
+
   const options = {
     repository: context.payload.repository.full_name,
     prefix: `${process.env.GITHUB_WORKSPACE}/`,
