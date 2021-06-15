@@ -13151,15 +13151,10 @@ const main = async () => {
   const covFile = core.getInput('pytest-coverage-path');
   const xmlFile = core.getInput('junitxml-path');
   const xmlTitle = core.getInput('junitxml-title');
-  const WATERMARK = `<!-- Pytest Coverage Comment: ${github.job} -->\n`;
   const { context } = github;
   const { repo, owner } = context.repo;
+  const WATERMARK = `<!-- Pytest Coverage Comment: ${context.job} -->\n`;
   let finalHtml = '';
-
-  console.log('Misha0');
-  console.log(JSON.stringify(github));
-  console.log('Misha1');
-  console.log(JSON.stringify(context));
 
   const options = {
     repository: context.payload.repository.full_name,
