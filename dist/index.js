@@ -134,7 +134,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getState = exports.saveState = exports.group = exports.endGroup = exports.startGroup = exports.info = exports.warning = exports.error = exports.debug = exports.isDebug = exports.setFailed = exports.setCommandEcho = exports.setOutput = exports.getBooleanInput = exports.getInput = exports.addPath = exports.setSecret = exports.exportVariable = exports.ExitCode = void 0;
+exports.getState = exports.saveState = exports.group = exports.endGroup = exports.startGroup = exports.info = exports.warning = exports.error = exports.debug = exports.isDebug = exports.setFailed = exports.setCommandEcho = exports.setOutput = exports.getBooleanInput = exports.getMultilineInput = exports.getInput = exports.addPath = exports.setSecret = exports.exportVariable = exports.ExitCode = void 0;
 const command_1 = __nccwpck_require__(7351);
 const file_command_1 = __nccwpck_require__(717);
 const utils_1 = __nccwpck_require__(5278);
@@ -220,6 +220,21 @@ function getInput(name, options) {
     return val.trim();
 }
 exports.getInput = getInput;
+/**
+ * Gets the values of an multiline input.  Each value is also trimmed.
+ *
+ * @param     name     name of the input to get
+ * @param     options  optional. See InputOptions.
+ * @returns   string[]
+ *
+ */
+function getMultilineInput(name, options) {
+    const inputs = getInput(name, options)
+        .split('\n')
+        .filter(x => x !== '');
+    return inputs;
+}
+exports.getMultilineInput = getMultilineInput;
 /**
  * Gets the input value of the boolean type in the YAML 1.2 "core schema" specification.
  * Support boolean input list: `true | True | TRUE | false | False | FALSE` .
@@ -13126,8 +13141,6 @@ const github = __nccwpck_require__(5438);
 const { getCoverageReport } = __nccwpck_require__(3248);
 const { getSummaryReport } = __nccwpck_require__(9670);
 
-const WATERMARK = '<!-- Pytest Coverage Comment -->\n';
-
 const main = async () => {
   const token = core.getInput('github-token');
   const title = core.getInput('title');
@@ -13138,9 +13151,9 @@ const main = async () => {
   const covFile = core.getInput('pytest-coverage-path');
   const xmlFile = core.getInput('junitxml-path');
   const xmlTitle = core.getInput('junitxml-title');
-
   const { context } = github;
   const { repo, owner } = context.repo;
+  const WATERMARK = `<!-- Pytest Coverage Comment: ${context.job} -->\n`;
   let finalHtml = '';
 
   const options = {

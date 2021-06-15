@@ -3,8 +3,6 @@ const github = require('@actions/github');
 const { getCoverageReport } = require('./parse');
 const { getSummaryReport } = require('./junitXml');
 
-const WATERMARK = '<!-- Pytest Coverage Comment -->\n';
-
 const main = async () => {
   const token = core.getInput('github-token');
   const title = core.getInput('title');
@@ -15,9 +13,9 @@ const main = async () => {
   const covFile = core.getInput('pytest-coverage-path');
   const xmlFile = core.getInput('junitxml-path');
   const xmlTitle = core.getInput('junitxml-title');
-
   const { context } = github;
   const { repo, owner } = context.repo;
+  const WATERMARK = `<!-- Pytest Coverage Comment: ${context.job} -->\n`;
   let finalHtml = '';
 
   const options = {
