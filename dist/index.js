@@ -12725,8 +12725,13 @@ const getMultipleReport = (options) => {
       const coverage = getCoverageReport(internalOptions);
       const summary = getParsedXml(internalOptions);
 
-      table += `| ${l.title} | ${coverage.html}`;
-      if (hasXmlReports) {
+      if (coverage.html) {
+        table += `| ${l.title} | ${coverage.html}`;
+      } else if (summary) {
+        table += `| ${l.title} |  `;
+      }
+
+      if (hasXmlReports && summary) {
         const { errors, failures, skipped, tests, time } = summary;
         table += `| ${tests} | ${skipped} :zzz: | ${failures} :x: | ${errors} :fire: | ${time}s :stopwatch: |
 `;
