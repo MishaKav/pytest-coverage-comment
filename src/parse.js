@@ -1,5 +1,23 @@
 const { getPathToFile, getContentFile } = require('./utils');
 
+// return true if "covergae file" include all special words
+const isValidCoverageContent = (data) => {
+  if (!data || !data.length) {
+    return false;
+  }
+
+  const wordsToInclude = [
+    'coverage: platform linux',
+    'Stmts',
+    'Miss',
+    'Cover',
+    'Missing',
+    'TOTAL',
+  ];
+
+  return wordsToInclude.every((w) => data.includes(w));
+};
+
 // return full html coverage report and coverage percenatge
 const getCoverageReport = (options) => {
   const { covFile } = options;
@@ -8,8 +26,15 @@ const getCoverageReport = (options) => {
     const covFilePath = getPathToFile(covFile);
     const content = getContentFile(covFilePath);
     const coverage = getTotalCoverage(content);
+    const isValid = isValidCoverageContent(content);
 
-    if (content) {
+    if (content && !isValid) {
+      console.log(
+        `Error: coverage file "${covFilePath}" has bad format or wrong data`
+      );
+    }
+
+    if (content && isValid) {
       const html = toHtml(content, options);
       const total = getTotal(content);
       const color = getCoverageColor(total ? total.cover : '0');
