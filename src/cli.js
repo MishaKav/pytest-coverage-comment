@@ -58,7 +58,7 @@ const main = async () => {
     multipleFiles,
   };
 
-  if (multipleFiles && multipleFiles.length) {
+  if (options.multipleFiles && options.multipleFiles.length) {
     finalHtml += getMultipleReport(options);
   } else {
     const { html } = getCoverageReport(options);
