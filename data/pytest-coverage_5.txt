@@ -1,0 +1,75 @@
+test/test_scdata.py::test_arrow_save
+  /home/runner/work/ctxbio/ctxbio/ctxbio/scdata.py:154: FutureWarning: 'pyarrow.read_serialized' is deprecated as of 2.0.0 and will be removed in a future version. Use pickle or the pyarrow IPC functionality instead.
+    self.adata = load_single_cell_data(path=x, **kwargs)
+
+-- Docs: https://docs.pytest.org/en/stable/warnings.html
+----- generated xml file: /home/runner/work/ctxbio/ctxbio/test/pytest.xml ------
+
+---------- coverage: platform linux, python 3.7.10-final-0 -----------
+Name                                                                      Stmts   Miss  Cover
+---------------------------------------------------------------------------------------------
+/home/runner/work/ctxbio/ctxbio/ctxbio/__init__.py                           16      3    81%
+/home/runner/work/ctxbio/ctxbio/ctxbio/algorithms.py                        170     57    66%
+/home/runner/work/ctxbio/ctxbio/ctxbio/cesium.py                             95     95     0%
+/home/runner/work/ctxbio/ctxbio/ctxbio/cesium3.py                           148    119    20%
+/home/runner/work/ctxbio/ctxbio/ctxbio/compartments.py                       27      0   100%
+/home/runner/work/ctxbio/ctxbio/ctxbio/genes.py                              31      1    97%
+/home/runner/work/ctxbio/ctxbio/ctxbio/imports.py                            36      0   100%
+/home/runner/work/ctxbio/ctxbio/ctxbio/io/__init__.py                         1      0   100%
+/home/runner/work/ctxbio/ctxbio/ctxbio/io/downsample_mol_info.py             38      1    97%
+/home/runner/work/ctxbio/ctxbio/ctxbio/io/gmt.py                             11      0   100%
+/home/runner/work/ctxbio/ctxbio/ctxbio/io/homologene.py                      22     10    55%
+/home/runner/work/ctxbio/ctxbio/ctxbio/io/mtx.py                             11      0   100%
+/home/runner/work/ctxbio/ctxbio/ctxbio/io/scload.py                          92     65    29%
+/home/runner/work/ctxbio/ctxbio/ctxbio/legacy/__init__.py                     0      0   100%
+/home/runner/work/ctxbio/ctxbio/ctxbio/legacy/cite_seq.py                    42     42     0%
+/home/runner/work/ctxbio/ctxbio/ctxbio/legacy/feature_data.py                16     16     0%
+/home/runner/work/ctxbio/ctxbio/ctxbio/legacy/vdj.py                         78     78     0%
+/home/runner/work/ctxbio/ctxbio/ctxbio/neighbors.py                         115     15    87%
+/home/runner/work/ctxbio/ctxbio/ctxbio/plot/__init__.py                       5      0   100%
+/home/runner/work/ctxbio/ctxbio/ctxbio/plot/legacy.py                       107     77    28%
+/home/runner/work/ctxbio/ctxbio/ctxbio/plot/plot.py                         678    101    85%
+/home/runner/work/ctxbio/ctxbio/ctxbio/plot/stacked_barplots.py             135      2    99%
+/home/runner/work/ctxbio/ctxbio/ctxbio/plot/utils.py                        140     35    75%
+/home/runner/work/ctxbio/ctxbio/ctxbio/plot/violin.py                        54      6    89%
+/home/runner/work/ctxbio/ctxbio/ctxbio/preprocess/__init__.py                 0      0   100%
+/home/runner/work/ctxbio/ctxbio/ctxbio/preprocess/ambient.py                140    122    13%
+/home/runner/work/ctxbio/ctxbio/ctxbio/preprocess/computations.py           481    145    70%
+/home/runner/work/ctxbio/ctxbio/ctxbio/preprocess/params.py                  39      0   100%
+/home/runner/work/ctxbio/ctxbio/ctxbio/preprocess/pegasus.py                116     10    91%
+/home/runner/work/ctxbio/ctxbio/ctxbio/preprocess/preprocess.py              89     10    89%
+/home/runner/work/ctxbio/ctxbio/ctxbio/preprocess/scvi_wrapper.py           138     25    82%
+/home/runner/work/ctxbio/ctxbio/ctxbio/preprocess/seurat_v3_hvg.py           97     17    82%
+/home/runner/work/ctxbio/ctxbio/ctxbio/remote_utils.py                       86     86     0%
+/home/runner/work/ctxbio/ctxbio/ctxbio/sampleqc.py                          221    221     0%
+/home/runner/work/ctxbio/ctxbio/ctxbio/scdata.py                            768    251    67%
+/home/runner/work/ctxbio/ctxbio/ctxbio/scdb/__init__.py                     285    213    25%
+/home/runner/work/ctxbio/ctxbio/ctxbio/scdb/base.py                          16      7    56%
+/home/runner/work/ctxbio/ctxbio/ctxbio/scdb/event.py                         37     14    62%
+/home/runner/work/ctxbio/ctxbio/ctxbio/scdb/exceptions.py                     4      0   100%
+/home/runner/work/ctxbio/ctxbio/ctxbio/scdb/ref.py                           25      6    76%
+/home/runner/work/ctxbio/ctxbio/ctxbio/scdb/serialization.py                132    105    20%
+/home/runner/work/ctxbio/ctxbio/ctxbio/scdb/storage.py                      492    340    31%
+/home/runner/work/ctxbio/ctxbio/ctxbio/scdb/timestamps.py                    15      9    40%
+/home/runner/work/ctxbio/ctxbio/ctxbio/scdb/types.py                          5      0   100%
+/home/runner/work/ctxbio/ctxbio/ctxbio/scoring.py                            91      8    91%
+/home/runner/work/ctxbio/ctxbio/ctxbio/sequence/__init__.py                   2      2     0%
+/home/runner/work/ctxbio/ctxbio/ctxbio/sequence/bam_extract_bc_reads.py      30     30     0%
+/home/runner/work/ctxbio/ctxbio/ctxbio/sequence/bam_window_coverage.py       42     42     0%
+/home/runner/work/ctxbio/ctxbio/ctxbio/sequence/bams.py                      42     42     0%
+/home/runner/work/ctxbio/ctxbio/ctxbio/sequence/exon_intron_ratio.py         93     93     0%
+/home/runner/work/ctxbio/ctxbio/ctxbio/sequence/fastq.py                     19     19     0%
+/home/runner/work/ctxbio/ctxbio/ctxbio/sequence/reader.py                    14     14     0%
+/home/runner/work/ctxbio/ctxbio/ctxbio/stats/__init__.py                      0      0   100%
+/home/runner/work/ctxbio/ctxbio/ctxbio/stats/autocorrelation.py              25     25     0%
+/home/runner/work/ctxbio/ctxbio/ctxbio/stats/deg.py                         131     67    49%
+/home/runner/work/ctxbio/ctxbio/ctxbio/stats/differential_abundance.py      178    178     0%
+/home/runner/work/ctxbio/ctxbio/ctxbio/stats/emd.py                         106    106     0%
+/home/runner/work/ctxbio/ctxbio/ctxbio/stats/gene_set_analysis.py            57     17    70%
+/home/runner/work/ctxbio/ctxbio/ctxbio/stats/knnpurity.py                    49     11    78%
+/home/runner/work/ctxbio/ctxbio/ctxbio/stats/mixmodels.py                    72      1    99%
+/home/runner/work/ctxbio/ctxbio/ctxbio/utils.py                             129     57    56%
+---------------------------------------------------------------------------------------------
+TOTAL                                                                      6334   3016    52%
+
+=== 219 passed, 1 skipped, 15 deselected, 2441 warnings in 469.61s (0:07:49) ===

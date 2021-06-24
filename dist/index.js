@@ -12770,7 +12770,6 @@ const isValidCoverageContent = (data) => {
     'Stmts',
     'Miss',
     'Cover',
-    'Missing',
     'TOTAL',
   ];
 
