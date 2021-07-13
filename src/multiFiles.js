@@ -49,7 +49,7 @@ const getMultipleReport = (options) => {
 
       if (coverage.html) {
         table += `| ${l.title} | ${coverage.html}`;
-        
+
         if (i === 0) {
           core.setOutput('coverage', coverage.coverage);
           core.setOutput('color', coverage.color);
