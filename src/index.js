@@ -59,7 +59,9 @@ const main = async () => {
     if (coverage) {
       core.setOutput('coverage', coverage);
       core.setOutput('color', color);
-      console.log(`Publishing ${title}. Total coverage ${coverage}.`);
+      console.log(
+        `Publishing ${title}. Total coverage: ${coverage}. Color: ${color}`
+      );
     }
   }
 

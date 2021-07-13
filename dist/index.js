@@ -12679,6 +12679,7 @@ module.exports = { getSummaryReport, getParsedXml };
 
 const { getCoverageReport } = __nccwpck_require__(3248);
 const { getParsedXml } = __nccwpck_require__(9670);
+const core = __nccwpck_require__(2186);
 
 // parse oneline from multiple files to object
 const parseLine = (line) => {
@@ -12720,13 +12721,18 @@ const getMultipleReport = (options) => {
 `;
     let table = hasXmlReports ? fullTable : miniTable;
 
-    lineReports.forEach((l) => {
+    lineReports.forEach((l, i) => {
       const internalOptions = getOptions(options, l);
       const coverage = getCoverageReport(internalOptions);
       const summary = getParsedXml(internalOptions);
 
       if (coverage.html) {
         table += `| ${l.title} | ${coverage.html}`;
+
+        if (i === 0) {
+          core.setOutput('coverage', coverage.coverage);
+          core.setOutput('color', coverage.color);
+        }
       } else if (summary) {
         table += `| ${l.title} |  `;
       }
@@ -13314,7 +13320,9 @@ const main = async () => {
     if (coverage) {
       core.setOutput('coverage', coverage);
       core.setOutput('color', color);
-      console.log(`Publishing ${title}. Total coverage ${coverage}.`);
+      console.log(
+        `Publishing ${title}. Total coverage: ${coverage}. Color: ${color}`
+      );
     }
   }
 
