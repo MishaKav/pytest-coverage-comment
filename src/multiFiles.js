@@ -1,5 +1,6 @@
 const { getCoverageReport } = require('./parse');
 const { getParsedXml } = require('./junitXml');
+const core = require('@actions/core');
 
 // parse oneline from multiple files to object
 const parseLine = (line) => {
@@ -41,13 +42,18 @@ const getMultipleReport = (options) => {
 `;
     let table = hasXmlReports ? fullTable : miniTable;
 
-    lineReports.forEach((l) => {
+    lineReports.forEach((l, i) => {
       const internalOptions = getOptions(options, l);
       const coverage = getCoverageReport(internalOptions);
       const summary = getParsedXml(internalOptions);
 
       if (coverage.html) {
         table += `| ${l.title} | ${coverage.html}`;
+        
+        if (i === 0) {
+          core.setOutput('coverage', coverage.coverage);
+          core.setOutput('color', coverage.color);
+        }
       } else if (summary) {
         table += `| ${l.title} |  `;
       }
