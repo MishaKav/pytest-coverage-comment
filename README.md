@@ -8,7 +8,7 @@ You can add this action to your GitHub workflow for Ubuntu runners (e.g. runs-on
 
 ```yaml
 - name: Pytest coverage comment
-  uses: MishaKav/pytest-coverage-comment@v1.1.4
+  uses: MishaKav/pytest-coverage-comment@v1.1.5
   with:
     pytest-coverage-path: ./pytest-coverage.txt
     junitxml-path: ./pytest.xml
@@ -16,17 +16,17 @@ You can add this action to your GitHub workflow for Ubuntu runners (e.g. runs-on
 
 ## Inputs
 
-| Name                   | Required | Default                 | Description                                                                                                                                                                                                                                                               |
-| ---------------------- | -------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `github-token`         | ✓        | `${{github.token}}`     | An alternative GitHub token, other than the default provided by GitHub Actions runner                                                                                                                                                                                     |
-| `pytest-coverage-path` |          | `./pytest-coverage.txt` | The location of the txt output of pytest-coverage. Used to generate the comment                                                                                                                                                                                           |
-| `title`                |          | `Coverage Report`       | Title for the coverage report. Useful for monorepo projects                                                                                                                                                                                                               |
-| `badge-title`          |          | `Coverage`              | Title for the badge icon                                                                                                                                                                                                                                                  |
-| `hide-badge`           |          | false                   | Hide badge with percentage                                                                                                                                                                                                                                                |
-| `hide-report`          |          | false                   | Hide coverage report                                                                                                                                                                                                                                                      |
-| `junitxml-path`        |          | ''                      | The location of the junitxml path                                                                                                                                                                                                                                         |
-| `junitxml-title`       |          | ''                      | Title for summary for junitxml                                                                                                                                                                                                                                            |
-| `create-new-comment`   |          | false                   | When false, will update the same comment, otherwise will publish new comment on each run.                                                                                                                                                                                 |
+| Name                   | Required | Default                 | Description                                                                                                                                                                                                                                                                                                                                                                   |
+| ---------------------- | -------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `github-token`         | ✓        | `${{github.token}}`     | An alternative GitHub token, other than the default provided by GitHub Actions runner                                                                                                                                                                                                                                                                                         |
+| `pytest-coverage-path` |          | `./pytest-coverage.txt` | The location of the txt output of pytest-coverage. Used to generate the comment                                                                                                                                                                                                                                                                                               |
+| `title`                |          | `Coverage Report`       | Title for the coverage report. Useful for monorepo projects                                                                                                                                                                                                                                                                                                                   |
+| `badge-title`          |          | `Coverage`              | Title for the badge icon                                                                                                                                                                                                                                                                                                                                                      |
+| `hide-badge`           |          | false                   | Hide badge with percentage                                                                                                                                                                                                                                                                                                                                                    |
+| `hide-report`          |          | false                   | Hide coverage report                                                                                                                                                                                                                                                                                                                                                          |
+| `junitxml-path`        |          | ''                      | The location of the junitxml path                                                                                                                                                                                                                                                                                                                                             |
+| `junitxml-title`       |          | ''                      | Title for summary for junitxml                                                                                                                                                                                                                                                                                                                                                |
+| `create-new-comment`   |          | false                   | When false, will update the same comment, otherwise will publish new comment on each run.                                                                                                                                                                                                                                                                                     |
 | `multiple-files`       |          | ''                      | You can pass array of titles and files to generate single comment with table of results.<br/>Single line should look like `Title, ./path/to/pytest-coverage.txt, ./path/to/pytest.xml`<br/> example:<br/> `My Title 1, ./data/pytest-coverage_3.txt, ./data/pytest_1.xml`<br/>**Note:** In that mode the `output` for `coverage` and `color` will be for the first file only. |
 
 ## Output example
@@ -71,7 +71,7 @@ jobs:
           pytest --junitxml=pytest.xml --cov=app tests/ | tee pytest-coverage.txt
 
       - name: Pytest coverage comment
-        uses: MishaKav/pytest-coverage-comment@v1.1.4
+        uses: MishaKav/pytest-coverage-comment@v1.1.5
         with:
           pytest-coverage-path: ./pytest-coverage.txt
           junitxml-path: ./pytest.xml
@@ -82,7 +82,7 @@ Example GitHub Action workflow that uses coverage percentage as output (see the 
 ```yaml
 - name: Pytest coverage comment
   id: coverageComment
-  uses: MishaKav/pytest-coverage-comment@v1.1.4
+  uses: MishaKav/pytest-coverage-comment@v1.1.5
   with:
     pytest-coverage-path: ./pytest-coverage.txt
     junitxml-path: ./pytest.xml
@@ -97,7 +97,7 @@ Example GitHub Action workflow that passes all params to Pytest Coverage Comment
 
 ```yaml
 - name: Pytest coverage comment
-  uses: MishaKav/pytest-coverage-comment@v1.1.4
+  uses: MishaKav/pytest-coverage-comment@v1.1.5
   with:
     pytest-coverage-path: ./path-to-file/pytest-coverage.txt
     title: My Coverage Report Title
@@ -109,6 +109,8 @@ Example GitHub Action workflow that passes all params to Pytest Coverage Comment
     junitxml-title: My JUnit Xml Summary Title
 ```
 
+![image](https://user-images.githubusercontent.com/289035/126039976-3f1bf8dd-5a6b-4103-8548-fc3eecc377d7.png)
+
 Example GitHub Action workflow that runs pytest inside **docker**
 It will generate `pytest-coverage.txt` and `pytest.xml` in `/tmp` directory inside docker and share `/tmp` directory with GitHub workspace.
 
@@ -118,7 +120,7 @@ It will generate `pytest-coverage.txt` and `pytest.xml` in `/tmp` directory insi
     docker run -v /tmp:/tmp $IMAGE_TAG python3 -m pytest --cov-report=term-missing:skip-covered --junitxml=/tmp/pytest.xml --cov=src tests/ | tee /tmp/pytest-coverage.txt
 
 - name: Pytest coverage comment
-  uses: MishaKav/pytest-coverage-comment@v1.1.4
+  uses: MishaKav/pytest-coverage-comment@v1.1.5
   with:
     pytest-coverage-path: /tmp/pytest-coverage.txt
     junitxml-path: /tmp/pytest.xml
@@ -128,7 +130,7 @@ Example GitHub Action workflow that uses multiple files mode (see the [live work
 
 ```yaml
 - name: Pytest coverage comment
-  uses: MishaKav/pytest-coverage-comment@v1.1.4
+  uses: MishaKav/pytest-coverage-comment@v1.1.5
   with:
     multiple-files: |
       My Title 1, ./data/pytest-coverage_3.txt, ./data/pytest_1.xml
