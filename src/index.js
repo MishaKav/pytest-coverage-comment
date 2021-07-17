@@ -4,6 +4,8 @@ const { getCoverageReport } = require('./parse');
 const { getSummaryReport } = require('./junitXml');
 const { getMultipleReport } = require('./multiFiles');
 
+const MAX_COMMENT_LENGTH = 65536;
+
 const main = async () => {
   const token = core.getInput('github-token', { required: true });
   const title = core.getInput('title', { required: false });
@@ -50,10 +52,22 @@ const main = async () => {
   if (multipleFiles && multipleFiles.length) {
     finalHtml += getMultipleReport(options);
   } else {
-    const { html, coverage, color } = getCoverageReport(options);
+    let report = getCoverageReport(options);
+    const { coverage, color } = report;
     const summaryReport = getSummaryReport(options);
 
-    finalHtml += html;
+    if (report.html.length + summaryReport.length > MAX_COMMENT_LENGTH) {
+      // generate new html without report
+      console.warn(
+        `Your comment is too long (maximum is ${MAX_COMMENT_LENGTH} characters), coverage report will not be added.`
+      );
+      console.warn(
+        `Try add: "--cov-report=term-missing:skip-covered", or add "hide-report: true" or switch to "multiple-files" mode`
+      );
+      report = getSummaryReport({ ...options, hideReport: true });
+    }
+
+    finalHtml += report.html;
     finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
 
     if (coverage) {
