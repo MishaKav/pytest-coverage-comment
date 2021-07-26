@@ -13278,6 +13278,7 @@ const main = async () => {
   const createNewComment = core.getBooleanInput('create-new-comment', {
     required: false,
   });
+  const hideComment = core.getBooleanInput('hide-comment', { required: false });
   const covFile = core.getInput('pytest-coverage-path', { required: false });
   const xmlFile = core.getInput('junitxml-path', { required: false });
   const xmlTitle = core.getInput('junitxml-title', { required: false });
@@ -13299,6 +13300,7 @@ const main = async () => {
     hideBadge,
     hideReport,
     createNewComment,
+    hideComment,
     xmlTitle,
     multipleFiles,
   };
@@ -13342,7 +13344,7 @@ const main = async () => {
     }
   }
 
-  if (!finalHtml) {
+  if (!finalHtml || options.hideComment) {
     console.log('Nothing to report');
     return;
   }
