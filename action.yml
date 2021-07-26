@@ -29,6 +29,10 @@ inputs:
     description: 'Hide coverage report'
     default: 'false'
     required: false
+  hide-comment:
+    description: 'Hide the whole comment (use when you need only `output`)'
+    default: 'false'
+    required: false
   junitxml-path:
     description: 'The location of the junitxml path'
     default: ''

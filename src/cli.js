@@ -54,6 +54,7 @@ const main = async () => {
     hideBadge: false,
     hideReport: true,
     createNewComment: false,
+    hideComment: false,
     xmlTitle: '',
     multipleFiles,
   };
@@ -68,7 +69,7 @@ const main = async () => {
     finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
   }
 
-  if (!finalHtml) {
+  if (!finalHtml || options.hideComment) {
     console.log('Nothing to report');
     return;
   }
