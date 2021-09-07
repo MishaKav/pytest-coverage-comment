@@ -47,6 +47,7 @@ const main = async () => {
     prefix,
     covFile: getPathToFile(covFile),
     xmlFile: getPathToFile(xmlFile),
+    defaultBranch: 'main',
     head: 'feat/test',
     base: 'main',
     title: 'Coverage Report',

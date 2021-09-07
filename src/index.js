@@ -16,6 +16,7 @@ const main = async () => {
     required: false,
   });
   const hideComment = core.getBooleanInput('hide-comment', { required: false });
+  const defaultBranch = core.getInput('default-branch', { required: false });
   const covFile = core.getInput('pytest-coverage-path', { required: false });
   const xmlFile = core.getInput('junitxml-path', { required: false });
   const xmlTitle = core.getInput('junitxml-title', { required: false });
@@ -38,6 +39,7 @@ const main = async () => {
     hideReport,
     createNewComment,
     hideComment,
+    defaultBranch,
     xmlTitle,
     multipleFiles,
   };
@@ -58,7 +60,11 @@ const main = async () => {
     const { coverage, color, html } = report;
     const summaryReport = getSummaryReport(options);
 
-    core.setOutput('coverageHtml', html);
+    if (html) {
+      const newOptions = { ...options, commit: defaultBranch };
+      const output = getCoverageReport(newOptions);
+      core.setOutput('coverageHtml', output.html);
+    }
 
     if (html.length + summaryReport.length > MAX_COMMENT_LENGTH) {
       // generate new html without report
