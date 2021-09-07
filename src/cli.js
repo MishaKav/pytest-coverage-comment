@@ -6,7 +6,7 @@ const { getMultipleReport } = require('./multiFiles');
 
 /*  
   Usefull git commands
-  git tag -a -m "fisrt alpha release" v1.0 && git push --follow-tags 
+  git tag -a -m "Export coverage example" v1.1.7 && git push --follow-tags 
   git tag -d v1.0 
   git tag -d origin v1.0  
 

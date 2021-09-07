@@ -29,7 +29,7 @@ const getOptions = (options = {}, line = {}) => ({
 
 // return multiple report in markdown format
 const getMultipleReport = (options) => {
-  const { multipleFiles } = options;
+  const { multipleFiles, defaultBranch } = options;
 
   try {
     const lineReports = multipleFiles.map(parseLine).filter((l) => l);
@@ -53,6 +53,10 @@ const getMultipleReport = (options) => {
         if (i === 0) {
           core.setOutput('coverage', coverage.coverage);
           core.setOutput('color', coverage.color);
+
+          const newOptions = { ...internalOptions, commit: defaultBranch };
+          const output = getCoverageReport(newOptions);
+          core.setOutput('coverageHtml', output.html);
         }
       } else if (summary) {
         table += `| ${l.title} |  `;
