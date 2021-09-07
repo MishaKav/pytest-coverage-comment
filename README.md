@@ -8,7 +8,7 @@ You can add this action to your GitHub workflow for Ubuntu runners (e.g. runs-on
 
 ```yaml
 - name: Pytest coverage comment
-  uses: MishaKav/pytest-coverage-comment@v1.1.7
+  uses: MishaKav/pytest-coverage-comment@main
   with:
     pytest-coverage-path: ./pytest-coverage.txt
     junitxml-path: ./pytest.xml
@@ -72,7 +72,7 @@ jobs:
           pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=app tests/ | tee pytest-coverage.txt
 
       - name: Pytest coverage comment
-        uses: MishaKav/pytest-coverage-comment@v1.1.7
+        uses: MishaKav/pytest-coverage-comment@main
         with:
           pytest-coverage-path: ./pytest-coverage.txt
           junitxml-path: ./pytest.xml
@@ -83,7 +83,7 @@ Example GitHub Action workflow that uses coverage percentage as output (see the 
 ```yaml
 - name: Pytest coverage comment
   id: coverageComment
-  uses: MishaKav/pytest-coverage-comment@v1.1.7
+  uses: MishaKav/pytest-coverage-comment@main
   with:
     pytest-coverage-path: ./pytest-coverage.txt
     junitxml-path: ./pytest.xml
@@ -99,7 +99,7 @@ Example GitHub Action workflow that passes all params to Pytest Coverage Comment
 
 ```yaml
 - name: Pytest coverage comment
-  uses: MishaKav/pytest-coverage-comment@v1.1.7
+  uses: MishaKav/pytest-coverage-comment@main
   with:
     pytest-coverage-path: ./path-to-file/pytest-coverage.txt
     title: My Coverage Report Title
@@ -123,7 +123,7 @@ It will generate `pytest-coverage.txt` and `pytest.xml` in `/tmp` directory insi
     docker run -v /tmp:/tmp $IMAGE_TAG python3 -m pytest --cov-report=term-missing:skip-covered --junitxml=/tmp/pytest.xml --cov=src tests/ | tee /tmp/pytest-coverage.txt
 
 - name: Pytest coverage comment
-  uses: MishaKav/pytest-coverage-comment@v1.1.7
+  uses: MishaKav/pytest-coverage-comment@main
   with:
     pytest-coverage-path: /tmp/pytest-coverage.txt
     junitxml-path: /tmp/pytest.xml
@@ -133,7 +133,7 @@ Example GitHub Action workflow that uses multiple files mode (see the [live work
 
 ```yaml
 - name: Pytest coverage comment
-  uses: MishaKav/pytest-coverage-comment@v1.1.7
+  uses: MishaKav/pytest-coverage-comment@main
   with:
     multiple-files: |
       My Title 1, ./data/pytest-coverage_3.txt, ./data/pytest_1.xml
