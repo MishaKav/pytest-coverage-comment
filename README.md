@@ -8,7 +8,7 @@ You can add this action to your GitHub workflow for Ubuntu runners (e.g. runs-on
 
 ```yaml
 - name: Pytest coverage comment
-  uses: MishaKav/pytest-coverage-comment@v1.1.7
+  uses: MishaKav/pytest-coverage-comment@main
   with:
     pytest-coverage-path: ./pytest-coverage.txt
     junitxml-path: ./pytest.xml
@@ -28,6 +28,7 @@ You can add this action to your GitHub workflow for Ubuntu runners (e.g. runs-on
 | `junitxml-title`       |          | ''                      | Title for summary for junitxml                                                                                                                                                                                                                                                                                                                                                |
 | `create-new-comment`   |          | false                   | When false, will update the same comment, otherwise will publish new comment on each run.                                                                                                                                                                                                                                                                                     |
 | `hide-comment`         |          | false                   | Hide the whole comment (use when you need only the `output`). Useful for auto-update bagdes in readme. See the [workflow](../main/.github/workflows/live-test.yml) for example                                                                                                                                                                                                |
+| `default-branch`       |          | `main`                  | This branch name is usefull when generate "coverageHtml", it points direct links to files on this branch (instead of commit).<br/>Usually "main" or "master".                                                                                                                                                                                                                 |
 | `multiple-files`       |          | ''                      | You can pass array of titles and files to generate single comment with table of results.<br/>Single line should look like `Title, ./path/to/pytest-coverage.txt, ./path/to/pytest.xml`<br/> example:<br/> `My Title 1, ./data/pytest-coverage_3.txt, ./data/pytest_1.xml`<br/>**Note:** In that mode the `output` for `coverage` and `color` will be for the first file only. |
 
 ## Output example
@@ -72,7 +73,7 @@ jobs:
           pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=app tests/ | tee pytest-coverage.txt
 
       - name: Pytest coverage comment
-        uses: MishaKav/pytest-coverage-comment@v1.1.7
+        uses: MishaKav/pytest-coverage-comment@main
         with:
           pytest-coverage-path: ./pytest-coverage.txt
           junitxml-path: ./pytest.xml
@@ -83,7 +84,7 @@ Example GitHub Action workflow that uses coverage percentage as output (see the 
 ```yaml
 - name: Pytest coverage comment
   id: coverageComment
-  uses: MishaKav/pytest-coverage-comment@v1.1.7
+  uses: MishaKav/pytest-coverage-comment@main
   with:
     pytest-coverage-path: ./pytest-coverage.txt
     junitxml-path: ./pytest.xml
@@ -99,7 +100,7 @@ Example GitHub Action workflow that passes all params to Pytest Coverage Comment
 
 ```yaml
 - name: Pytest coverage comment
-  uses: MishaKav/pytest-coverage-comment@v1.1.7
+  uses: MishaKav/pytest-coverage-comment@main
   with:
     pytest-coverage-path: ./path-to-file/pytest-coverage.txt
     title: My Coverage Report Title
@@ -123,7 +124,7 @@ It will generate `pytest-coverage.txt` and `pytest.xml` in `/tmp` directory insi
     docker run -v /tmp:/tmp $IMAGE_TAG python3 -m pytest --cov-report=term-missing:skip-covered --junitxml=/tmp/pytest.xml --cov=src tests/ | tee /tmp/pytest-coverage.txt
 
 - name: Pytest coverage comment
-  uses: MishaKav/pytest-coverage-comment@v1.1.7
+  uses: MishaKav/pytest-coverage-comment@main
   with:
     pytest-coverage-path: /tmp/pytest-coverage.txt
     junitxml-path: /tmp/pytest.xml
@@ -133,11 +134,58 @@ Example GitHub Action workflow that uses multiple files mode (see the [live work
 
 ```yaml
 - name: Pytest coverage comment
-  uses: MishaKav/pytest-coverage-comment@v1.1.7
+  uses: MishaKav/pytest-coverage-comment@main
   with:
     multiple-files: |
       My Title 1, ./data/pytest-coverage_3.txt, ./data/pytest_1.xml
       My Title 2, ./data/pytest-coverage_4.txt, ./data/pytest_2.xml
+```
+
+Example GitHub Action workflow that will update your `README.md` with coverage report, only on merge to `main` branch (see the [update-coverage-on-readme workflow](../main/.github/workflows/update-coverage-on-readme.yml))
+All you need is to add in your `README.md` the following lines wherever you want.
+If your coverage html report will not change, it wouldn't push any changes to readme file.
+
+```html
+<!-- Pytest Coverage Comment:Begin -->
+<!-- Pytest Coverage Comment:End -->
+```
+
+```yaml
+name: Update Coverage on Readme
+on:
+  push:
+jobs:
+  update-coverage-on-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+          fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
+
+      - name: Extract branch name
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
+
+      - name: Pytest coverage comment
+        if: ${{ github.ref == 'refs/heads/main' }}
+        id: coverageComment
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          hide-comment: true
+          pytest-coverage-path: ./data/pytest-coverage_4.txt
+
+      - name: Update Readme with Coverage Html
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: |
+          sed -i '/<!-- Pytest Coverage Comment:Begin -->/,/<!-- Pytest Coverage Comment:End -->/c\<!-- Pytest Coverage Comment:Begin -->\n\${{ steps.coverageComment.outputs.coverageHtml }}\n<!-- Pytest Coverage Comment:End -->' ./README.md
+
+      - name: Commit & Push changes to Readme
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: actions-js/push@master
+        with:
+          message: Update coverage on Readme
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ## Result example

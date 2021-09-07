@@ -45,6 +45,10 @@ inputs:
     description: 'When false, will update the same comment, otherwise will publish new comment on each run'
     default: 'false'
     required: false
+  default-branch:
+    description: 'This branch name is usefull when generate "coverageHtml", it points direct links to files on this branch (instead of commit). Usually "main" or "master"'
+    default: 'main'
+    required: false
   multiple-files:
     description: > 
       You can pass array of titles and files to generate single comment with table of results. 

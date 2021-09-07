@@ -10,7 +10,7 @@ jobs:
 
       - name: Pytest coverage comment
         id: coverageComment
-        uses: MishaKav/pytest-coverage-comment@v1.1.7
+        uses: MishaKav/pytest-coverage-comment@main
         with:
           pytest-coverage-path: ./data/pytest-coverage_4.txt
           junitxml-path: ./data/pytest_1.xml
@@ -19,6 +19,7 @@ jobs:
         run: |
           echo "Coverage Report - ${{ steps.coverageComment.outputs.coverage }}"
           echo "Coverage Color - ${{ steps.coverageComment.outputs.color }}"
+          echo "Coverage Html - ${{ steps.coverageComment.outputs.coverageHtml }}"
 
       - name: Create the Badge
         uses: schneegans/dynamic-badges-action@v1.0.0
