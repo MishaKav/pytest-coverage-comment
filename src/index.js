@@ -55,10 +55,12 @@ const main = async () => {
     finalHtml += getMultipleReport(options);
   } else {
     let report = getCoverageReport(options);
-    const { coverage, color } = report;
+    const { coverage, color, html } = report;
     const summaryReport = getSummaryReport(options);
 
-    if (report.html.length + summaryReport.length > MAX_COMMENT_LENGTH) {
+    core.setOutput('coverageHtml', html);
+
+    if (html.length + summaryReport.length > MAX_COMMENT_LENGTH) {
       // generate new html without report
       console.warn(
         `Your comment is too long (maximum is ${MAX_COMMENT_LENGTH} characters), coverage report will not be added.`
@@ -69,7 +71,7 @@ const main = async () => {
       report = getSummaryReport({ ...options, hideReport: true });
     }
 
-    finalHtml += report.html;
+    finalHtml += html;
     finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
 
     if (coverage) {

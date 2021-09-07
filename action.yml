@@ -58,6 +58,8 @@ outputs:
     description: 'value indicating the coverage percentage of your report based on pytest, example 30%'
   color:
     description: 'color of coverage report'
+  coverageHtml:
+    description: 'The html of the coverage report'
 runs:
   using: 'node12'
   main: 'dist/index.js'
