@@ -52,7 +52,7 @@ const main = async () => {
     title: 'Coverage Report',
     badgeTitle: 'Coverage',
     hideBadge: false,
-    hideReport: true,
+    hideReport: false,
     createNewComment: false,
     hideComment: false,
     xmlTitle: '',
