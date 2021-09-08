@@ -12766,6 +12766,15 @@ const getMultipleReport = (options) => {
           const newOptions = { ...internalOptions, commit: defaultBranch };
           const output = getCoverageReport(newOptions);
           core.setOutput('coverageHtml', output.html);
+
+          if (summary) {
+            const { errors, failures, skipped, tests, time } = summary;
+            const valuesToExport = { errors, failures, skipped, tests, time };
+
+            Object.entries(valuesToExport).forEach(([key, value]) => {
+              core.setOutput(key, value);
+            });
+          }
         }
       } else if (summary) {
         table += `| ${l.title} |  `;
@@ -13298,7 +13307,7 @@ var __webpack_exports__ = {};
 const core = __nccwpck_require__(2186);
 const github = __nccwpck_require__(5438);
 const { getCoverageReport } = __nccwpck_require__(3248);
-const { getSummaryReport } = __nccwpck_require__(9670);
+const { getSummaryReport, getParsedXml } = __nccwpck_require__(9670);
 const { getMultipleReport } = __nccwpck_require__(4158);
 
 const MAX_COMMENT_LENGTH = 65536;
@@ -13361,6 +13370,17 @@ const main = async () => {
       const newOptions = { ...options, commit: defaultBranch };
       const output = getCoverageReport(newOptions);
       core.setOutput('coverageHtml', output.html);
+    }
+
+    // set to output junitxml values
+    if (summaryReport) {
+      const parsedXml = getParsedXml(options);
+      const { errors, failures, skipped, tests, time } = parsedXml;
+      const valuesToExport = { errors, failures, skipped, tests, time };
+
+      Object.entries(valuesToExport).forEach(([key, value]) => {
+        core.setOutput(key, value);
+      });
     }
 
     if (html.length + summaryReport.length > MAX_COMMENT_LENGTH) {

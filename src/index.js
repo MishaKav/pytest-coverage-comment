@@ -1,7 +1,7 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
 const { getCoverageReport } = require('./parse');
-const { getSummaryReport } = require('./junitXml');
+const { getSummaryReport, getParsedXml } = require('./junitXml');
 const { getMultipleReport } = require('./multiFiles');
 
 const MAX_COMMENT_LENGTH = 65536;
@@ -64,6 +64,17 @@ const main = async () => {
       const newOptions = { ...options, commit: defaultBranch };
       const output = getCoverageReport(newOptions);
       core.setOutput('coverageHtml', output.html);
+    }
+
+    // set to output junitxml values
+    if (summaryReport) {
+      const parsedXml = getParsedXml(options);
+      const { errors, failures, skipped, tests, time } = parsedXml;
+      const valuesToExport = { errors, failures, skipped, tests, time };
+
+      Object.entries(valuesToExport).forEach(([key, value]) => {
+        core.setOutput(key, value);
+      });
     }
 
     if (html.length + summaryReport.length > MAX_COMMENT_LENGTH) {

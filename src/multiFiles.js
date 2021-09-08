@@ -57,6 +57,15 @@ const getMultipleReport = (options) => {
           const newOptions = { ...internalOptions, commit: defaultBranch };
           const output = getCoverageReport(newOptions);
           core.setOutput('coverageHtml', output.html);
+
+          if (summary) {
+            const { errors, failures, skipped, tests, time } = summary;
+            const valuesToExport = { errors, failures, skipped, tests, time };
+
+            Object.entries(valuesToExport).forEach(([key, value]) => {
+              core.setOutput(key, value);
+            });
+          }
         }
       } else if (summary) {
         table += `| ${l.title} |  `;

@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { getCoverageReport } = require('./parse');
-const { getSummaryReport } = require('./junitXml');
+const { getSummaryReport, getParsedXml } = require('./junitXml');
 const { getMultipleReport } = require('./multiFiles');
 
 /*  
@@ -65,6 +65,17 @@ const main = async () => {
   } else {
     const { html } = getCoverageReport(options);
     const summaryReport = getSummaryReport(options);
+
+    // set to output junitxml values
+    if (summaryReport) {
+      const parsedXml = getParsedXml(options);
+      const { errors, failures, skipped, tests, time } = parsedXml;
+      const valuesToExport = { errors, failures, skipped, tests, time };
+
+      Object.entries(valuesToExport).forEach(([key, value]) => {
+        console.log(key, value);
+      });
+    }
 
     finalHtml += html;
     finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
