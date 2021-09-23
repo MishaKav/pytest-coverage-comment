@@ -51,6 +51,8 @@ const getSummary = (data) => {
     return '';
   }
 
+  console.log('testsuites: ' + parser.resultObject.testsuites);
+
   return parser.resultObject.testsuites.testsuite[0]['$'];
 };
 
