@@ -87,7 +87,13 @@ const getNotSuccessTest = (options) => {
   const parsed = parser.parseString(data);
   if (!parsed) {
     console.log(`JUnitXml file is not XML or not well formed`);
-    return '';
+
+    return {
+      count,
+      failures,
+      errors,
+      skipped,
+    }
   }
 
   testsuite = parser.resultObject.testsuites.testsuite[0];
