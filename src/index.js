@@ -66,8 +66,15 @@ const main = async () => {
       core.setOutput('coverageHtml', output.html);
     }
 
+    console.log('exec getNotSuccessTest()');
+    const notSuccessTestInfo = getNotSuccessTest(options);
+    console.log('notSuccessTestInfo: ', notSuccessTestInfo);
+
+    core.setOutput('notSuccessTestInfo', JSON.stringify(notSuccessTestInfo));
+
     // set to output junitxml values
     if (summaryReport) {
+      console.log('test1');
       const parsedXml = getParsedXml(options);
       const { errors, failures, skipped, tests, time } = parsedXml;
       const valuesToExport = { errors, failures, skipped, tests, time };
@@ -75,12 +82,6 @@ const main = async () => {
       Object.entries(valuesToExport).forEach(([key, value]) => {
         core.setOutput(key, value);
       });
-
-      console.log('exec getNotSuccessTest()');
-      const notSuccessTestInfo = getNotSuccessTest(options);
-      console.log('notSuccessTestInfo: ', notSuccessTestInfo);
-
-      core.setOutput('notSuccessTestInfo', JSON.stringify(notSuccessTestInfo));
     }
 
     if (html.length + summaryReport.length > MAX_COMMENT_LENGTH) {
