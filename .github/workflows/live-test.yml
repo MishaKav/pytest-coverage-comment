@@ -20,6 +20,11 @@ jobs:
           echo "Coverage Report - ${{ steps.coverageComment.outputs.coverage }}"
           echo "Coverage Color - ${{ steps.coverageComment.outputs.color }}"
           echo "Coverage Html - ${{ steps.coverageComment.outputs.coverageHtml }}"
+          echo "Errors - ${{ steps.coverageComment.outputs.errors }}"
+          echo "Failures - ${{ steps.coverageComment.outputs.failures }}"
+          echo "Skipped - ${{ steps.coverageComment.outputs.skipped }}"
+          echo "Tests - ${{ steps.coverageComment.outputs.tests }}"
+          echo "Time - ${{ steps.coverageComment.outputs.time }}"
           echo "Not Success Test Info - ${{ steps.coverageComment.outputs.notSuccessTestInfo }}"
 
       - name: Create the Badge
