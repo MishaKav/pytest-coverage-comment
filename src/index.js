@@ -1,7 +1,11 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
 const { getCoverageReport } = require('./parse');
-const { getSummaryReport, getParsedXml } = require('./junitXml');
+const {
+  getSummaryReport,
+  getParsedXml,
+  getNotSuccessTest,
+} = require('./junitXml');
 const { getMultipleReport } = require('./multiFiles');
 
 const MAX_COMMENT_LENGTH = 65536;
@@ -75,6 +79,9 @@ const main = async () => {
       Object.entries(valuesToExport).forEach(([key, value]) => {
         core.setOutput(key, value);
       });
+
+      const notSuccessTestInfo = getNotSuccessTest(options);
+      core.setOutput('notSuccessTestInfo', JSON.stringify(notSuccessTestInfo));
     }
 
     if (html.length + summaryReport.length > MAX_COMMENT_LENGTH) {

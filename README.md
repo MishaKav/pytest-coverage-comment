@@ -33,16 +33,30 @@ You can add this action to your GitHub workflow for Ubuntu runners (e.g. runs-on
 
 ## Output Variables
 
-| Name           | Example | Description                                                                           |
-| -------------- | ------- | ------------------------------------------------------------------------------------- |
-| `coverage`     | 30%     | Percentage of the coverage, get from `pytest-cov`                                     |
-| `color`        | red     | Color of the percentage. You can see the whole list of [badge colors](#badges-colors) |
-| `coverageHtml` | ...     | Html with links to files of missing lines. See the [output-example](#output-example)  |
-| `tests`        | 109     | Total number of tests, get from `junitxml`                                            |
-| `skipped`      | 2       | Total number of skipped tests, get from `junitxml`                                    |
-| `failures`     | 1       | Total number of tests with failures, get from `junitxml`                              |
-| `errors`       | 0       | Total number of tests with errors, get from `junitxml`                                |
-| `time`         | 0.583   | Seconds the took to run all the tests, get from `junitxml`                            |
+| Name                 | Example                        | Description                                                                           |
+| -------------------- | ------------------------------ | ------------------------------------------------------------------------------------- |
+| `coverage`           | 30%                            | Percentage of the coverage, get from `pytest-cov`                                     |
+| `color`              | red                            | Color of the percentage. You can see the whole list of [badge colors](#badges-colors) |
+| `coverageHtml`       | ...                            | Html with links to files of missing lines. See the [output-example](#output-example)  |
+| `tests`              | 109                            | Total number of tests, get from `junitxml`                                            |
+| `skipped`            | 2                              | Total number of skipped tests, get from `junitxml`                                    |
+| `failures`           | 1                              | Total number of tests with failures, get from `junitxml`                              |
+| `errors`             | 0                              | Total number of tests with errors, get from `junitxml`                                |
+| `time`               | 0.583                          | Seconds the took to run all the tests, get from `junitxml`                            |
+| `notSuccessTestInfo` | [example](#notSuccessTestInfo) | Info from testcase that has failures/errors/skipped, get from `junitxml`              |
+
+### notSuccessTestInfo
+
+the format will be JSON.stringify in current structure
+
+```json
+{
+  "failures": [{ "classname": "...", "name": "..." }],
+  "errors": [{ "classname": "...", "name": "..." }],
+  "skipped": [{ "classname": "...", "name": "..." }],
+  "count": 3
+}
+```
 
 ## Output example
 
