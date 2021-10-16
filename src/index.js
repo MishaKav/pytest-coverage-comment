@@ -77,7 +77,6 @@ const main = async () => {
       });
 
       const notSuccessTestInfo = getNotSuccessTest(options);
-  
       core.setOutput('notSuccessTestInfo', JSON.stringify(notSuccessTestInfo));
     }
 

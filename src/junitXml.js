@@ -17,11 +17,11 @@ const getXmlContent = (options) => {
   }
 
   return null;
-}
+};
 
 // return parsed xml
 const getParsedXml = (options) => {
-  content = getXmlContent(options);
+  const content = getXmlContent(options);
 
   if (content) {
     return getSummary(content);
@@ -59,27 +59,12 @@ const getSummary = (data) => {
     return '';
   }
 
-  console.log('testsuites: ' + parser.resultObject.testsuites);
-
   return parser.resultObject.testsuites.testsuite[0]['$'];
 };
 
-const getNotSuccessTest = (options) => {
-
-  let count = 0;
-  let failures = [];
-  let errors = [];
-  let skipped = [];
-
-  data = getXmlContent(options);
-
+const getTestCases = (data) => {
   if (!data || !data.length) {
-    return {
-      count,
-      failures,
-      errors,
-      skipped,
-    }
+    return null;
   }
 
   const parser = new xml2js.Parser();
@@ -87,46 +72,43 @@ const getNotSuccessTest = (options) => {
   const parsed = parser.parseString(data);
   if (!parsed) {
     console.log(`JUnitXml file is not XML or not well formed`);
+    return '';
+  }
 
-    return {
-      count,
-      failures,
-      errors,
-      skipped,
+  return parser.resultObject.testsuites.testsuite[0].testcase;
+};
+
+const getNotSuccessTest = (options) => {
+  const initData = { count: 0, failures: [], errors: [], skipped: [] };
+
+  try {
+    const content = getXmlContent(options);
+
+    if (content) {
+      const testCaseToOutput = (testcase) => {
+        const { classname, name } = testcase['$'];
+        return { classname, name };
+      };
+
+      const testcases = getTestCases(content);
+
+      const failures = testcases.filter((t) => t.failure).map(testCaseToOutput);
+      const errors = testcases.filter((t) => t.error).map(testCaseToOutput);
+      const skipped = testcases.filter((t) => t.skipped).map(testCaseToOutput);
+
+      return {
+        failures,
+        errors,
+        skipped,
+        count: failures.length + errors.length + skipped.length,
+      };
     }
+  } catch (error) {
+    console.log(`Error: Could not get notSuccessTestInfo successfully.`, error);
   }
 
-  testsuite = parser.resultObject.testsuites.testsuite[0];
-
-  for (testcase of testsuite.testcase) {
-    if ('failure' in testcase) {
-      failures.push({
-        'classname': testcase['$'].classname,
-        'name': testcase['$'].name
-      });
-      count++;
-    } else if ('error' in testcase) {
-      errors.push({
-        'classname': testcase['$'].classname,
-        'name': testcase['$'].name
-      });
-      count++;
-    } else if ('skipped' in testcase) {
-      skipped.push({
-        'classname': testcase['$'].classname,
-        'name': testcase['$'].name
-      });
-      count++;
-    }
-  }
-
-  return {
-    count,
-    failures,
-    errors,
-    skipped,
-  }
-}
+  return initData;
+};
 
 // convert summary from junitxml to md
 const toMarkdown = (summary, options) => {

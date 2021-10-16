@@ -1,7 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 const { getCoverageReport } = require('./parse');
-const { getSummaryReport, getParsedXml } = require('./junitXml');
+const {
+  getSummaryReport,
+  getParsedXml,
+  getNotSuccessTest,
+} = require('./junitXml');
 const { getMultipleReport } = require('./multiFiles');
 
 /*  
@@ -71,6 +75,9 @@ const main = async () => {
       const parsedXml = getParsedXml(options);
       const { errors, failures, skipped, tests, time } = parsedXml;
       const valuesToExport = { errors, failures, skipped, tests, time };
+      const notSuccessTestInfo = getNotSuccessTest(options);
+
+      console.log('notSuccessTestInfo', JSON.stringify(notSuccessTestInfo));
 
       Object.entries(valuesToExport).forEach(([key, value]) => {
         console.log(key, value);
