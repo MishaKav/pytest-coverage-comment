@@ -1,7 +1,11 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
 const { getCoverageReport } = require('./parse');
-const { getSummaryReport, getParsedXml, getNotSuccessTest } = require('./junitXml');
+const {
+  getSummaryReport,
+  getParsedXml,
+  getNotSuccessTest,
+} = require('./junitXml');
 const { getMultipleReport } = require('./multiFiles');
 
 const MAX_COMMENT_LENGTH = 65536;

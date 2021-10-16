@@ -13363,7 +13363,11 @@ var __webpack_exports__ = {};
 const core = __nccwpck_require__(2186);
 const github = __nccwpck_require__(5438);
 const { getCoverageReport } = __nccwpck_require__(3248);
-const { getSummaryReport, getParsedXml, getNotSuccessTest } = __nccwpck_require__(9670);
+const {
+  getSummaryReport,
+  getParsedXml,
+  getNotSuccessTest,
+} = __nccwpck_require__(9670);
 const { getMultipleReport } = __nccwpck_require__(4158);
 
 const MAX_COMMENT_LENGTH = 65536;
