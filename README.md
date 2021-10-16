@@ -242,3 +242,13 @@ Multiple Files Mode (can be useful on mono-repo projects)
 
 If you want auto-update the coverage badge on your Readme, you can see the [workflow](../main/.github/workflows/live-test.yml)
 ![Auto Updating Bagde](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/MishaKav/5e90d640f8c212ab7bbac38f72323f80/raw/pytest-coverage-comment__main.json)
+
+## 🤝 Contributing [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
+
+We welcome all contributions. You can submit any ideas as [pull requests](https://github.com/MishaKav/pytest-coverage-comment/pulls) or as [GitHub issues](https://github.com/MishaKav/pytest-coverage-comment/issues) and have a good time! :)
+
+## Our Contibutors
+
+<a href="https://github.com/MishaKav/pytest-coverage-comment/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=MishaKav/pytest-coverage-comment" alt="Contibutors" />
+</a>
