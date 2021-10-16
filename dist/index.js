@@ -12630,8 +12630,7 @@ function wrappy (fn, cb) {
 const xml2js = __nccwpck_require__(6189);
 const { getPathToFile, getContentFile } = __nccwpck_require__(1608);
 
-// return parsed xml
-const getParsedXml = (options) => {
+const getXmlContent = (options) => {
   const { xmlFile } = options;
 
   try {
@@ -12640,12 +12639,21 @@ const getParsedXml = (options) => {
     if (xmlFilePath) {
       const content = getContentFile(xmlFilePath);
 
-      if (content) {
-        return getSummary(content);
-      }
+      return content;
     }
   } catch (error) {
-    console.log(`Error: on generating summary report`, error);
+    console.log(`Error: Could not get the xml string successfully.`, error);
+  }
+
+  return null;
+};
+
+// return parsed xml
+const getParsedXml = (options) => {
+  const content = getXmlContent(options);
+
+  if (content) {
+    return getSummary(content);
   }
 
   return '';
@@ -12683,6 +12691,54 @@ const getSummary = (data) => {
   return parser.resultObject.testsuites.testsuite[0]['$'];
 };
 
+const getTestCases = (data) => {
+  if (!data || !data.length) {
+    return null;
+  }
+
+  const parser = new xml2js.Parser();
+
+  const parsed = parser.parseString(data);
+  if (!parsed) {
+    console.log(`JUnitXml file is not XML or not well formed`);
+    return '';
+  }
+
+  return parser.resultObject.testsuites.testsuite[0].testcase;
+};
+
+const getNotSuccessTest = (options) => {
+  const initData = { count: 0, failures: [], errors: [], skipped: [] };
+
+  try {
+    const content = getXmlContent(options);
+
+    if (content) {
+      const testCaseToOutput = (testcase) => {
+        const { classname, name } = testcase['$'];
+        return { classname, name };
+      };
+
+      const testcases = getTestCases(content);
+
+      const failures = testcases.filter((t) => t.failure).map(testCaseToOutput);
+      const errors = testcases.filter((t) => t.error).map(testCaseToOutput);
+      const skipped = testcases.filter((t) => t.skipped).map(testCaseToOutput);
+
+      return {
+        failures,
+        errors,
+        skipped,
+        count: failures.length + errors.length + skipped.length,
+      };
+    }
+  } catch (error) {
+    console.log(`Error: Could not get notSuccessTestInfo successfully.`, error);
+  }
+
+  return initData;
+};
+
 // convert summary from junitxml to md
 const toMarkdown = (summary, options) => {
   const { errors, failures, skipped, tests, time } = summary;
@@ -12699,7 +12755,7 @@ ${table}`;
   return table;
 };
 
-module.exports = { getSummaryReport, getParsedXml };
+module.exports = { getSummaryReport, getParsedXml, getNotSuccessTest };
 
 
 /***/ }),
@@ -13307,7 +13363,7 @@ var __webpack_exports__ = {};
 const core = __nccwpck_require__(2186);
 const github = __nccwpck_require__(5438);
 const { getCoverageReport } = __nccwpck_require__(3248);
-const { getSummaryReport, getParsedXml } = __nccwpck_require__(9670);
+const { getSummaryReport, getParsedXml, getNotSuccessTest } = __nccwpck_require__(9670);
 const { getMultipleReport } = __nccwpck_require__(4158);
 
 const MAX_COMMENT_LENGTH = 65536;
@@ -13381,6 +13437,9 @@ const main = async () => {
       Object.entries(valuesToExport).forEach(([key, value]) => {
         core.setOutput(key, value);
       });
+
+      const notSuccessTestInfo = getNotSuccessTest(options);
+      core.setOutput('notSuccessTestInfo', JSON.stringify(notSuccessTestInfo));
     }
 
     if (html.length + summaryReport.length > MAX_COMMENT_LENGTH) {
