@@ -53,6 +53,7 @@ const getMultipleReport = (options) => {
         if (i === 0) {
           core.setOutput('coverage', coverage.coverage);
           core.setOutput('color', coverage.color);
+          core.setOutput('warnings', coverage.warnings);
 
           const newOptions = { ...internalOptions, commit: defaultBranch };
           const output = getCoverageReport(newOptions);
