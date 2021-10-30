@@ -61,7 +61,7 @@ const main = async () => {
     finalHtml += getMultipleReport(options);
   } else {
     let report = getCoverageReport(options);
-    const { coverage, color, html } = report;
+    const { coverage, color, html, warnings } = report;
     const summaryReport = getSummaryReport(options);
 
     if (html) {
@@ -101,8 +101,9 @@ const main = async () => {
     if (coverage) {
       core.setOutput('coverage', coverage);
       core.setOutput('color', color);
+      core.setOutput('warnings', warnings);
       console.log(
-        `Publishing ${title}. Total coverage: ${coverage}. Color: ${color}`
+        `Publishing ${title}. Total coverage: ${coverage}. Color: ${color}. Warnings: ${warnings}`
       );
     }
   }

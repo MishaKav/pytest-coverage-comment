@@ -36,15 +36,16 @@ const getCoverageReport = (options) => {
     if (content && isValid) {
       const html = toHtml(content, options);
       const total = getTotal(content);
+      const warnings = getWarnings(content);
       const color = getCoverageColor(total ? total.cover : '0');
 
-      return { html, coverage, color };
+      return { html, coverage, color, warnings };
     }
   } catch (error) {
     console.log(`Error: on generating coverage report`, error);
   }
 
-  return { html: '', coverage: '0', color: 'red' };
+  return { html: '', coverage: '0', color: 'red', warnings: 0 };
 };
 
 // get coverage color
@@ -108,6 +109,24 @@ const getTotal = (data) => {
   const line = lines.find((l) => l.includes('TOTAL '));
 
   return parseOneLine(line);
+};
+
+// get number of warnings from coverage-file
+const getWarnings = (data) => {
+  if (!data || !data.length) {
+    return null;
+  }
+
+  const WARNINGS_KEY = ' warnings in ';
+  if (!data.includes(WARNINGS_KEY)) {
+    return 0;
+  }
+
+  const line = data.split('\n').find((l) => l.includes(WARNINGS_KEY));
+  const lineArr = line.split(' ');
+  const indexOfWarnings = lineArr.findIndex((i) => i === 'warnings');
+
+  return parseInt(lineArr[indexOfWarnings - 1]);
 };
 
 // parse one line from coverage-file
