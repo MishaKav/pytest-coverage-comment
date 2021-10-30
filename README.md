@@ -38,6 +38,7 @@ You can add this action to your GitHub workflow for Ubuntu runners (e.g. runs-on
 | `coverage`           | 30%                            | Percentage of the coverage, get from `pytest-cov`                                     |
 | `color`              | red                            | Color of the percentage. You can see the whole list of [badge colors](#badges-colors) |
 | `coverageHtml`       | ...                            | Html with links to files of missing lines. See the [output-example](#output-example)  |
+| `warnings`           | 2441                           | Number of warnings, get from pytest-cov                                               |
 | `tests`              | 109                            | Total number of tests, get from `junitxml`                                            |
 | `skipped`            | 2                              | Total number of skipped tests, get from `junitxml`                                    |
 | `failures`           | 1                              | Total number of tests with failures, get from `junitxml`                              |
@@ -121,6 +122,14 @@ Example GitHub Action workflow that uses coverage percentage as output (see the 
     echo "Coverage Percantage - ${{ steps.coverageComment.outputs.coverage }}"
     echo "Coverage Color - ${{ steps.coverageComment.outputs.color }}"
     echo "Coverage Html - ${{ steps.coverageComment.outputs.coverageHtml }}"
+
+    echo "Coverage Warnings - ${{ steps.coverageComment.outputs.warnings }}"
+
+    echo "Coverage Errors - ${{ steps.coverageComment.outputs.errors }}"
+    echo "Coverage Failures - ${{ steps.coverageComment.outputs.failures }}"
+    echo "Coverage Skipped - ${{ steps.coverageComment.outputs.skipped }}"
+    echo "Coverage Tests - ${{ steps.coverageComment.outputs.tests }}"
+    echo "Coverage Time - ${{ steps.coverageComment.outputs.time }}"
 ```
 
 Example GitHub Action workflow that passes all params to Pytest Coverage Comment
