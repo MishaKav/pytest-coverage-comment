@@ -130,6 +130,7 @@ Example GitHub Action workflow that uses coverage percentage as output (see the 
     echo "Coverage Skipped - ${{ steps.coverageComment.outputs.skipped }}"
     echo "Coverage Tests - ${{ steps.coverageComment.outputs.tests }}"
     echo "Coverage Time - ${{ steps.coverageComment.outputs.time }}"
+    echo "Not Success Test Info - ${{ steps.coverageComment.outputs.notSuccessTestInfo }}"
 ```
 
 Example GitHub Action workflow that passes all params to Pytest Coverage Comment
