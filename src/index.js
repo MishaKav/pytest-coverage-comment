@@ -59,7 +59,7 @@ const main = async () => {
 
   if (multipleFiles && multipleFiles.length) {
     finalHtml += getMultipleReport(options);
-    core.setOutput('summaryReport', finalHtml);
+    core.setOutput('summaryReport', JSON.stringify(finalHtml));
   } else {
     let report = getCoverageReport(options);
     const { coverage, color, html, warnings } = report;
@@ -83,7 +83,7 @@ const main = async () => {
 
       const notSuccessTestInfo = getNotSuccessTest(options);
       core.setOutput('notSuccessTestInfo', JSON.stringify(notSuccessTestInfo));
-      core.setOutput('summaryReport', summaryReport);
+      core.setOutput('summaryReport', JSON.stringify(summaryReport));
     }
 
     if (html.length + summaryReport.length > MAX_COMMENT_LENGTH) {
