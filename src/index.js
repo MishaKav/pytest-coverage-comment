@@ -59,6 +59,7 @@ const main = async () => {
 
   if (multipleFiles && multipleFiles.length) {
     finalHtml += getMultipleReport(options);
+    core.setOutput('summaryReport', finalHtml);
   } else {
     let report = getCoverageReport(options);
     const { coverage, color, html, warnings } = report;
