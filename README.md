@@ -38,6 +38,7 @@ You can add this action to your GitHub workflow for Ubuntu runners (e.g. runs-on
 | `coverage`           | 30%                            | Percentage of the coverage, get from `pytest-cov`                                     |
 | `color`              | red                            | Color of the percentage. You can see the whole list of [badge colors](#badges-colors) |
 | `coverageHtml`       | ...                            | Html with links to files of missing lines. See the [output-example](#output-example)  |
+| `summaryReport`      | ...                            | Markdown with summaryof: Tests/Skipped/Failures/Errors/Time                           |
 | `warnings`           | 2441                           | Number of warnings, get from pytest-cov                                               |
 | `tests`              | 109                            | Total number of tests, get from `junitxml`                                            |
 | `skipped`            | 2                              | Total number of skipped tests, get from `junitxml`                                    |
@@ -122,6 +123,7 @@ Example GitHub Action workflow that uses coverage percentage as output (see the 
     echo "Coverage Percantage - ${{ steps.coverageComment.outputs.coverage }}"
     echo "Coverage Color - ${{ steps.coverageComment.outputs.color }}"
     echo "Coverage Html - ${{ steps.coverageComment.outputs.coverageHtml }}"
+    echo "Summary Report - ${{ steps.coverageComment.outputs.summaryReport }}"
 
     echo "Coverage Warnings - ${{ steps.coverageComment.outputs.warnings }}"
 
@@ -215,7 +217,7 @@ jobs:
       - name: Update Readme with Coverage Html
         if: ${{ github.ref == 'refs/heads/main' }}
         run: |
-          sed -i '/<!-- Pytest Coverage Comment:Begin -->/,/<!-- Pytest Coverage Comment:End -->/c\<!-- Pytest Coverage Comment:Begin -->\n\${{ steps.coverageComment.outputs.coverageHtml }}\n<!-- Pytest Coverage Comment:End -->' ./README.md
+          sed -i '/<!-- Pytest Coverage Comment:Begin -->/,/<!-- Pytest Coverage Comment:End -->/c\<!-- Pytest Coverage Comment:Begin -->\n\${{ steps.coverageComment.outputs.coverageHtml }}\n${{ steps.coverageComment.outputs.summaryReport }}\n<!-- Pytest Coverage Comment:End -->' ./README.md
 
       - name: Commit & Push changes to Readme
         if: ${{ github.ref == 'refs/heads/main' }}
