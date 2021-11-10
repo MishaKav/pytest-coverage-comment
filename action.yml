@@ -4,35 +4,43 @@ author: 'Misha Kav'
 branding:
   icon: 'message-circle'
   color: 'blue'
+
 inputs:
   github-token:
     description: 'GitHub API Access Token'
     default: ${{ github.token }}
     required: true
+
   pytest-coverage-path:
     description: 'The location of the txt output of pytest-coverage'
     default: './pytest-coverage.txt'
     required: false
+
   title:
     description: 'Title for the coverage report. Useful for monorepo projects'
     default: 'Coverage Report'
     required: false
+
   badge-title:
     description: 'Title for the badge icon'
     default: 'Coverage'
     required: false
+
   hide-badge:
     description: 'Hide badge with percentage'
     default: 'false'
     required: false
+
   hide-report:
     description: 'Hide coverage report'
     default: 'false'
     required: false
+
   hide-comment:
     description: 'Hide the whole comment (use when you need only `output`)'
     default: 'false'
     required: false
+
   junitxml-path:
     description: 'The location of the junitxml path'
     default: ''
@@ -41,29 +49,50 @@ inputs:
     description: 'Title for summary for junitxml'
     default: ''
     required: false
+
   create-new-comment:
     description: 'When false, will update the same comment, otherwise will publish new comment on each run'
     default: 'false'
     required: false
+
   default-branch:
     description: 'This branch name is usefull when generate "coverageHtml", it points direct links to files on this branch (instead of commit). Usually "main" or "master"'
     default: 'main'
     required: false
+
   multiple-files:
-    description: > 
+    description: >
       You can pass array of titles and files to generate single comment with table of results. 
       Single line should look like `Title, ./path/to/pytest-coverage.txt, ./path/to/pytest.xml`
       example: 
         My Title 1, ./data/pytest-coverage_3.txt, ./data/pytest_1.xml
     default: ''
     required: false
+
 outputs:
   coverage:
     description: 'value indicating the coverage percentage of your report based on pytest, example 30%'
   color:
     description: 'color of coverage report'
   coverageHtml:
-    description: 'The html of the coverage report'
+    description: 'The html of the coverage report. Html with links to files of missing lines'
+  summaryReport:
+    description: 'Markdown with summaryof: Tests/Skipped/Failures/Errors/Time'
+  warnings:
+    description: 'Number of warnings, get from pytest-cov'
+  tests:
+    description: 'Total number of tests, get from `junitxml`'
+  skipped:
+    description: 'Total number of skipped tests, get from `junitxml`'
+  failures:
+    description: 'Total number of tests with failures, get from `junitxml`'
+  errors:
+    description: 'Total number of tests with errors, get from `junitxml`'
+  time:
+    description: 'Seconds the took to run all the tests, get from `junitxml`'
+  notSuccessTestInfo:
+    description: 'Info from testcase that has failures/errors/skipped, get from `junitxml`'
+
 runs:
   using: 'node12'
   main: 'dist/index.js'
