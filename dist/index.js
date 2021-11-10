@@ -13622,6 +13622,7 @@ const main = async () => {
 
       const notSuccessTestInfo = getNotSuccessTest(options);
       core.setOutput('notSuccessTestInfo', JSON.stringify(notSuccessTestInfo));
+      core.setOutput('summaryReport', summaryReport);
     }
 
     if (html.length + summaryReport.length > MAX_COMMENT_LENGTH) {
