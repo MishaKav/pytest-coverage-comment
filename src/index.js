@@ -27,13 +27,13 @@ const main = async () => {
   const multipleFiles = core.getMultilineInput('multiple-files', {
     required: false,
   });
-  const { context } = github;
+  const { context, repository } = github;
   const { repo, owner } = context.repo;
   const WATERMARK = `<!-- Pytest Coverage Comment: ${context.job} -->\n`;
   let finalHtml = '';
 
   const options = {
-    repository: context.payload.repository.full_name,
+    repository,
     prefix: `${process.env.GITHUB_WORKSPACE}/`,
     covFile,
     xmlFile,
