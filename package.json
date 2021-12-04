@@ -28,9 +28,9 @@
     "xml2js": "^0.4.23"
   },
   "devDependencies": {
-    "@vercel/ncc": "^0.32.0",
-    "eslint": "^8.3.0",
-    "prettier": "^2.5.0"
+    "@vercel/ncc": "^0.33.0",
+    "eslint": "^8.4.0",
+    "prettier": "^2.5.1"
   },
   "prettier": {
     "semi": true,
