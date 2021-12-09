@@ -33,7 +33,7 @@ const main = async () => {
   let finalHtml = '';
 
   const options = {
-    repository,
+    repository: repository || `${owner}/${repo}`,
     prefix: `${process.env.GITHUB_WORKSPACE}/`,
     covFile,
     xmlFile,
