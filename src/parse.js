@@ -214,7 +214,7 @@ const toTable = (data, options) => {
   console.log(`Generating coverage report`);
   const headTr = toHeadRow(options);
 
-  const totalTr = toTotalRow(totalLine);
+  const totalTr = toTotalRow(totalLine, options);
 
   const folders = makeFolders(coverage, options);
 
@@ -223,7 +223,7 @@ const toTable = (data, options) => {
     .reduce(
       (acc, key) => [
         ...acc,
-        toFolderTd(key),
+        toFolderTd(key, options),
         ...folders[key].map((file) => toRow(file, key !== '', options)),
       ],
       []
@@ -251,10 +251,11 @@ const toRow = (item, indent = false, options) => {
 };
 
 // make summary row - tr
-const toTotalRow = (item) => {
+const toTotalRow = (item, options) => {
   const { name, stmts, miss, cover } = item;
+  const emptyCell = options.hasMissing ? '<td>&nbsp;</td>' : '';
 
-  return `<tr><td><b>${name}</b></td><td><b>${stmts}</b></td><td><b>${miss}</b></td><td><b>${cover}</b></td><td>&nbsp;</td></tr>`;
+  return `<tr><td><b>${name}</b></td><td><b>${stmts}</b></td><td><b>${miss}</b></td><td><b>${cover}</b></td>${emptyCell}</tr>`;
 };
 
 // make fileName cell - td
@@ -269,12 +270,13 @@ const toFileNameTd = (item, indent = false, options) => {
 };
 
 // make folder row - tr
-const toFolderTd = (path) => {
+const toFolderTd = (path, options) => {
   if (path === '') {
     return '';
   }
 
-  return `<tr><td colspan="5"><b>${path}</b></td></tr>`;
+  const colspan = options.hasMissing ? 5 : 4;
+  return `<tr><td colspan="${colspan}"><b>${path}</b></td></tr>`;
 };
 
 // make missing cell - td
