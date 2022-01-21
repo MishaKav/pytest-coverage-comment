@@ -72,7 +72,7 @@ const main = async () => {
 
   if (options.reportOnlyChangedFiles) {
     const changedFiles = await getChangedFiles(options);
-    console.log('changedFiles', JSON.stringify(changedFiles));
+    options.changedFiles = changedFiles;
   }
 
   if (multipleFiles && multipleFiles.length) {
@@ -96,6 +96,7 @@ const main = async () => {
       const valuesToExport = { errors, failures, skipped, tests, time };
 
       Object.entries(valuesToExport).forEach(([key, value]) => {
+        core.info(`${key}: ${value}`);
         core.setOutput(key, value);
       });
 
@@ -106,10 +107,10 @@ const main = async () => {
 
     if (html.length + summaryReport.length > MAX_COMMENT_LENGTH) {
       // generate new html without report
-      console.warn(
+      core.warning(
         `Your comment is too long (maximum is ${MAX_COMMENT_LENGTH} characters), coverage report will not be added.`
       );
-      console.warn(
+      core.warning(
         `Try add: "--cov-report=term-missing:skip-covered", or add "hide-report: true" or switch to "multiple-files" mode`
       );
       report = getSummaryReport({ ...options, hideReport: true });
@@ -119,17 +120,22 @@ const main = async () => {
     finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
 
     if (coverage) {
+      core.info(`coverage: ${coverage}`);
+      core.info(`color: ${color}`);
+      core.info(`warnings: ${warnings}`);
+
       core.setOutput('coverage', coverage);
       core.setOutput('color', color);
       core.setOutput('warnings', warnings);
-      console.log(
+
+      core.info(
         `Publishing ${title}. Total coverage: ${coverage}. Color: ${color}. Warnings: ${warnings}`
       );
     }
   }
 
   if (!finalHtml || options.hideComment) {
-    console.log('Nothing to report');
+    core.info('Nothing to report');
     return;
   }
   const body = WATERMARK + finalHtml;
@@ -138,7 +144,7 @@ const main = async () => {
   const issue_number = payload.pull_request ? payload.pull_request.number : 0;
 
   if (eventName === 'push') {
-    console.log('Create commit comment');
+    core.info('Create commit comment');
     await octokit.repos.createCommitComment({
       repo,
       owner,
@@ -149,7 +155,7 @@ const main = async () => {
 
   if (eventName === 'pull_request') {
     if (createNewComment) {
-      console.log('Creating a new comment');
+      core.info('Creating a new comment');
 
       await octokit.issues.createComment({
         repo,
@@ -171,7 +177,7 @@ const main = async () => {
       );
 
       if (comment) {
-        console.log('Founded previous commit, updating');
+        core.info('Founded previous commit, updating');
         await octokit.issues.updateComment({
           repo,
           owner,
@@ -179,7 +185,7 @@ const main = async () => {
           body,
         });
       } else {
-        console.log('No previous commit founded, creating a new one');
+        core.info('No previous commit founded, creating a new one');
         await octokit.issues.createComment({
           repo,
           owner,
@@ -319,6 +325,6 @@ const getChangedFiles = async (options) => {
 };
 
 main().catch((err) => {
-  console.log(err);
+  core.error(err);
   core.setFailed(err.message);
 });

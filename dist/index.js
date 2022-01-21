@@ -12786,6 +12786,7 @@ function wrappy (fn, cb) {
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const xml2js = __nccwpck_require__(6189);
+const core = __nccwpck_require__(2186);
 const { getPathToFile, getContentFile } = __nccwpck_require__(1608);
 
 const getXmlContent = (options) => {
@@ -12800,7 +12801,7 @@ const getXmlContent = (options) => {
       return content;
     }
   } catch (error) {
-    console.log(`Error: Could not get the xml string successfully.`, error);
+    core.error(`Could not get the xml string successfully.`, error);
   }
 
   return null;
@@ -12826,7 +12827,7 @@ const getSummaryReport = (options) => {
       return toMarkdown(parsedXml, options);
     }
   } catch (error) {
-    console.log(`Error: on generating summary report`, error);
+    core.error(`Error on generating summary report`, error);
   }
 
   return '';
@@ -12842,7 +12843,7 @@ const getSummary = (data) => {
 
   const parsed = parser.parseString(data);
   if (!parsed) {
-    console.log(`JUnitXml file is not XML or not well formed`);
+    core.warning(`JUnitXml file is not XML or not well formed`);
     return '';
   }
 
@@ -12858,7 +12859,7 @@ const getTestCases = (data) => {
 
   const parsed = parser.parseString(data);
   if (!parsed) {
-    console.log(`JUnitXml file is not XML or not well formed`);
+    core.warning(`JUnitXml file is not XML or not well formed`);
     return '';
   }
 
@@ -12891,7 +12892,7 @@ const getNotSuccessTest = (options) => {
       };
     }
   } catch (error) {
-    console.log(`Error: Could not get notSuccessTestInfo successfully.`, error);
+    core.warning(`Could not get notSuccessTestInfo successfully.`, error);
   }
 
   return initData;
@@ -12974,6 +12975,12 @@ const getMultipleReport = (options) => {
         table += `| ${l.title} | ${coverage.html}`;
 
         if (i === 0) {
+          core.group(internalOptions.covFile);
+          core.info('coverage:', coverage.coverage);
+          core.info('color:', coverage.color);
+          core.info('warnings:', coverage.warnings);
+          core.endGroup();
+
           core.setOutput('coverage', coverage.coverage);
           core.setOutput('color', coverage.color);
           core.setOutput('warnings', coverage.warnings);
@@ -12986,9 +12993,12 @@ const getMultipleReport = (options) => {
             const { errors, failures, skipped, tests, time } = summary;
             const valuesToExport = { errors, failures, skipped, tests, time };
 
+            core.group(internalOptions.xmlFile);
             Object.entries(valuesToExport).forEach(([key, value]) => {
               core.setOutput(key, value);
+              core.info(`${key}: ${value}`);
             });
+            core.endGroup();
           }
         }
       } else if (summary) {
@@ -13007,7 +13017,7 @@ const getMultipleReport = (options) => {
 
     return table;
   } catch (error) {
-    console.log(`Error: on generating summary report`, error);
+    core.error(`Error on generating summary report`, error);
   }
 
   return '';
@@ -13021,6 +13031,7 @@ module.exports = { getMultipleReport };
 /***/ 3248:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
+const core = __nccwpck_require__(2186);
 const { getPathToFile, getContentFile } = __nccwpck_require__(1608);
 
 // return true if "covergae file" include all special words
@@ -13051,7 +13062,7 @@ const getCoverageReport = (options) => {
     const isValid = isValidCoverageContent(content);
 
     if (content && !isValid) {
-      console.log(
+      core.error(
         `Error: coverage file "${covFilePath}" has bad format or wrong data`
       );
     }
@@ -13065,7 +13076,7 @@ const getCoverageReport = (options) => {
       return { html, coverage, color, warnings };
     }
   } catch (error) {
-    console.log(`Error: on generating coverage report`, error);
+    core.error(`Error on generating coverage report`, error);
   }
 
   return { html: '', coverage: '0', color: 'red', warnings: 0 };
@@ -13228,13 +13239,13 @@ const toTable = (data, options) => {
   const coverage = parse(data);
 
   if (!coverage) {
-    console.log(`Coverage file not well formed`);
+    core.warning(`Coverage file not well formed`);
     return null;
   }
   const totalLine = getTotal(data);
   options.hasMissing = coverage.some((c) => c.missing);
 
-  console.log(`Generating coverage report`);
+  core.info(`Generating coverage report`);
   const headTr = toHeadRow(options);
 
   const totalTr = toTotalRow(totalLine, options);
@@ -13330,6 +13341,7 @@ module.exports = { getCoverageReport };
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const fs = __nccwpck_require__(7147);
+const core = __nccwpck_require__(2186);
 
 const getPathToFile = (pathToFile) => {
   if (!pathToFile) {
@@ -13347,22 +13359,21 @@ const getContentFile = (pathToFile) => {
     return null;
   }
 
-  console.log(`Try reading file '${pathToFile}'`);
   const fileExists = fs.existsSync(pathToFile);
 
   if (!fileExists) {
-    console.log(`File '${pathToFile}' doesn't exist`);
+    core.warning(`File '${pathToFile}' doesn't exist`);
     return null;
   }
 
   const content = fs.readFileSync(pathToFile, 'utf8');
 
   if (!content) {
-    console.log(`No content found in file '${pathToFile}'`);
+    core.warning(`No content found in file '${pathToFile}'`);
     return null;
   }
 
-  console.log(`File read successfully '${pathToFile}'`);
+  core.info(`File read successfully '${pathToFile}'`);
   return content;
 };
 
@@ -13614,7 +13625,7 @@ const main = async () => {
 
   if (options.reportOnlyChangedFiles) {
     const changedFiles = await getChangedFiles(options);
-    console.log('changedFiles', JSON.stringify(changedFiles));
+    options.changedFiles = changedFiles;
   }
 
   if (multipleFiles && multipleFiles.length) {
@@ -13638,6 +13649,7 @@ const main = async () => {
       const valuesToExport = { errors, failures, skipped, tests, time };
 
       Object.entries(valuesToExport).forEach(([key, value]) => {
+        core.info(`${key}: ${value}`);
         core.setOutput(key, value);
       });
 
@@ -13648,10 +13660,10 @@ const main = async () => {
 
     if (html.length + summaryReport.length > MAX_COMMENT_LENGTH) {
       // generate new html without report
-      console.warn(
+      core.warning(
         `Your comment is too long (maximum is ${MAX_COMMENT_LENGTH} characters), coverage report will not be added.`
       );
-      console.warn(
+      core.warning(
         `Try add: "--cov-report=term-missing:skip-covered", or add "hide-report: true" or switch to "multiple-files" mode`
       );
       report = getSummaryReport({ ...options, hideReport: true });
@@ -13661,17 +13673,22 @@ const main = async () => {
     finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
 
     if (coverage) {
+      core.info(`coverage: ${coverage}`);
+      core.info(`color: ${color}`);
+      core.info(`warnings: ${warnings}`);
+
       core.setOutput('coverage', coverage);
       core.setOutput('color', color);
       core.setOutput('warnings', warnings);
-      console.log(
+
+      core.info(
         `Publishing ${title}. Total coverage: ${coverage}. Color: ${color}. Warnings: ${warnings}`
       );
     }
   }
 
   if (!finalHtml || options.hideComment) {
-    console.log('Nothing to report');
+    core.info('Nothing to report');
     return;
   }
   const body = WATERMARK + finalHtml;
@@ -13680,7 +13697,7 @@ const main = async () => {
   const issue_number = payload.pull_request ? payload.pull_request.number : 0;
 
   if (eventName === 'push') {
-    console.log('Create commit comment');
+    core.info('Create commit comment');
     await octokit.repos.createCommitComment({
       repo,
       owner,
@@ -13691,7 +13708,7 @@ const main = async () => {
 
   if (eventName === 'pull_request') {
     if (createNewComment) {
-      console.log('Creating a new comment');
+      core.info('Creating a new comment');
 
       await octokit.issues.createComment({
         repo,
@@ -13713,7 +13730,7 @@ const main = async () => {
       );
 
       if (comment) {
-        console.log('Founded previous commit, updating');
+        core.info('Founded previous commit, updating');
         await octokit.issues.updateComment({
           repo,
           owner,
@@ -13721,7 +13738,7 @@ const main = async () => {
           body,
         });
       } else {
-        console.log('No previous commit founded, creating a new one');
+        core.info('No previous commit founded, creating a new one');
         await octokit.issues.createComment({
           repo,
           owner,
@@ -13861,7 +13878,7 @@ const getChangedFiles = async (options) => {
 };
 
 main().catch((err) => {
-  console.log(err);
+  core.error(err);
   core.setFailed(err.message);
 });
 

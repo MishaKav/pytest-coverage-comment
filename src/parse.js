@@ -1,3 +1,4 @@
+const core = require('@actions/core');
 const { getPathToFile, getContentFile } = require('./utils');
 
 // return true if "covergae file" include all special words
@@ -28,7 +29,7 @@ const getCoverageReport = (options) => {
     const isValid = isValidCoverageContent(content);
 
     if (content && !isValid) {
-      console.log(
+      core.error(
         `Error: coverage file "${covFilePath}" has bad format or wrong data`
       );
     }
@@ -42,7 +43,7 @@ const getCoverageReport = (options) => {
       return { html, coverage, color, warnings };
     }
   } catch (error) {
-    console.log(`Error: on generating coverage report`, error);
+    core.error(`Error on generating coverage report`, error);
   }
 
   return { html: '', coverage: '0', color: 'red', warnings: 0 };
@@ -205,13 +206,13 @@ const toTable = (data, options) => {
   const coverage = parse(data);
 
   if (!coverage) {
-    console.log(`Coverage file not well formed`);
+    core.warning(`Coverage file not well formed`);
     return null;
   }
   const totalLine = getTotal(data);
   options.hasMissing = coverage.some((c) => c.missing);
 
-  console.log(`Generating coverage report`);
+  core.info(`Generating coverage report`);
   const headTr = toHeadRow(options);
 
   const totalTr = toTotalRow(totalLine, options);

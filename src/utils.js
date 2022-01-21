@@ -1,4 +1,5 @@
 const fs = require('fs');
+const core = require('@actions/core');
 
 const getPathToFile = (pathToFile) => {
   if (!pathToFile) {
@@ -16,22 +17,21 @@ const getContentFile = (pathToFile) => {
     return null;
   }
 
-  console.log(`Try reading file '${pathToFile}'`);
   const fileExists = fs.existsSync(pathToFile);
 
   if (!fileExists) {
-    console.log(`File '${pathToFile}' doesn't exist`);
+    core.warning(`File '${pathToFile}' doesn't exist`);
     return null;
   }
 
   const content = fs.readFileSync(pathToFile, 'utf8');
 
   if (!content) {
-    console.log(`No content found in file '${pathToFile}'`);
+    core.warning(`No content found in file '${pathToFile}'`);
     return null;
   }
 
-  console.log(`File read successfully '${pathToFile}'`);
+  core.info(`File read successfully '${pathToFile}'`);
   return content;
 };
 
