@@ -229,7 +229,7 @@ const toTable = (data, options) => {
           .filter(
             (file) =>
               options.reportOnlyChangedFiles &&
-              options.changedFiles.all.some((f) => f.includes(file))
+              !options.changedFiles.all.some((f) => f.includes(file))
           )
           .map((file) => toRow(file, key !== '', options)),
       ],
