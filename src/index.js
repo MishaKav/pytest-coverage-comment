@@ -29,6 +29,7 @@ const main = async () => {
   });
   const { context, repository } = github;
   const { repo, owner } = context.repo;
+  const { eventName, payload } = context;
   const WATERMARK = `<!-- Pytest Coverage Comment: ${context.job} -->\n`;
   let finalHtml = '';
 
@@ -48,12 +49,12 @@ const main = async () => {
     multipleFiles,
   };
 
-  if (context.eventName === 'pull_request') {
-    options.commit = context.payload.pull_request.head.sha;
-    options.head = context.payload.pull_request.head.ref;
-    options.base = context.payload.pull_request.base.ref;
-  } else if (context.eventName === 'push') {
-    options.commit = context.payload.after;
+  if (eventName === 'pull_request') {
+    options.commit = payload.pull_request.head.sha;
+    options.head = payload.pull_request.head.ref;
+    options.base = payload.pull_request.base.ref;
+  } else if (eventName === 'push') {
+    options.commit = payload.after;
     options.head = context.ref;
   }
 
@@ -117,11 +118,9 @@ const main = async () => {
   const body = WATERMARK + finalHtml;
   const octokit = github.getOctokit(token);
 
-  const issue_number = context.payload.pull_request
-    ? context.payload.pull_request.number
-    : 0;
+  const issue_number = payload.pull_request ? payload.pull_request.number : 0;
 
-  if (context.eventName === 'push') {
+  if (eventName === 'push') {
     console.log('Create commit comment');
     await octokit.repos.createCommitComment({
       repo,
@@ -131,7 +130,7 @@ const main = async () => {
     });
   }
 
-  if (context.eventName === 'pull_request') {
+  if (eventName === 'pull_request') {
     if (createNewComment) {
       console.log('Creating a new comment');
 
