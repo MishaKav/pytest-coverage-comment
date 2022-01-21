@@ -43,7 +43,7 @@ const getCoverageReport = (options) => {
       return { html, coverage, color, warnings };
     }
   } catch (error) {
-    core.error(`Error on generating coverage report`, error);
+    core.error(`Generating coverage report`, error);
   }
 
   return { html: '', coverage: '0', color: 'red', warnings: 0 };

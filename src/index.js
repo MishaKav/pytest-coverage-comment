@@ -290,38 +290,23 @@ const getChangedFiles = async (options) => {
       }
     }
 
-    // Format the arrays of changed files.
-    let allFormatted,
-      addedFormatted,
-      modifiedFormatted,
-      removedFormatted,
-      renamedFormatted,
-      addedModifiedFormatted;
-
-    allFormatted = all.join(',');
-    addedFormatted = added.join(',');
-    modifiedFormatted = modified.join(',');
-    removedFormatted = removed.join(',');
-    renamedFormatted = renamed.join(',');
-    addedModifiedFormatted = addedModified.join(',');
-
     // Log the output values.
-    core.info(`All: ${allFormatted}`);
-    core.info(`Added: ${addedFormatted}`);
-    core.info(`Modified: ${modifiedFormatted}`);
-    core.info(`Removed: ${removedFormatted}`);
-    core.info(`Renamed: ${renamedFormatted}`);
-    core.info(`Added or modified: ${addedModifiedFormatted}`);
+    core.info('All: ', all.join(','));
+    core.info('Added:', added.join(', '));
+    core.info('Modified: ', modified.join(', '));
+    core.info('Removed: ', removed.join(', '));
+    core.info('Renamed: ', renamed.join(', '));
+    core.info('Added or modified: ', addedModified.join(', '));
 
     core.endGroup();
 
     return {
-      all: allFormatted,
-      [FILE_STATUSES.ADDED]: addedFormatted,
-      [FILE_STATUSES.MODIFIED]: modifiedFormatted,
-      [FILE_STATUSES.REMOVED]: removedFormatted,
-      [FILE_STATUSES.RENAMED]: renamedFormatted,
-      AddedOrModified: addedModifiedFormatted,
+      all: all,
+      [FILE_STATUSES.ADDED]: added,
+      [FILE_STATUSES.MODIFIED]: modified,
+      [FILE_STATUSES.REMOVED]: removed,
+      [FILE_STATUSES.RENAMED]: renamed,
+      AddedOrModified: addedModified,
     };
   } catch (error) {
     core.setFailed(error.message);
