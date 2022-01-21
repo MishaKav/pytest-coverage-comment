@@ -290,13 +290,12 @@ const getChangedFiles = async (options) => {
       }
     }
 
-    // Log the output values.
-    core.info('All: ', all.join(','));
-    core.info('Added:', added.join(', '));
-    core.info('Modified: ', modified.join(', '));
-    core.info('Removed: ', removed.join(', '));
-    core.info('Renamed: ', renamed.join(', '));
-    core.info('Added or modified: ', addedModified.join(', '));
+    core.info(`All: ${all.join(',')}`);
+    core.info(`Added: ${added.join(', ')}`);
+    core.info(`Modified: ${modified.join(', ')}`);
+    core.info(`Removed: ${removed.join(', ')}`);
+    core.info(`Renamed: ${renamed.join(', ')}`);
+    core.info(`Added or modified: ${addedModified.join(', ')}`);
 
     core.endGroup();
 

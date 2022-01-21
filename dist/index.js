@@ -12892,7 +12892,9 @@ const getNotSuccessTest = (options) => {
       };
     }
   } catch (error) {
-    core.warning(`Could not get notSuccessTestInfo successfully.`, error);
+    core.warning(
+      `Could not get notSuccessTestInfo successfully. ${error.message}`
+    );
   }
 
   return initData;
@@ -12976,9 +12978,9 @@ const getMultipleReport = (options) => {
 
         if (i === 0) {
           core.startGroup(internalOptions.covFile);
-          core.info('coverage:', coverage.coverage);
-          core.info('color:', coverage.color);
-          core.info('warnings:', coverage.warnings);
+          core.info(`coverage: ${coverage.coverage}`);
+          core.info(`color: ${coverage.color}`);
+          core.info(`warnings: ${coverage.warnings}`);
           core.endGroup();
 
           core.setOutput('coverage', coverage.coverage);
@@ -13368,18 +13370,18 @@ const getContentFile = (pathToFile) => {
   const fileExists = fs.existsSync(pathToFile);
 
   if (!fileExists) {
-    core.warning(`File '${pathToFile}' doesn't exist`);
+    core.warning(`File "${pathToFile}" doesn't exist`);
     return null;
   }
 
   const content = fs.readFileSync(pathToFile, 'utf8');
 
   if (!content) {
-    core.warning(`No content found in file '${pathToFile}'`);
+    core.warning(`No content found in file "${pathToFile}"`);
     return null;
   }
 
-  core.info(`File read successfully '${pathToFile}'`);
+  core.info(`File read successfully "${pathToFile}"`);
   return content;
 };
 
@@ -13849,13 +13851,12 @@ const getChangedFiles = async (options) => {
       }
     }
 
-    // Log the output values.
-    core.info('All: ', all.join(','));
-    core.info('Added:', added.join(', '));
-    core.info('Modified: ', modified.join(', '));
-    core.info('Removed: ', removed.join(', '));
-    core.info('Renamed: ', renamed.join(', '));
-    core.info('Added or modified: ', addedModified.join(', '));
+    core.info(`All: ${all.join(',')}`);
+    core.info(`Added: ${added.join(', ')}`);
+    core.info(`Modified: ${modified.join(', ')}`);
+    core.info(`Removed: ${removed.join(', ')}`);
+    core.info(`Renamed: ${renamed.join(', ')}`);
+    core.info(`Added or modified: ${addedModified.join(', ')}`);
 
     core.endGroup();
 

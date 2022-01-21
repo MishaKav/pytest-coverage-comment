@@ -20,18 +20,18 @@ const getContentFile = (pathToFile) => {
   const fileExists = fs.existsSync(pathToFile);
 
   if (!fileExists) {
-    core.warning(`File '${pathToFile}' doesn't exist`);
+    core.warning(`File "${pathToFile}" doesn't exist`);
     return null;
   }
 
   const content = fs.readFileSync(pathToFile, 'utf8');
 
   if (!content) {
-    core.warning(`No content found in file '${pathToFile}'`);
+    core.warning(`No content found in file "${pathToFile}"`);
     return null;
   }
 
-  core.info(`File read successfully '${pathToFile}'`);
+  core.info(`File read successfully "${pathToFile}"`);
   return content;
 };
 

@@ -52,9 +52,9 @@ const getMultipleReport = (options) => {
 
         if (i === 0) {
           core.startGroup(internalOptions.covFile);
-          core.info('coverage:', coverage.coverage);
-          core.info('color:', coverage.color);
-          core.info('warnings:', coverage.warnings);
+          core.info(`coverage: ${coverage.coverage}`);
+          core.info(`color: ${coverage.color}`);
+          core.info(`warnings: ${coverage.warnings}`);
           core.endGroup();
 
           core.setOutput('coverage', coverage.coverage);

@@ -105,7 +105,9 @@ const getNotSuccessTest = (options) => {
       };
     }
   } catch (error) {
-    core.warning(`Could not get notSuccessTestInfo successfully.`, error);
+    core.warning(
+      `Could not get notSuccessTestInfo successfully. ${error.message}`
+    );
   }
 
   return initData;
