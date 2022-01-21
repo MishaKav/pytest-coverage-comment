@@ -59,9 +59,17 @@ const main = async () => {
     hideBadge: false,
     hideReport: false,
     createNewComment: false,
+    reportOnlyChangedFiles: true,
     hideComment: false,
     xmlTitle: '',
-    multipleFiles,
+    // multipleFiles,
+    changedFiles: {
+      all: [
+        'functions/example_completed/example_completed.py',
+        'functions/example_manager/example_manager.py',
+        'functions/example_manager/example_static.py',
+      ],
+    },
   };
 
   if (options.multipleFiles && options.multipleFiles.length) {

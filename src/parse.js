@@ -221,19 +221,24 @@ const toTable = (data, options) => {
 
   const rows = Object.keys(folders)
     .sort()
+    .filter((folderPath) => {
+      if (!options.reportOnlyChangedFiles) {
+        return true;
+      }
+
+      const allFilesInFolder = Object.values(folders[folderPath]).map(
+        (f) => f.name
+      );
+
+      return allFilesInFolder.every((f) =>
+        options.changedFiles.all.some((c) => c.includes(f))
+      );
+    })
     .reduce(
       (acc, key) => [
         ...acc,
         toFolderTd(key, options),
-        ...folders[key]
-          .filter((file) => {
-            console.log(file);
-            return (
-              options.reportOnlyChangedFiles &&
-              !options.changedFiles.all.some((f) => f.includes(file))
-            );
-          })
-          .map((file) => toRow(file, key !== '', options)),
+        ...folders[key].map((file) => toRow(file, key !== '', options)),
       ],
       []
     );
