@@ -51,7 +51,7 @@ const getMultipleReport = (options) => {
         table += `| ${l.title} | ${coverage.html}`;
 
         if (i === 0) {
-          core.group(internalOptions.covFile);
+          core.startGroup(internalOptions.covFile);
           core.info('coverage:', coverage.coverage);
           core.info('color:', coverage.color);
           core.info('warnings:', coverage.warnings);
@@ -69,7 +69,7 @@ const getMultipleReport = (options) => {
             const { errors, failures, skipped, tests, time } = summary;
             const valuesToExport = { errors, failures, skipped, tests, time };
 
-            core.group(internalOptions.xmlFile);
+            core.startGroup(internalOptions.xmlFile);
             Object.entries(valuesToExport).forEach(([key, value]) => {
               core.setOutput(key, value);
               core.info(`${key}: ${value}`);

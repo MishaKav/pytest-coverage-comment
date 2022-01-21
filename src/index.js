@@ -120,17 +120,15 @@ const main = async () => {
     finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
 
     if (coverage) {
+      core.startGroup(options.covFile);
       core.info(`coverage: ${coverage}`);
       core.info(`color: ${color}`);
       core.info(`warnings: ${warnings}`);
+      core.endGroup();
 
       core.setOutput('coverage', coverage);
       core.setOutput('color', color);
       core.setOutput('warnings', warnings);
-
-      core.info(
-        `Publishing ${title}. Total coverage: ${coverage}. Color: ${color}. Warnings: ${warnings}`
-      );
     }
   }
 
@@ -223,6 +221,7 @@ const getChangedFiles = async (options) => {
         );
     }
 
+    core.startGroup('Changed files');
     // Log the base and head commits
     core.info(`Base commit: ${base}`);
     core.info(`Head commit: ${head}`);
@@ -312,6 +311,8 @@ const getChangedFiles = async (options) => {
     core.info(`Removed: ${removedFormatted}`);
     core.info(`Renamed: ${renamedFormatted}`);
     core.info(`Added or modified: ${addedModifiedFormatted}`);
+
+    core.endGroup();
 
     return {
       [FILE_STATUSES.ADDED]: addedFormatted,
