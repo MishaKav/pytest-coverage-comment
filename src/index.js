@@ -111,7 +111,7 @@ const main = async () => {
         `Your comment is too long (maximum is ${MAX_COMMENT_LENGTH} characters), coverage report will not be added.`
       );
       core.warning(
-        `Try add: "--cov-report=term-missing:skip-covered", or add "hide-report: true" or switch to "multiple-files" mode`
+        `Try add: "--cov-report=term-missing:skip-covered", or add "hide-report: true", or add "report-only-changed-files: true", or switch to "multiple-files" mode`
       );
       report = getSummaryReport({ ...options, hideReport: true });
     }

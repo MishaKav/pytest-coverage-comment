@@ -149,6 +149,7 @@ Example GitHub Action workflow that passes all params to Pytest Coverage Comment
     hide-report: false
     create-new-comment: false
     hide-comment: false
+    report-only-changed-files: false
     junitxml-path: ./path-to-file/pytest.xml
     junitxml-title: My JUnit Xml Summary Title
 ```
