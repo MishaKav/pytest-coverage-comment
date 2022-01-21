@@ -12801,7 +12801,7 @@ const getXmlContent = (options) => {
       return content;
     }
   } catch (error) {
-    core.error(`Could not get the xml string successfully.`, error);
+    core.error(`Could not get the xml string successfully. ${error.message}`);
   }
 
   return null;
@@ -12827,7 +12827,7 @@ const getSummaryReport = (options) => {
       return toMarkdown(parsedXml, options);
     }
   } catch (error) {
-    core.error(`Error on generating summary report`, error);
+    core.error(`Error on generating summary report. ${error.message}`);
   }
 
   return '';
@@ -13019,7 +13019,7 @@ const getMultipleReport = (options) => {
 
     return table;
   } catch (error) {
-    core.error(`Error on generating summary report`, error);
+    core.error(`Error on generating summary report. ${error.message}`);
   }
 
   return '';
@@ -13078,7 +13078,7 @@ const getCoverageReport = (options) => {
       return { html, coverage, color, warnings };
     }
   } catch (error) {
-    core.error(`Generating coverage report`, error);
+    core.error(`Generating coverage report. ${error.message}`);
   }
 
   return { html: '', coverage: '0', color: 'red', warnings: 0 };
@@ -13261,11 +13261,13 @@ const toTable = (data, options) => {
         ...acc,
         toFolderTd(key, options),
         ...folders[key]
-          .filter(
-            (file) =>
+          .filter((file) => {
+            console.log(file);
+            return (
               options.reportOnlyChangedFiles &&
               !options.changedFiles.all.some((f) => f.includes(file))
-          )
+            );
+          })
           .map((file) => toRow(file, key !== '', options)),
       ],
       []

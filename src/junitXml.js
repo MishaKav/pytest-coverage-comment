@@ -14,7 +14,7 @@ const getXmlContent = (options) => {
       return content;
     }
   } catch (error) {
-    core.error(`Could not get the xml string successfully.`, error);
+    core.error(`Could not get the xml string successfully. ${error.message}`);
   }
 
   return null;
@@ -40,7 +40,7 @@ const getSummaryReport = (options) => {
       return toMarkdown(parsedXml, options);
     }
   } catch (error) {
-    core.error(`Error on generating summary report`, error);
+    core.error(`Error on generating summary report. ${error.message}`);
   }
 
   return '';

@@ -93,7 +93,7 @@ const getMultipleReport = (options) => {
 
     return table;
   } catch (error) {
-    core.error(`Error on generating summary report`, error);
+    core.error(`Error on generating summary report. ${error.message}`);
   }
 
   return '';
