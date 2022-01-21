@@ -1,4 +1,5 @@
 const xml2js = require('xml2js');
+const core = require('@actions/core');
 const { getPathToFile, getContentFile } = require('./utils');
 
 const getXmlContent = (options) => {
@@ -13,7 +14,7 @@ const getXmlContent = (options) => {
       return content;
     }
   } catch (error) {
-    console.log(`Error: Could not get the xml string successfully.`, error);
+    core.error(`Could not get the xml string successfully. ${error.message}`);
   }
 
   return null;
@@ -39,7 +40,7 @@ const getSummaryReport = (options) => {
       return toMarkdown(parsedXml, options);
     }
   } catch (error) {
-    console.log(`Error: on generating summary report`, error);
+    core.error(`Error on generating summary report. ${error.message}`);
   }
 
   return '';
@@ -55,7 +56,7 @@ const getSummary = (data) => {
 
   const parsed = parser.parseString(data);
   if (!parsed) {
-    console.log(`JUnitXml file is not XML or not well formed`);
+    core.warning(`JUnitXml file is not XML or not well formed`);
     return '';
   }
 
@@ -71,7 +72,7 @@ const getTestCases = (data) => {
 
   const parsed = parser.parseString(data);
   if (!parsed) {
-    console.log(`JUnitXml file is not XML or not well formed`);
+    core.warning(`JUnitXml file is not XML or not well formed`);
     return '';
   }
 
@@ -104,7 +105,9 @@ const getNotSuccessTest = (options) => {
       };
     }
   } catch (error) {
-    console.log(`Error: Could not get notSuccessTestInfo successfully.`, error);
+    core.warning(
+      `Could not get notSuccessTestInfo successfully. ${error.message}`
+    );
   }
 
   return initData;

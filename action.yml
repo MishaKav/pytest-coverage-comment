@@ -41,10 +41,16 @@ inputs:
     default: 'false'
     required: false
 
+  report-only-changed-files:
+    description: 'Show in report only changed files for this commit, and not all files'
+    default: 'false'
+    required: false
+
   junitxml-path:
     description: 'The location of the junitxml path'
     default: ''
     required: false
+
   junitxml-title:
     description: 'Title for summary for junitxml'
     default: ''

@@ -51,6 +51,12 @@ const getMultipleReport = (options) => {
         table += `| ${l.title} | ${coverage.html}`;
 
         if (i === 0) {
+          core.startGroup(internalOptions.covFile);
+          core.info(`coverage: ${coverage.coverage}`);
+          core.info(`color: ${coverage.color}`);
+          core.info(`warnings: ${coverage.warnings}`);
+          core.endGroup();
+
           core.setOutput('coverage', coverage.coverage);
           core.setOutput('color', coverage.color);
           core.setOutput('warnings', coverage.warnings);
@@ -63,9 +69,12 @@ const getMultipleReport = (options) => {
             const { errors, failures, skipped, tests, time } = summary;
             const valuesToExport = { errors, failures, skipped, tests, time };
 
+            core.startGroup(internalOptions.xmlFile);
             Object.entries(valuesToExport).forEach(([key, value]) => {
               core.setOutput(key, value);
+              core.info(`${key}: ${value}`);
             });
+            core.endGroup();
           }
         }
       } else if (summary) {
@@ -84,7 +93,7 @@ const getMultipleReport = (options) => {
 
     return table;
   } catch (error) {
-    console.log(`Error: on generating summary report`, error);
+    core.error(`Error on generating summary report. ${error.message}`);
   }
 
   return '';
