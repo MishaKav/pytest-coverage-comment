@@ -13745,8 +13745,8 @@ const getChangedFiles = async (options) => {
 
     switch (eventName) {
       case 'pull_request':
-        base = payload.pull_request?.base?.sha;
-        head = payload.pull_request?.head?.sha;
+        base = payload.pull_request.base.sha;
+        head = payload.pull_request.head.sha;
         break;
       case 'push':
         base = payload.before;
