@@ -195,6 +195,7 @@ const main = async () => {
   }
 };
 
+// generate object of all files that changed based on commit through Github API
 const getChangedFiles = async (options) => {
   try {
     const { context } = github;
@@ -315,10 +316,12 @@ const getChangedFiles = async (options) => {
     core.endGroup();
 
     return {
+      all: allFormatted,
       [FILE_STATUSES.ADDED]: addedFormatted,
       [FILE_STATUSES.MODIFIED]: modifiedFormatted,
       [FILE_STATUSES.REMOVED]: removedFormatted,
       [FILE_STATUSES.RENAMED]: renamedFormatted,
+      AddedOrModified: addedModifiedFormatted,
     };
   } catch (error) {
     core.setFailed(error.message);

@@ -225,7 +225,13 @@ const toTable = (data, options) => {
       (acc, key) => [
         ...acc,
         toFolderTd(key, options),
-        ...folders[key].map((file) => toRow(file, key !== '', options)),
+        ...folders[key]
+          .filter(
+            (file) =>
+              options.reportOnlyChangedFiles &&
+              options.changedFiles.all.some((f) => f.includes(file))
+          )
+          .map((file) => toRow(file, key !== '', options)),
       ],
       []
     );

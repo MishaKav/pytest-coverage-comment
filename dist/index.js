@@ -13258,7 +13258,13 @@ const toTable = (data, options) => {
       (acc, key) => [
         ...acc,
         toFolderTd(key, options),
-        ...folders[key].map((file) => toRow(file, key !== '', options)),
+        ...folders[key]
+          .filter(
+            (file) =>
+              options.reportOnlyChangedFiles &&
+              options.changedFiles.all.some((f) => f.includes(file))
+          )
+          .map((file) => toRow(file, key !== '', options)),
       ],
       []
     );
@@ -13748,6 +13754,7 @@ const main = async () => {
   }
 };
 
+// generate object of all files that changed based on commit through Github API
 const getChangedFiles = async (options) => {
   try {
     const { context } = github;
@@ -13868,10 +13875,12 @@ const getChangedFiles = async (options) => {
     core.endGroup();
 
     return {
+      all: allFormatted,
       [FILE_STATUSES.ADDED]: addedFormatted,
       [FILE_STATUSES.MODIFIED]: modifiedFormatted,
       [FILE_STATUSES.REMOVED]: removedFormatted,
       [FILE_STATUSES.RENAMED]: renamedFormatted,
+      AddedOrModified: addedModifiedFormatted,
     };
   } catch (error) {
     core.setFailed(error.message);
