@@ -146,7 +146,7 @@ const parseOneLine = (line) => {
     name: parsedLine[0],
     stmts: parsedLine[1].trimStart(),
     miss: parsedLine[2].trimStart(),
-    cover: parsedLine[3].trimStart(),
+    cover: parsedLine.at(-1).trimStart(),
     missing: parsedLine[4] && parsedLine[4].split(', '),
   };
 };
