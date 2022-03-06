@@ -46,13 +46,18 @@ inputs:
     default: 'false'
     required: false
 
+  junitxml-title:
+    description: 'Title for summary for junitxml'
+    default: ''
+    required: false
+
   junitxml-path:
     description: 'The location of the junitxml path'
     default: ''
     required: false
 
-  junitxml-title:
-    description: 'Title for summary for junitxml'
+  junitxml-path-main:
+    description: 'The location of the junitxml path compare to (usually `main` branch)'
     default: ''
     required: false
 

@@ -45,7 +45,7 @@ const getMultipleReport = (options) => {
     lineReports.forEach((l, i) => {
       const internalOptions = getOptions(options, l);
       const coverage = getCoverageReport(internalOptions);
-      const summary = getParsedXml(internalOptions);
+      const { parsedXml } = getParsedXml(internalOptions);
 
       if (coverage.html) {
         table += `| ${l.title} | ${coverage.html}`;
@@ -65,8 +65,8 @@ const getMultipleReport = (options) => {
           const output = getCoverageReport(newOptions);
           core.setOutput('coverageHtml', output.html);
 
-          if (summary) {
-            const { errors, failures, skipped, tests, time } = summary;
+          if (parsedXml) {
+            const { errors, failures, skipped, tests, time } = parsedXml;
             const valuesToExport = { errors, failures, skipped, tests, time };
 
             core.startGroup(internalOptions.xmlFile);
@@ -77,12 +77,12 @@ const getMultipleReport = (options) => {
             core.endGroup();
           }
         }
-      } else if (summary) {
+      } else if (parsedXml) {
         table += `| ${l.title} |  `;
       }
 
-      if (hasXmlReports && summary) {
-        const { errors, failures, skipped, tests, time } = summary;
+      if (hasXmlReports && parsedXml) {
+        const { errors, failures, skipped, tests, time } = parsedXml;
         table += `| ${tests} | ${skipped} :zzz: | ${failures} :x: | ${errors} :fire: | ${time}s :stopwatch: |
 `;
       } else {

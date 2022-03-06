@@ -35,6 +35,7 @@ const getPathToFile = (pathToFile) => {
 const main = async () => {
   const covFile = './../data/pytest-coverage_4.txt';
   const xmlFile = './../data/pytest_1.xml';
+  const xmlFileMain = './../data/pytest_2.xml';
   const prefix = path.dirname(path.dirname(path.resolve(covFile))) + '/';
   const multipleFiles = [
     `My Title 1, ${getPathToFile(covFile)}, ${getPathToFile(xmlFile)}`,
@@ -51,6 +52,7 @@ const main = async () => {
     prefix,
     covFile: getPathToFile(covFile),
     xmlFile: getPathToFile(xmlFile),
+    xmlFileMain: getPathToFile(xmlFileMain),
     defaultBranch: 'main',
     head: 'feat/test',
     base: 'main',

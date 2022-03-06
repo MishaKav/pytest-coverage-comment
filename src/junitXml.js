@@ -2,11 +2,12 @@ const xml2js = require('xml2js');
 const core = require('@actions/core');
 const { getPathToFile, getContentFile } = require('./utils');
 
-const getXmlContent = (options) => {
-  const { xmlFile } = options;
+const getXmlContent = (options, pathToXml = 'xmlFile') => {
+  const { xmlFile, xmlFileMain } = options;
+  const pathToFile = pathToXml === 'xmlFileMain' ? xmlFileMain : xmlFile;
 
   try {
-    const xmlFilePath = getPathToFile(xmlFile);
+    const xmlFilePath = getPathToFile(pathToFile);
 
     if (xmlFilePath) {
       const content = getContentFile(xmlFilePath);
@@ -23,21 +24,21 @@ const getXmlContent = (options) => {
 // return parsed xml
 const getParsedXml = (options) => {
   const content = getXmlContent(options);
+  const contentMain = getXmlContent(options, 'xmlFileMain');
 
-  if (content) {
-    return getSummary(content);
-  }
+  const parsedXml = content ? getSummary(content) : null;
+  const parsedXmlMain = contentMain ? getSummary(contentMain) : null;
 
-  return '';
+  return { parsedXml, parsedXmlMain };
 };
 
 // return summary report in markdown format
 const getSummaryReport = (options) => {
   try {
-    const parsedXml = getParsedXml(options);
+    const { parsedXml, parsedXmlMain } = getParsedXml(options);
 
     if (parsedXml) {
-      return toMarkdown(parsedXml, options);
+      return toMarkdown(parsedXml, options, parsedXmlMain);
     }
   } catch (error) {
     core.error(`Error on generating summary report. ${error.message}`);
@@ -113,12 +114,26 @@ const getNotSuccessTest = (options) => {
   return initData;
 };
 
-// convert summary from junitxml to md
-const toMarkdown = (summary, options) => {
-  const { errors, failures, skipped, tests, time } = summary;
+const getDiffValue = (newValue, oldValue) => {
+  if (!oldValue || newValue === oldValue) {
+    return newValue;
+  }
+
+  return `~~${oldValue}~~ **${newValue}**`;
+};
+
+// convert parsedXml from junitxml to md
+const toMarkdown = (parsedXml, options, parsedXmlMain) => {
+  const { errors, failures, skipped, tests, time } = parsedXml;
+  const t = getDiffValue(tests, parsedXmlMain?.tests);
+  const s = getDiffValue(skipped, parsedXmlMain?.skipped);
+  const f = getDiffValue(failures, parsedXmlMain?.failures);
+  const e = getDiffValue(errors, parsedXmlMain?.errors);
+  const tt = getDiffValue(time, parsedXmlMain?.time);
+
   const table = `| Tests | Skipped | Failures | Errors | Time |
 | ----- | ------- | -------- | -------- | ------------------ |
-| ${tests} | ${skipped} :zzz: | ${failures} :x: | ${errors} :fire: | ${time}s :stopwatch: |
+| ${t} | ${s} :zzz: | ${f} :x: | ${e} :fire: | ${tt}s :stopwatch: |
 `;
 
   if (options.xmlTitle) {
