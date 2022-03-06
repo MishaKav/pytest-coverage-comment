@@ -12912,11 +12912,11 @@ const getDiffValue = (newValue, oldValue) => {
 // convert parsedXml from junitxml to md
 const toMarkdown = (parsedXml, options, parsedXmlMain) => {
   const { errors, failures, skipped, tests, time } = parsedXml;
-  const t = getDiffValue(tests, parsedXmlMain?.tests);
-  const s = getDiffValue(skipped, parsedXmlMain?.skipped);
-  const f = getDiffValue(failures, parsedXmlMain?.failures);
-  const e = getDiffValue(errors, parsedXmlMain?.errors);
-  const tt = getDiffValue(time, parsedXmlMain?.time);
+  const t = getDiffValue(tests, parsedXmlMain && parsedXmlMain.tests);
+  const s = getDiffValue(skipped, parsedXmlMain && parsedXmlMain.skipped);
+  const f = getDiffValue(failures, parsedXmlMain && parsedXmlMain.failures);
+  const e = getDiffValue(errors, parsedXmlMain && parsedXmlMain.errors);
+  const tt = getDiffValue(time, parsedXmlMain && parsedXmlMain.time);
 
   const table = `| Tests | Skipped | Failures | Errors | Time |
 | ----- | ------- | -------- | -------- | ------------------ |
