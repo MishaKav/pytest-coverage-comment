@@ -37,6 +37,7 @@ const main = async () => {
   const xmlFile = './../data/pytest_1.xml';
   const xmlFileMain = './../data/pytest_2.xml';
   const prefix = path.dirname(path.dirname(path.resolve(covFile))) + '/';
+  // eslint-disable-next-line
   const multipleFiles = [
     `My Title 1, ${getPathToFile(covFile)}, ${getPathToFile(xmlFile)}`,
     `My Title 2, ${getPathToFile(covFile).replace('_4', '_3')}, ${getPathToFile(
