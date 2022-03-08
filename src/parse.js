@@ -109,7 +109,7 @@ const getTotal = (data) => {
   const lines = data.split('\n');
   const line = lines.find((l) => l.includes('TOTAL     '));
 
-  return parseOneLine(line);
+  return parseTotalLine(line);
 };
 
 // get number of warnings from coverage-file
@@ -146,8 +146,30 @@ const parseOneLine = (line) => {
     name: parsedLine[0],
     stmts: parsedLine[1].trimStart(),
     miss: parsedLine[2].trimStart(),
+    cover: parsedLine[parsedLine.length - 2].trimStart(),
+    missing:
+      parsedLine[parsedLine.length - 1] &&
+      parsedLine[parsedLine.length - 1].split(', '),
+  };
+};
+
+// parse total line from coverage-file
+const parseTotalLine = (line) => {
+  if (!line) {
+    return null;
+  }
+
+  const parsedLine = line.split('   ').filter((l) => l);
+
+  if (parsedLine.length < 4) {
+    return null;
+  }
+
+  return {
+    name: parsedLine[0],
+    stmts: parsedLine[1].trimStart(),
+    miss: parsedLine[2].trimStart(),
     cover: parsedLine[parsedLine.length - 1].trimStart(),
-    missing: parsedLine[4] && parsedLine[4].split(', '),
   };
 };
 
