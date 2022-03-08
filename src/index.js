@@ -32,8 +32,9 @@ const main = async () => {
   );
   const defaultBranch = core.getInput('default-branch', { required: false });
   const covFile = core.getInput('pytest-coverage-path', { required: false });
-  const xmlFile = core.getInput('junitxml-path', { required: false });
   const xmlTitle = core.getInput('junitxml-title', { required: false });
+  const xmlFile = core.getInput('junitxml-path', { required: false });
+  const xmlFileMain = core.getInput('junitxml-path-main', { required: false });
   const multipleFiles = core.getMultilineInput('multiple-files', {
     required: false,
   });
@@ -49,6 +50,7 @@ const main = async () => {
     prefix: `${process.env.GITHUB_WORKSPACE}/`,
     covFile,
     xmlFile,
+    xmlFileMain,
     title,
     badgeTitle,
     hideBadge,
