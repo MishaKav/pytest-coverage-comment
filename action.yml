@@ -16,6 +16,11 @@ inputs:
     default: './pytest-coverage.txt'
     required: false
 
+  coverage-path-prefix:
+    description: 'Prefix for path when link to files in comment'
+    default: ''
+    required: false
+
   title:
     description: 'Title for the coverage report. Useful for monorepo projects'
     default: 'Coverage Report'

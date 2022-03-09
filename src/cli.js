@@ -50,6 +50,7 @@ const main = async () => {
     repository: 'MishaKav/pytest-coverage-comment',
     commit: 'f9d42291812ed03bb197e48050ac38ac6befe4e5',
     prefix,
+    pathPrefix: '',
     covFile: getPathToFile(covFile),
     xmlFile: getPathToFile(xmlFile),
     defaultBranch: 'main',
