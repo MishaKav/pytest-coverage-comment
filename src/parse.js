@@ -297,7 +297,7 @@ const toTotalRow = (item, options) => {
 // make fileName cell - td
 const toFileNameTd = (item, indent = false, options) => {
   const relative = item.name.replace(options.prefix, '');
-  const href = `https://github.com/${options.repository}/blob/${options.commit}/${relative}`;
+  const href = `https://github.com/${options.repository}/blob/${options.commit}/${options.pathPrefix}${relative}`;
   const parts = relative.split('/');
   const last = parts[parts.length - 1];
   const space = indent ? '&nbsp; &nbsp;' : '';
