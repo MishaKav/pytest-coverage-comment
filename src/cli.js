@@ -61,7 +61,7 @@ const main = async () => {
     hideBadge: false,
     hideReport: false,
     createNewComment: false,
-    reportOnlyChangedFiles: true,
+    reportOnlyChangedFiles: false,
     hideComment: false,
     xmlTitle: '',
     // multipleFiles,

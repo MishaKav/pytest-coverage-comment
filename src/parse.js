@@ -142,14 +142,22 @@ const parseOneLine = (line) => {
     return null;
   }
 
+  const lastItem = parsedLine[parsedLine.length - 1];
+  const isFullCoverage = lastItem === '100%';
+  const cover = isFullCoverage
+    ? '100%'
+    : parsedLine[parsedLine.length - 2].trimStart();
+  const missing = isFullCoverage
+    ? null
+    : parsedLine[parsedLine.length - 1] &&
+      parsedLine[parsedLine.length - 1].split(', ');
+
   return {
     name: parsedLine[0],
     stmts: parsedLine[1].trimStart(),
     miss: parsedLine[2].trimStart(),
-    cover: parsedLine[parsedLine.length - 2].trimStart(),
-    missing:
-      parsedLine[parsedLine.length - 1] &&
-      parsedLine[parsedLine.length - 1].split(', '),
+    cover,
+    missing,
   };
 };
 

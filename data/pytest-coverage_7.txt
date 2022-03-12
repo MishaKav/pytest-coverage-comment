@@ -1,0 +1,9 @@
+============================= test session starts ==============================
+  ---------- coverage: platform linux, python 3.10.2-final-0 -----------
+  Name                     Stmts   Miss Branch BrPart  Cover   Missing
+  --------------------------------------------------------------------
+  src/schedule/header.py      50      0     16      0   100%
+  src/schedule/pdf.py         16      0      2      0   100%
+  src/schedule/utils.py       53      1     22      2    96%   120, 134->133
+  --------------------------------------------------------------------
+  TOTAL                      119      1     40      2    98%
