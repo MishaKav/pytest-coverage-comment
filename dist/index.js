@@ -16088,7 +16088,8 @@ const getChangedFiles = async (options) => {
       addedModified = [];
 
     for (const file of files) {
-      const { filename, status } = file;
+      const { filename: filenameOriginal, status } = file;
+      const filename = filenameOriginal.replace(options.pathPrefix, '');
 
       all.push(filename);
 
