@@ -1,6 +1,6 @@
 {
   "name": "pytest-coverage-comment",
-  "version": "1.1.22",
+  "version": "1.1.23",
   "description": "Comments a pull request with the pytest code coverage badge, full report and tests summary",
   "author": "Misha Kav",
   "license": "MIT",
@@ -29,7 +29,7 @@
   },
   "devDependencies": {
     "@vercel/ncc": "^0.33.3",
-    "eslint": "^8.10.0",
+    "eslint": "^8.11.0",
     "prettier": "^2.5.1"
   },
   "prettier": {
