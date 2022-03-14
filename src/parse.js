@@ -249,6 +249,9 @@ const toTable = (data, options) => {
 
   const folders = makeFolders(coverage, options);
 
+  console.log('options.changedFiles.all', options.changedFiles.all);
+  console.log('folders', folders);
+
   const rows = Object.keys(folders)
     .sort()
     .filter((folderPath) => {
@@ -259,7 +262,7 @@ const toTable = (data, options) => {
       const allFilesInFolder = Object.values(folders[folderPath]).map(
         (f) => f.name
       );
-      console.log('allFilesInFolder', allFilesInFolder);
+
       return allFilesInFolder.every((f) =>
         options.changedFiles.all.some((c) => c.includes(f))
       );
