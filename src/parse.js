@@ -259,7 +259,7 @@ const toTable = (data, options) => {
       const allFilesInFolder = Object.values(folders[folderPath]).map(
         (f) => f.name
       );
-
+      console.log(allFilesInFolder);
       return allFilesInFolder.every((f) =>
         options.changedFiles.all.some((c) => c.includes(f))
       );
