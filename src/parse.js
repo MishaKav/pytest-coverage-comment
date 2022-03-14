@@ -249,9 +249,6 @@ const toTable = (data, options) => {
 
   const folders = makeFolders(coverage, options);
 
-  console.log('options.changedFiles.all', options.changedFiles.all);
-  console.log('folders', folders);
-
   const rows = Object.keys(folders)
     .sort()
     .filter((folderPath) => {
