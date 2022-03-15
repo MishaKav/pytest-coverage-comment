@@ -15253,7 +15253,7 @@ const isValidCoverageContent = (data) => {
   }
 
   const wordsToInclude = [
-    'coverage: platform linux',
+    'coverage: platform',
     'Stmts',
     'Miss',
     'Cover',
