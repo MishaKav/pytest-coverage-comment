@@ -35,4 +35,12 @@ const getContentFile = (pathToFile) => {
   return content;
 };
 
-module.exports = { getPathToFile, getContentFile };
+const getFileExtension = (pathToFile) => {
+  if (!pathToFile) {
+    return null;
+  }
+
+  return pathToFile.split('.').pop().toLowerCase();
+};
+
+module.exports = { getPathToFile, getContentFile, getFileExtension };

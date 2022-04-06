@@ -12,7 +12,7 @@ inputs:
     required: true
 
   pytest-coverage-path:
-    description: 'The location of the txt output of pytest-coverage'
+    description: 'The location of the txt output of pytest-coverage or coverage xml file'
     default: './pytest-coverage.txt'
     required: false
 
@@ -73,10 +73,10 @@ inputs:
 
   multiple-files:
     description: >
-      You can pass array of titles and files to generate single comment with table of results. 
-      Single line should look like `Title, ./path/to/pytest-coverage.txt, ./path/to/pytest.xml`
-      example: 
-        My Title 1, ./data/pytest-coverage_3.txt, ./data/pytest_1.xml
+      You can pass array of titles and files to generate single comment with table of results.
+      Single line should look like `Title, ./path/to/coverage.xml, ./path/to/pytest.xml`
+      example:
+        My Title 1, ./data/coverage_3.xml, ./data/pytest_1.xml
     default: ''
     required: false
 

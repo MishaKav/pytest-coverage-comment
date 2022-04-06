@@ -23,7 +23,7 @@ You can add this action to your GitHub workflow for Ubuntu runners (e.g. runs-on
 | Name                        | Required | Default                 | Description                                                                                                                                                                                                                                                                                                                                                                   |
 | --------------------------- | -------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `github-token`              | ✓        | `${{github.token}}`     | An alternative GitHub token, other than the default provided by GitHub Actions runner                                                                                                                                                                                                                                                                                         |
-| `pytest-coverage-path`      |          | `./pytest-coverage.txt` | The location of the txt output of pytest-coverage. Used to generate the comment                                                                                                                                                                                                                                                                                               |
+| `pytest-coverage-path`      |          | `./pytest-coverage.txt` | The location of the txt output of pytest-coverage. Used to generate the comment. Also support the location of the coverage xml report file. Arg: `--cov-report`                                                                                                                                                                                                                                                                                              |
 | `coverage-path-prefix`      |          | ''                      | Prefix for path when link to files in comment                                                                                                                                                                                                                                                                                                                                 |
 | `title`                     |          | `Coverage Report`       | Title for the coverage report. Useful for monorepo projects                                                                                                                                                                                                                                                                                                                   |
 | `badge-title`               |          | `Coverage`              | Title for the badge icon                                                                                                                                                                                                                                                                                                                                                      |
@@ -173,6 +173,20 @@ It will generate `pytest-coverage.txt` and `pytest.xml` in `/tmp` directory insi
   uses: MishaKav/pytest-coverage-comment@main
   with:
     pytest-coverage-path: /tmp/pytest-coverage.txt
+    junitxml-path: /tmp/pytest.xml
+```
+
+The example below will generate `coverage.xml` and `pytest.xml` in `/tmp` directory inside docker and share `/tmp` directory with GitHub workspace.
+
+```yaml
+- name: Run unit tests (pytest)
+  run: |
+    docker run -v /tmp:/tmp $IMAGE_TAG python3 -m pytest --cov-report "xml:tmp/coverage.xml" --junitxml="tmp/pytest.xml" --cov=src tests/ 
+
+- name: Pytest coverage comment
+  uses: MishaKav/pytest-coverage-comment@main
+  with:
+    pytest-coverage-path: /tmp/coverage.xml
     junitxml-path: /tmp/pytest.xml
 ```
 
