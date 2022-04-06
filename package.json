@@ -25,6 +25,7 @@
   "dependencies": {
     "@actions/core": "^1.6.0",
     "@actions/github": "^4.0.0",
+    "fast-xml-parser": "^4.0.7",
     "xml2js": "^0.4.23"
   },
   "devDependencies": {
