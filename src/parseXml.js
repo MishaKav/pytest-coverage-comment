@@ -1,4 +1,4 @@
-const xml2js = require('xml2js');
+const { XMLParser } = require('fast-xml-parser');
 const core = require('@actions/core');
 
 const getCoverageReportXml = (content) => {
@@ -15,14 +15,18 @@ const getCoverageData = (content) => {
     return null;
   }
 
-  const parser = new xml2js.Parser();
-  const parsed = parser.parseString(content);
-  if (!parsed) {
+  const options = {
+    ignoreDeclaration: true,
+    ignoreAttributes: false,
+  };
+  const parser = new XMLParser(options);
+  const output = parser.parse(content);
+
+  if (!output) {
     core.warning(`Coverage file is not XML or not well formed`);
     return '';
   }
-
-  return parser.resultObject.coverage;
+  return output.coverage;
 };
 
 const getTotal = (content) => {
@@ -30,26 +34,15 @@ const getTotal = (content) => {
     return null;
   }
 
-  const cover = floatToInt(getXmlAttrib(content, 'line-rate'));
-  const linesValid = parseInt(getXmlAttrib(content, 'lines-valid'));
-  const linesCovered = parseInt(getXmlAttrib(content, 'lines-covered'));
+  const cover = floatToInt(content['@_line-rate']);
+  const linesValid = parseInt(content['@_lines-valid']);
+  const linesCovered = parseInt(content['@_lines-covered']);
   return {
     name: 'TOTAL',
     stmts: linesValid,
     miss: linesValid - linesCovered,
     cover: cover !== '0' ? `${cover}%` : '0',
   };
-};
-
-const getXmlAttrib = (obj, attribName) => {
-  const entries = Object.entries(obj.$);
-  for (let i = 0; i < entries.length; i++) {
-    const e = entries[i];
-    if (e[0] === attribName) {
-      return e[1];
-    }
-  }
-  return null;
 };
 
 const floatToInt = (strValue) => {
@@ -61,16 +54,11 @@ const floatToInt = (strValue) => {
 // parse coverage xml
 const parseXml = (coverageData) => {
   let files = [];
-  for (let i = 0; i < coverageData.packages.length; i++) {
-    const package = coverageData.packages[i].package;
-    for (let j = 0; j < package.length; j++) {
-      const classes = package[j].classes;
-      for (let k = 0; k < classes.length; k++) {
-        const c = classes[k].class;
-        for (let l = 0; l < c.length; l++) {
-          files.push(parseClass(c[l]));
-        }
-      }
+  for (let i = 0; i < coverageData.packages.package.length; i++) {
+    const package = coverageData.packages.package[i];
+    for (let j = 0; j < package.classes.class.length; j++) {
+      const c = package.classes.class[j];
+      files.push(parseClass(c));
     }
   }
   return files;
@@ -79,12 +67,12 @@ const parseXml = (coverageData) => {
 const parseClass = (c) => {
   const { stmts, missing, totalMissing } = parseLines(c.lines);
 
-  const lineRate = getXmlAttrib(c, 'line-rate');
+  const lineRate = c['@_line-rate'];
   const isFullCoverage = lineRate === '1';
   const cover = isFullCoverage ? '100%' : `${floatToInt(lineRate)}%`;
 
   return {
-    name: c.$.filename,
+    name: c['@_filename'],
     stmts: `${stmts}`,
     miss: `${totalMissing}`,
     cover: cover,
@@ -95,14 +83,10 @@ const parseClass = (c) => {
 const parseLines = (lines) => {
   let stmts = 0;
   const missingLines = [];
-  for (let i = 0; i < lines.length; i++) {
-    const iter = lines[i].line;
-    for (let j = 0; j < iter.length; j++) {
-      stmts++;
-      const line = iter[j];
-      if (line.$.hits === '0') {
-        missingLines.push(parseInt(line.$.number));
-      }
+  for (let i = 0; i < lines.line.length; i++) {
+    const line = lines.line[i];
+    if (line['@_hits'] === '0') {
+      missingLines.push(parseInt(line['@_number']));
     }
   }
   const missing = missingLines.reduce((arr, val, i, a) => {
