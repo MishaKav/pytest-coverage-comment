@@ -74,9 +74,9 @@ inputs:
   multiple-files:
     description: >
       You can pass array of titles and files to generate single comment with table of results.
-      Single line should look like `Title, ./path/to/coverage.xml, ./path/to/pytest.xml`
+      Single line should look like `Title, ./path/to/pytest-coverage.txt, ./path/to/pytest.xml`
       example:
-        My Title 1, ./data/coverage_3.xml, ./data/pytest_1.xml
+        My Title 1, ./data/pytest-coverage_3.txt, ./data/pytest_1.xml
     default: ''
     required: false
 

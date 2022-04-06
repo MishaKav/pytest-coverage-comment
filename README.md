@@ -29,7 +29,7 @@ You can add this action to your GitHub workflow for Ubuntu runners (e.g. runs-on
 | Name                        | Required | Default                 | Description                                                                                                                                                                                                                                                                                                                                                                   |
 | --------------------------- | -------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `github-token`              | ✓        | `${{github.token}}`     | An alternative GitHub token, other than the default provided by GitHub Actions runner                                                                                                                                                                                                                                                                                         |
-| `pytest-coverage-path`      |          | `./pytest-coverage.txt` | The location of the txt output of pytest-coverage. Used to generate the comment. Also support the location of the coverage xml report file. Arg: `--cov-report`                                                                                                                                                                                                                                                                                              |
+| `pytest-coverage-path`      |          | `./pytest-coverage.txt` | The location of the txt output of pytest-coverage. Used to generate the comment. Also support the location of the coverage xml report file. Arg: `--cov-report`                                                                                                                                                                                                               |
 | `coverage-path-prefix`      |          | ''                      | Prefix for path when link to files in comment                                                                                                                                                                                                                                                                                                                                 |
 | `title`                     |          | `Coverage Report`       | Title for the coverage report. Useful for monorepo projects                                                                                                                                                                                                                                                                                                                   |
 | `badge-title`               |          | `Coverage`              | Title for the badge icon                                                                                                                                                                                                                                                                                                                                                      |
@@ -187,7 +187,7 @@ The example below will generate `coverage.xml` and `pytest.xml` in `/tmp` direct
 ```yaml
 - name: Run unit tests (pytest)
   run: |
-    docker run -v /tmp:/tmp $IMAGE_TAG python3 -m pytest --cov-report "xml:tmp/coverage.xml" --junitxml="tmp/pytest.xml" --cov=src tests/ 
+    docker run -v /tmp:/tmp $IMAGE_TAG python3 -m pytest --cov-report "xml:tmp/coverage.xml" --junitxml="tmp/pytest.xml" --cov=src tests/
 
 - name: Pytest coverage comment
   uses: MishaKav/pytest-coverage-comment@main
@@ -213,9 +213,9 @@ If your coverage html report will not change, it wouldn't push any changes to re
 
 ```html
 <!-- Pytest Coverage Comment:Begin -->
-| Tests | Skipped | Failures | Errors | Time |
-| ----- | ------- | -------- | -------- | ------------------ |
-| 109 | 2 :zzz: | 1 :x: | 0 :fire: | 0.583s :stopwatch: |
+| Tests | Skipped | Failures | Errors | Time | | ----- | ------- | -------- |
+-------- | ------------------ | | 109 | 2 :zzz: | 1 :x: | 0 :fire: | 0.583s
+:stopwatch: |
 
 <!-- Pytest Coverage Comment:End -->
 ```
@@ -248,3 +248,49 @@ jobs:
       - name: Update Readme with Coverage Html
         if: ${{ github.ref == 'refs/heads/main' }}
         run: |
+          sed -i '/<!-- Pytest Coverage Comment:Begin -->/,/<!-- Pytest Coverage Comment:End -->/c\<!-- Pytest Coverage Comment:Begin -->\n\${{ steps.coverageComment.outputs.coverageHtml }}\n${{ steps.coverageComment.outputs.summaryReport }}\n<!-- Pytest Coverage Comment:End -->' ./README.md
+       - name: Commit & Push changes to Readme
+         if: ${{ github.ref == 'refs/heads/main' }}
+         uses: actions-js/push@master
+         with:
+           message: Update coverage on Readme
+           github_token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+## Result example
+
+Collapsed comment
+![Result Collapse Example](https://user-images.githubusercontent.com/289035/120536428-c7664a80-c3ec-11eb-9cce-3ac53343fac4.png)
+
+Expanded comment
+![Result Expand Example](https://user-images.githubusercontent.com/289035/120536607-f8df1600-c3ec-11eb-9f49-c6d7571e43ac.png)
+
+Multiple Files Mode (can be useful on mono-repo projects)
+![Result Multiple Files Mode Example](https://user-images.githubusercontent.com/289035/122121939-ddd0c500-ce34-11eb-8546-89a8a769e065.png)
+
+## Badges colors
+
+![Coverage 0-40](https://img.shields.io/badge/Coverage-20%25-red.svg) [0, 40]
+
+![Coverage 40-60](https://img.shields.io/badge/Coverage-50%25-orange.svg) [40, 60]
+
+![Coverage 60-80](https://img.shields.io/badge/Coverage-70%25-yellow.svg) [60, 80]
+
+![Coverage 80-90](https://img.shields.io/badge/Coverage-85%25-green.svg) [80, 90]
+
+![Coverage 90-100](https://img.shields.io/badge/Coverage-95%25-brightgreen.svg) [90, 100]
+
+## Auto updating badge on README
+
+If you want auto-update the coverage badge on your Readme, you can see the [workflow](../main/.github/workflows/live-test.yml)
+![Auto Updating Bagde](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/MishaKav/5e90d640f8c212ab7bbac38f72323f80/raw/pytest-coverage-comment__main.json)
+
+## 🤝 Contributing [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
+
+We welcome all contributions. You can submit any ideas as [pull requests](https://github.com/MishaKav/pytest-coverage-comment/pulls) or as [GitHub issues](https://github.com/MishaKav/pytest-coverage-comment/issues) and have a good time! :)
+
+## Our Contibutors
+
+ <a href="https://github.com/MishaKav/pytest-coverage-comment/graphs/contributors">
+   <img src="https://contrib.rocks/image?repo=MishaKav/pytest-coverage-comment" alt="Contibutors" />
+ </a>
