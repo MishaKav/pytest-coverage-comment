@@ -15113,9 +15113,11 @@ const getNotSuccessTest = (options) => {
 // convert summary from junitxml to md
 const toMarkdown = (summary, options) => {
   const { errors, failures, skipped, tests, time } = summary;
+  const displayTime =
+    time > 60 ? `${(time / 60) | 0}m ${time % 60 | 0}s` : `${time}s`;
   const table = `| Tests | Skipped | Failures | Errors | Time |
 | ----- | ------- | -------- | -------- | ------------------ |
-| ${tests} | ${skipped} :zzz: | ${failures} :x: | ${errors} :fire: | ${time}s :stopwatch: |
+| ${tests} | ${skipped} :zzz: | ${failures} :x: | ${errors} :fire: | ${displayTime} :stopwatch: |
 `;
 
   if (options.xmlTitle) {
@@ -15219,7 +15221,9 @@ const getMultipleReport = (options) => {
 
       if (hasXmlReports && summary) {
         const { errors, failures, skipped, tests, time } = summary;
-        table += `| ${tests} | ${skipped} :zzz: | ${failures} :x: | ${errors} :fire: | ${time}s :stopwatch: |
+        const displayTime =
+          time > 60 ? `${(time / 60) | 0}m ${time % 60 | 0}s` : `${time}s`;
+        table += `| ${tests} | ${skipped} :zzz: | ${failures} :x: | ${errors} :fire: | ${displayTime} :stopwatch: |
 `;
       } else {
         table += `
