@@ -83,7 +83,9 @@ const getMultipleReport = (options) => {
 
       if (hasXmlReports && summary) {
         const { errors, failures, skipped, tests, time } = summary;
-        table += `| ${tests} | ${skipped} :zzz: | ${failures} :x: | ${errors} :fire: | ${time}s :stopwatch: |
+        const displayTime =
+          time > 60 ? `${(time / 60) | 0}m ${time % 60 | 0}s` : `${time}s`;
+        table += `| ${tests} | ${skipped} :zzz: | ${failures} :x: | ${errors} :fire: | ${displayTime} :stopwatch: |
 `;
       } else {
         table += `
