@@ -15416,7 +15416,7 @@ const parseTotalLine = (line) => {
     return null;
   }
 
-  const parsedLine = line.split('   ').filter((l) => l);
+  const parsedLine = line.split('  ').filter((l) => l);
 
   if (parsedLine.length < 4) {
     return null;
