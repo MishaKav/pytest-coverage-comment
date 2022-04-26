@@ -216,17 +216,19 @@ const getTotalCoverage = (data) => {
 
 // convert all data to html output
 const toHtml = (data, options) => {
-  const { badgeTitle, title, hideBadge, hideReport } = options;
+  const { badgeTitle, title, hideBadge, hideReport, reportOnlyChangedFiles } =
+    options;
   const table = hideReport ? '' : toTable(data, options);
   const total = getTotal(data);
   const color = getCoverageColor(total.cover);
+  const onlyChnaged = reportOnlyChangedFiles ? '• ' : '';
   const readmeHref = `https://github.com/${options.repository}/blob/${options.commit}/README.md`;
   const badgeHtml = hideBadge
     ? ''
     : `<a href="${readmeHref}"><img alt="${badgeTitle}" src="https://img.shields.io/badge/${badgeTitle}-${total.cover}25-${color}.svg" /></a><br/>`;
   const reportHtml = hideReport
     ? ''
-    : `<details><summary>${title}</summary>${table}</details>`;
+    : `<details><summary>${title} ${onlyChnaged}</summary>${table}</details>`;
 
   return `${badgeHtml}${reportHtml}`;
 };
@@ -234,6 +236,7 @@ const toHtml = (data, options) => {
 // make html table from coverage-file
 const toTable = (data, options) => {
   const coverage = parse(data);
+  const { reportOnlyChangedFiles, changedFiles } = options;
 
   if (!coverage) {
     core.warning(`Coverage file not well formed`);
@@ -244,15 +247,13 @@ const toTable = (data, options) => {
 
   core.info(`Generating coverage report`);
   const headTr = toHeadRow(options);
-
   const totalTr = toTotalRow(totalLine, options);
-
   const folders = makeFolders(coverage, options);
 
   const rows = Object.keys(folders)
     .sort()
     .filter((folderPath) => {
-      if (!options.reportOnlyChangedFiles) {
+      if (!reportOnlyChangedFiles) {
         return true;
       }
 
@@ -261,7 +262,7 @@ const toTable = (data, options) => {
       );
 
       return allFilesInFolder.every((f) =>
-        options.changedFiles.all.some((c) => c.includes(f))
+        changedFiles.all.some((c) => c.includes(f))
       );
     })
     .reduce(
@@ -273,7 +274,14 @@ const toTable = (data, options) => {
       []
     );
 
-  return `<table>${headTr}<tbody>${rows.join('')}${totalTr}</tbody></table>`;
+  const hasLines = rows.length > 0;
+  const isFilesChanged =
+    reportOnlyChangedFiles && !hasLines
+      ? `<i>report-only-changed-files is enabled. No files were changed during this commit :)</i>`
+      : '';
+
+  // prettier-ignore
+  return `<table>${headTr}<tbody>${rows.join('')}${totalTr}</tbody></table>${isFilesChanged}`;
 };
 
 // make html head row - th
