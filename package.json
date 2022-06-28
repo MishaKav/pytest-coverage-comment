@@ -7,8 +7,12 @@
   "keywords": [
     "actions",
     "pull-request",
+    "push",
     "comment",
-    "message"
+    "message",
+    "python",
+    "pytest",
+    "coverage"
   ],
   "bugs": {
     "url": "https://github.com/MishaKav/pytest-coverage-comment/issues"
