@@ -16356,14 +16356,23 @@ const getChangedFiles = async (options) => {
     core.info(`Base commit: ${base}`);
     core.info(`Head commit: ${head}`);
 
-    // Use GitHub's compare two commits API.
-    // https://developer.github.com/v3/repos/commits/#compare-two-commits
-    const response = await octokit.repos.compareCommits({
-      base,
-      head,
-      owner,
-      repo,
-    });
+    let response = null;
+    // that is first commit, we cannot get diff
+    if (base === '0000000000000000000000000000000000000000') {
+      response = await octokit.rest.repos.getCommit({
+        owner,
+        repo,
+        ref: head,
+      });
+    } else {
+      // https://developer.github.com/v3/repos/commits/#compare-two-commits
+      response = await octokit.rest.repos.compareCommits({
+        base,
+        head,
+        owner,
+        repo,
+      });
+    }
 
     // Ensure that the request was successful.
     if (response.status !== 200) {
@@ -16372,14 +16381,6 @@ const getChangedFiles = async (options) => {
           "Please submit an issue on this action's GitHub repo."
       );
     }
-
-    // Ensure that the head commit is ahead of the base commit.
-    // if (response.data.status !== 'ahead') {
-    //   core.setFailed(
-    //     `The head commit for this ${eventName} event is not ahead of the base commit. ` +
-    //       "Please submit an issue on this action's GitHub repo."
-    //   );
-    // }
 
     // Get the changed files from the response payload.
     const files = response.data.files;
