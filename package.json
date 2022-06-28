@@ -1,6 +1,6 @@
 {
   "name": "pytest-coverage-comment",
-  "version": "1.1.28",
+  "version": "1.1.29",
   "description": "Comments a pull request with the pytest code coverage badge, full report and tests summary",
   "author": "Misha Kav",
   "license": "MIT",
@@ -27,14 +27,14 @@
     "all": "npm run lint && npm run format && npm run build"
   },
   "dependencies": {
-    "@actions/core": "^1.7.0",
+    "@actions/core": "^1.9.0",
     "@actions/github": "^4.0.0",
     "xml2js": "^0.4.23"
   },
   "devDependencies": {
-    "@vercel/ncc": "^0.33.4",
-    "eslint": "^8.14.0",
-    "prettier": "^2.6.2"
+    "@vercel/ncc": "^0.34.0",
+    "eslint": "^8.18.0",
+    "prettier": "^2.7.1"
   },
   "prettier": {
     "semi": true,
