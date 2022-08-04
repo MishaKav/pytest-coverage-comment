@@ -177,7 +177,7 @@ const main = async () => {
       );
 
       if (comment) {
-        core.info('Founded previous commit, updating');
+        core.info('Founded previous comment, updating');
         await octokit.issues.updateComment({
           repo,
           owner,
@@ -185,7 +185,7 @@ const main = async () => {
           body,
         });
       } else {
-        core.info('No previous commit founded, creating a new one');
+        core.info('No previous comment founded, creating a new one');
         await octokit.issues.createComment({
           repo,
           owner,
