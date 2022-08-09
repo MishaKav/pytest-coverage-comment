@@ -80,6 +80,11 @@ inputs:
     default: ''
     required: false
 
+  remove-link-from-badge:
+    description: 'When true, it will remove the link from badge to readme'
+    default: 'false'
+    required: false
+
 outputs:
   coverage:
     description: 'value indicating the coverage percentage of your report based on pytest, example 30%'
