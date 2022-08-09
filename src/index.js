@@ -30,6 +30,9 @@ const main = async () => {
     'report-only-changed-files',
     { required: false }
   );
+  const removeLinkFromBadge = core.getBooleanInput('remove-link-from-badge', {
+    required: false,
+  });
   const defaultBranch = core.getInput('default-branch', { required: false });
   const covFile = core.getInput('pytest-coverage-path', { required: false });
   const pathPrefix = core.getInput('coverage-path-prefix', { required: false });
@@ -58,6 +61,7 @@ const main = async () => {
     createNewComment,
     hideComment,
     reportOnlyChangedFiles,
+    removeLinkFromBadge,
     defaultBranch,
     xmlTitle,
     multipleFiles,

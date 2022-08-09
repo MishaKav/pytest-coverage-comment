@@ -216,16 +216,24 @@ const getTotalCoverage = (data) => {
 
 // convert all data to html output
 const toHtml = (data, options) => {
-  const { badgeTitle, title, hideBadge, hideReport, reportOnlyChangedFiles } =
-    options;
+  const {
+    badgeTitle,
+    title,
+    hideBadge,
+    hideReport,
+    reportOnlyChangedFiles,
+    removeLinkFromBadge,
+  } = options;
   const table = hideReport ? '' : toTable(data, options);
   const total = getTotal(data);
   const color = getCoverageColor(total.cover);
   const onlyChnaged = reportOnlyChangedFiles ? '• ' : '';
   const readmeHref = `https://github.com/${options.repository}/blob/${options.commit}/README.md`;
-  const badgeHtml = hideBadge
-    ? ''
-    : `<a href="${readmeHref}"><img alt="${badgeTitle}" src="https://img.shields.io/badge/${badgeTitle}-${total.cover}25-${color}.svg" /></a><br/>`;
+  const badge = `<img alt="${badgeTitle}" src="https://img.shields.io/badge/${badgeTitle}-${total.cover}25-${color}.svg" />`;
+  const badgeWithLink = removeLinkFromBadge
+    ? badge
+    : `<a href="${readmeHref}">${badge}</a>`;
+  const badgeHtml = hideBadge ? '' : badgeWithLink;
   const reportHtml = hideReport
     ? ''
     : `<details><summary>${title} ${onlyChnaged}</summary>${table}</details>`;
