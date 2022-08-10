@@ -128,6 +128,7 @@ const main = async () => {
   finalHtml += multipleFilesHtml
     ? `\n\n${multipleFilesHtml}`
     : multipleFilesHtml;
+  core.setOutput('summaryReport', JSON.stringify(finalHtml));
 
   if (coverage) {
     core.startGroup(options.covFile);
