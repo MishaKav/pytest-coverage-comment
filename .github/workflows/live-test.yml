@@ -10,10 +10,12 @@ jobs:
 
       - name: Pytest coverage comment
         id: coverageComment
-        uses: MishaKav/pytest-coverage-comment@main
+        uses: MishaKav/pytest-coverage-comment@add-multi-files-to-coverage-report
         with:
           pytest-coverage-path: ./data/pytest-coverage_4.txt
           junitxml-path: ./data/pytest_1.xml
+          multiple-files: |
+            title1, ./data/pytest-coverage_4.txt, ./data/pytest_1.xml
 
       - name: Check the output coverage
         run: |
