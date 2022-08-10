@@ -75,29 +75,34 @@ const main = async () => {
     },
   };
 
-  if (options.multipleFiles && options.multipleFiles.length) {
-    finalHtml += getMultipleReport(options);
-  } else {
-    const { html } = getCoverageReport(options);
-    const summaryReport = getSummaryReport(options);
+  const { html } = getCoverageReport(options);
+  const summaryReport = getSummaryReport(options);
 
-    // set to output junitxml values
-    if (summaryReport) {
-      const parsedXml = getParsedXml(options);
-      const { errors, failures, skipped, tests, time } = parsedXml;
-      const valuesToExport = { errors, failures, skipped, tests, time };
-      const notSuccessTestInfo = getNotSuccessTest(options);
+  // set to output junitxml values
+  if (summaryReport) {
+    const parsedXml = getParsedXml(options);
+    const { errors, failures, skipped, tests, time } = parsedXml;
+    const valuesToExport = { errors, failures, skipped, tests, time };
+    const notSuccessTestInfo = getNotSuccessTest(options);
 
-      console.log('notSuccessTestInfo', JSON.stringify(notSuccessTestInfo));
+    console.log('notSuccessTestInfo', JSON.stringify(notSuccessTestInfo));
 
-      Object.entries(valuesToExport).forEach(([key, value]) => {
-        console.log(key, value);
-      });
-    }
-
-    finalHtml += html;
-    finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
+    Object.entries(valuesToExport).forEach(([key, value]) => {
+      console.log(key, value);
+    });
   }
+
+  finalHtml += html;
+  finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
+
+  let multipleFilesHtml = '';
+  if (options.multipleFiles && options.multipleFiles.length) {
+    multipleFilesHtml = `\n\n${getMultipleReport(options)}`;
+  }
+
+  finalHtml += multipleFilesHtml
+    ? `\n\n${multipleFilesHtml}`
+    : multipleFilesHtml;
 
   if (!finalHtml || options.hideComment) {
     console.log('Nothing to report');
