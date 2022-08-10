@@ -107,9 +107,9 @@ const main = async () => {
     core.setOutput('summaryReport', JSON.stringify(summaryReport));
   }
 
+  let multipleFilesHtml = '';
   if (multipleFiles && multipleFiles.length) {
-    finalHtml += `\n\n${getMultipleReport(options)}`;
-    core.setOutput('summaryReport', JSON.stringify(finalHtml));
+    multipleFilesHtml = `\n\n${getMultipleReport(options)}`;
   }
 
   if (html.length + summaryReport.length > MAX_COMMENT_LENGTH) {
@@ -125,6 +125,9 @@ const main = async () => {
 
   finalHtml += html;
   finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
+  finalHtml += multipleFilesHtml
+    ? `\n\n${multipleFilesHtml}`
+    : multipleFilesHtml;
 
   if (coverage) {
     core.startGroup(options.covFile);
