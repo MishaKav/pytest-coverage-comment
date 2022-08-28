@@ -30,6 +30,9 @@ const main = async () => {
     'report-only-changed-files',
     { required: false }
   );
+  const removeLinkFromBadge = core.getBooleanInput('remove-link-from-badge', {
+    required: false,
+  });
   const defaultBranch = core.getInput('default-branch', { required: false });
   const covFile = core.getInput('pytest-coverage-path', { required: false });
   const pathPrefix = core.getInput('coverage-path-prefix', { required: false });
@@ -58,6 +61,7 @@ const main = async () => {
     createNewComment,
     hideComment,
     reportOnlyChangedFiles,
+    removeLinkFromBadge,
     defaultBranch,
     xmlTitle,
     multipleFiles,
@@ -77,61 +81,65 @@ const main = async () => {
     options.changedFiles = changedFiles;
   }
 
+  let report = getCoverageReport(options);
+  const { coverage, color, html, warnings } = report;
+  const summaryReport = getSummaryReport(options);
+
+  if (html) {
+    const newOptions = { ...options, commit: defaultBranch };
+    const output = getCoverageReport(newOptions);
+    core.setOutput('coverageHtml', output.html);
+  }
+
+  // set to output junitxml values
+  if (summaryReport) {
+    const parsedXml = getParsedXml(options);
+    const { errors, failures, skipped, tests, time } = parsedXml;
+    const valuesToExport = { errors, failures, skipped, tests, time };
+
+    Object.entries(valuesToExport).forEach(([key, value]) => {
+      core.info(`${key}: ${value}`);
+      core.setOutput(key, value);
+    });
+
+    const notSuccessTestInfo = getNotSuccessTest(options);
+    core.setOutput('notSuccessTestInfo', JSON.stringify(notSuccessTestInfo));
+    core.setOutput('summaryReport', JSON.stringify(summaryReport));
+  }
+
+  let multipleFilesHtml = '';
   if (multipleFiles && multipleFiles.length) {
-    finalHtml += getMultipleReport(options);
-    core.setOutput('summaryReport', JSON.stringify(finalHtml));
-  } else {
-    let report = getCoverageReport(options);
-    const { coverage, color, html, warnings } = report;
-    const summaryReport = getSummaryReport(options);
+    multipleFilesHtml = `\n\n${getMultipleReport(options)}`;
+  }
 
-    if (html) {
-      const newOptions = { ...options, commit: defaultBranch };
-      const output = getCoverageReport(newOptions);
-      core.setOutput('coverageHtml', output.html);
-    }
+  if (html.length + summaryReport.length > MAX_COMMENT_LENGTH) {
+    // generate new html without report
+    core.warning(
+      `Your comment is too long (maximum is ${MAX_COMMENT_LENGTH} characters), coverage report will not be added.`
+    );
+    core.warning(
+      `Try add: "--cov-report=term-missing:skip-covered", or add "hide-report: true", or add "report-only-changed-files: true", or switch to "multiple-files" mode`
+    );
+    report = getSummaryReport({ ...options, hideReport: true });
+  }
 
-    // set to output junitxml values
-    if (summaryReport) {
-      const parsedXml = getParsedXml(options);
-      const { errors, failures, skipped, tests, time } = parsedXml;
-      const valuesToExport = { errors, failures, skipped, tests, time };
+  finalHtml += html;
+  finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
+  finalHtml += multipleFilesHtml
+    ? `\n\n${multipleFilesHtml}`
+    : multipleFilesHtml;
+  core.setOutput('summaryReport', JSON.stringify(finalHtml));
 
-      Object.entries(valuesToExport).forEach(([key, value]) => {
-        core.info(`${key}: ${value}`);
-        core.setOutput(key, value);
-      });
+  if (coverage) {
+    core.startGroup(options.covFile);
+    core.info(`coverage: ${coverage}`);
+    core.info(`color: ${color}`);
+    core.info(`warnings: ${warnings}`);
 
-      const notSuccessTestInfo = getNotSuccessTest(options);
-      core.setOutput('notSuccessTestInfo', JSON.stringify(notSuccessTestInfo));
-      core.setOutput('summaryReport', JSON.stringify(summaryReport));
-    }
-
-    if (html.length + summaryReport.length > MAX_COMMENT_LENGTH) {
-      // generate new html without report
-      core.warning(
-        `Your comment is too long (maximum is ${MAX_COMMENT_LENGTH} characters), coverage report will not be added.`
-      );
-      core.warning(
-        `Try add: "--cov-report=term-missing:skip-covered", or add "hide-report: true", or add "report-only-changed-files: true", or switch to "multiple-files" mode`
-      );
-      report = getSummaryReport({ ...options, hideReport: true });
-    }
-
-    finalHtml += html;
-    finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
-
-    if (coverage) {
-      core.startGroup(options.covFile);
-      core.info(`coverage: ${coverage}`);
-      core.info(`color: ${color}`);
-      core.info(`warnings: ${warnings}`);
-
-      core.setOutput('coverage', coverage);
-      core.setOutput('color', color);
-      core.setOutput('warnings', warnings);
-      core.endGroup();
-    }
+    core.setOutput('coverage', coverage);
+    core.setOutput('color', color);
+    core.setOutput('warnings', warnings);
+    core.endGroup();
   }
 
   if (!finalHtml || options.hideComment) {
@@ -177,7 +185,7 @@ const main = async () => {
       );
 
       if (comment) {
-        core.info('Founded previous commit, updating');
+        core.info('Founded previous comment, updating');
         await octokit.issues.updateComment({
           repo,
           owner,
@@ -185,7 +193,7 @@ const main = async () => {
           body,
         });
       } else {
-        core.info('No previous commit founded, creating a new one');
+        core.info('No previous comment founded, creating a new one');
         await octokit.issues.createComment({
           repo,
           owner,
@@ -229,27 +237,28 @@ const getChangedFiles = async (options) => {
     core.info(`Base commit: ${base}`);
     core.info(`Head commit: ${head}`);
 
-    // Use GitHub's compare two commits API.
-    // https://developer.github.com/v3/repos/commits/#compare-two-commits
-    const response = await octokit.repos.compareCommits({
-      base,
-      head,
-      owner,
-      repo,
-    });
+    let response = null;
+    // that is first commit, we cannot get diff
+    if (base === '0000000000000000000000000000000000000000') {
+      response = await octokit.rest.repos.getCommit({
+        owner,
+        repo,
+        ref: head,
+      });
+    } else {
+      // https://developer.github.com/v3/repos/commits/#compare-two-commits
+      response = await octokit.rest.repos.compareCommits({
+        base,
+        head,
+        owner,
+        repo,
+      });
+    }
 
     // Ensure that the request was successful.
     if (response.status !== 200) {
       core.setFailed(
         `The GitHub API for comparing the base and head commits for this ${eventName} event returned ${response.status}, expected 200. ` +
-          "Please submit an issue on this action's GitHub repo."
-      );
-    }
-
-    // Ensure that the head commit is ahead of the base commit.
-    if (response.data.status !== 'ahead') {
-      core.setFailed(
-        `The head commit for this ${eventName} event is not ahead of the base commit. ` +
           "Please submit an issue on this action's GitHub repo."
       );
     }
