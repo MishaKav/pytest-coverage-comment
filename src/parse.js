@@ -1,5 +1,5 @@
 const core = require('@actions/core');
-const { getPathToFile, getContentFile } = require('./utils');
+const { getPathToFile, getContentFile, getCoverageColor } = require('./utils');
 
 // return true if "covergae file" include all special words
 const isValidCoverageContent = (data) => {
@@ -29,9 +29,7 @@ const getCoverageReport = (options) => {
     const isValid = isValidCoverageContent(content);
 
     if (content && !isValid) {
-      core.error(
-        `Error: coverage file "${covFilePath}" has bad format or wrong data`
-      );
+      core.error(`Coverage file "${covFilePath}" has bad format or wrong data`);
     }
 
     if (content && isValid) {
@@ -47,41 +45,6 @@ const getCoverageReport = (options) => {
   }
 
   return { html: '', coverage: '0', color: 'red', warnings: 0 };
-};
-
-// get coverage color
-const getCoverageColor = (percentage) => {
-  // https://shields.io/category/coverage
-  const rangeColors = [
-    {
-      color: 'red',
-      range: [0, 40],
-    },
-    {
-      color: 'orange',
-      range: [40, 60],
-    },
-    {
-      color: 'yellow',
-      range: [60, 80],
-    },
-    {
-      color: 'green',
-      range: [80, 90],
-    },
-    {
-      color: 'brightgreen',
-      range: [90, 101],
-    },
-  ];
-
-  const num = parseFloat(percentage);
-
-  const { color } =
-    rangeColors.find(({ range: [min, max] }) => num >= min && num < max) ||
-    rangeColors[0];
-
-  return color;
 };
 
 // get actual lines from coverage-file
@@ -215,7 +178,7 @@ const getTotalCoverage = (data) => {
 };
 
 // convert all data to html output
-const toHtml = (data, options) => {
+const toHtml = (data, options, dataFromXml = null) => {
   const {
     badgeTitle,
     title,
@@ -224,8 +187,8 @@ const toHtml = (data, options) => {
     reportOnlyChangedFiles,
     removeLinkFromBadge,
   } = options;
-  const table = hideReport ? '' : toTable(data, options);
-  const total = getTotal(data);
+  const table = hideReport ? '' : toTable(data, options, dataFromXml);
+  const total = dataFromXml ? dataFromXml.total : getTotal(data);
   const color = getCoverageColor(total.cover);
   const onlyChnaged = reportOnlyChangedFiles ? '• ' : '';
   const readmeHref = `https://github.com/${options.repository}/blob/${options.commit}/README.md`;
@@ -242,15 +205,15 @@ const toHtml = (data, options) => {
 };
 
 // make html table from coverage-file
-const toTable = (data, options) => {
-  const coverage = parse(data);
+const toTable = (data, options, dataFromXml = null) => {
+  const coverage = dataFromXml ? dataFromXml.coverage : parse(data);
   const { reportOnlyChangedFiles, changedFiles } = options;
 
   if (!coverage) {
     core.warning(`Coverage file not well formed`);
     return null;
   }
-  const totalLine = getTotal(data);
+  const totalLine = dataFromXml ? dataFromXml.total : getTotal(data);
   options.hasMissing = coverage.some((c) => c.missing);
 
   core.info(`Generating coverage report`);
@@ -307,7 +270,8 @@ const toRow = (item, indent = false, options) => {
   const missing = toMissingTd(item, options);
   const lastTd = options.hasMissing ? `<td>${missing}</td>` : '';
 
-  return `<tr><td>${name}</td><td>${stmts}</td><td>${miss}</td><td>${cover}</td>${lastTd}</tr>`;
+  // prettier-ignore
+  return `<tr><td>${name.replace(/__/g, '\\_\\_')}</td><td>${stmts}</td><td>${miss}</td><td>${cover}</td>${lastTd}</tr>`;
 };
 
 // make summary row - tr
@@ -341,7 +305,7 @@ const toFolderTd = (path, options) => {
 
 // make missing cell - td
 const toMissingTd = (item, options) => {
-  if (!item.missing) {
+  if (!item.missing || !item.missing.length) {
     return '&nbsp;';
   }
 
@@ -358,4 +322,4 @@ const toMissingTd = (item, options) => {
     .join(', ');
 };
 
-module.exports = { getCoverageReport };
+module.exports = { getCoverageReport, getCoverageColor, toTable, toHtml };

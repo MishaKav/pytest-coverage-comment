@@ -2,17 +2,21 @@ name: Test Branch
 on:
   workflow_dispatch:
   pull_request:
+  push:
+    branches:
+      - test-coverage-xml
 jobs:
   test-branch:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Pytest coverage comment
         id: coverageComment
-        uses: MishaKav/pytest-coverage-comment@main
+        uses: MishaKav/pytest-coverage-comment@add-support-for-coverage-xml
         with:
-          pytest-coverage-path: ./data/pytest-coverage_4.txt
+          pytest-xml-coverage-path: ./data/coverage_1.xml
+          # pytest-coverage-path: ./data/pytest-coverage_4.txt
           junitxml-path: ./data/pytest_1.xml
 
       - name: Check the output coverage

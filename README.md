@@ -33,6 +33,7 @@ You can add this action to your GitHub workflow for Ubuntu runners (e.g. runs-on
 | --------------------------- | -------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `github-token`              | ✓        | `${{github.token}}`     | An alternative GitHub token, other than the default provided by GitHub Actions runner                                                                                                                                                                                                                                                                                         |
 | `pytest-coverage-path`      |          | `./pytest-coverage.txt` | The location of the txt output of pytest-coverage. Used to generate the comment                                                                                                                                                                                                                                                                                               |
+| `pytest-xml-coverage-path`  |          | ''                      | The location of coverage-xml from pytest-coverage (--cov-report "xml:coverage.xml)                                                                                                                                                                                                                                                                                            |
 | `coverage-path-prefix`      |          | ''                      | Prefix for path when link to files in comment                                                                                                                                                                                                                                                                                                                                 |
 | `title`                     |          | `Coverage Report`       | Title for the coverage report. Useful for monorepo projects                                                                                                                                                                                                                                                                                                                   |
 | `badge-title`               |          | `Coverage`              | Title for the badge icon                                                                                                                                                                                                                                                                                                                                                      |
@@ -100,7 +101,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v2
@@ -151,6 +152,16 @@ Example GitHub Action workflow that uses coverage percentage as output (see the 
     echo "Not Success Test Info - ${{ steps.coverageComment.outputs.notSuccessTestInfo }}"
 ```
 
+Example GitHub Action workflow that get coverage report from coverage-xml instead of coverage.txt
+`pytest --cov-report "xml:coverage.xml" --cov=src tests/`
+
+```yaml
+- name: Pytest coverage comment
+  uses: MishaKav/pytest-coverage-comment@main
+  with:
+    pytest-xml-coverage-path: ./coverage.xml
+```
+
 Example GitHub Action workflow that passes all params to Pytest Coverage Comment
 
 ```yaml
@@ -158,6 +169,7 @@ Example GitHub Action workflow that passes all params to Pytest Coverage Comment
   uses: MishaKav/pytest-coverage-comment@main
   with:
     pytest-coverage-path: ./path-to-file/pytest-coverage.txt
+    pytest-xml-coverage-path: ./path-to-file/coverage.xml
     title: My Coverage Report Title
     badge-title: My Badge Coverage Title
     hide-badge: false
@@ -215,7 +227,7 @@ jobs:
   update-coverage-on-readme:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
           fetch-depth: 0 # otherwise, you will failed to push refs to dest repo

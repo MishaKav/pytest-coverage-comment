@@ -1,6 +1,7 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
 const { getCoverageReport } = require('./parse');
+const { getCoverageXmlReport } = require('./parseXml');
 const {
   getSummaryReport,
   getParsedXml,
@@ -35,6 +36,9 @@ const main = async () => {
   });
   const defaultBranch = core.getInput('default-branch', { required: false });
   const covFile = core.getInput('pytest-coverage-path', { required: false });
+  const covXmlFile = core.getInput('pytest-xml-coverage-path', {
+    required: false,
+  });
   const pathPrefix = core.getInput('coverage-path-prefix', { required: false });
   const xmlFile = core.getInput('junitxml-path', { required: false });
   const xmlTitle = core.getInput('junitxml-title', { required: false });
@@ -53,6 +57,7 @@ const main = async () => {
     prefix: `${process.env.GITHUB_WORKSPACE}/`,
     pathPrefix,
     covFile,
+    covXmlFile,
     xmlFile,
     title,
     badgeTitle,
@@ -81,7 +86,9 @@ const main = async () => {
     options.changedFiles = changedFiles;
   }
 
-  let report = getCoverageReport(options);
+  let report = options.covXmlFile
+    ? getCoverageXmlReport(options)
+    : getCoverageReport(options);
   const { coverage, color, html, warnings } = report;
   const summaryReport = getSummaryReport(options);
 
@@ -112,14 +119,15 @@ const main = async () => {
     multipleFilesHtml = `\n\n${getMultipleReport(options)}`;
   }
 
-  if (html.length + summaryReport.length > MAX_COMMENT_LENGTH) {
+  if (
+    !options.hideReport &&
+    html.length + summaryReport.length > MAX_COMMENT_LENGTH
+  ) {
     // generate new html without report
-    core.warning(
-      `Your comment is too long (maximum is ${MAX_COMMENT_LENGTH} characters), coverage report will not be added.`
-    );
-    core.warning(
-      `Try add: "--cov-report=term-missing:skip-covered", or add "hide-report: true", or add "report-only-changed-files: true", or switch to "multiple-files" mode`
-    );
+    // prettier-ignore
+    core.warning(`Your comment is too long (maximum is ${MAX_COMMENT_LENGTH} characters), coverage report will not be added.`);
+    // prettier-ignore
+    core.warning(`Try add: "--cov-report=term-missing:skip-covered", or add "hide-report: true", or add "report-only-changed-files: true", or switch to "multiple-files" mode`);
     report = getSummaryReport({ ...options, hideReport: true });
   }
 

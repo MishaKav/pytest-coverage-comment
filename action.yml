@@ -15,6 +15,11 @@ inputs:
     description: 'The location of the txt output of pytest-coverage'
     default: './pytest-coverage.txt'
     required: false
+  
+  pytest-xml-coverage-path:
+    description: 'The location of coverage-xml from pytest-coverage'
+    default: ''
+    required: false
 
   coverage-path-prefix:
     description: 'Prefix for path when link to files in comment'
