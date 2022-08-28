@@ -16725,29 +16725,11 @@ function wrappy (fn, cb) {
 
 const xml2js = __nccwpck_require__(6189);
 const core = __nccwpck_require__(2186);
-const { getPathToFile, getContentFile } = __nccwpck_require__(1608);
-
-const getXmlContent = (options) => {
-  const { xmlFile } = options;
-
-  try {
-    const xmlFilePath = getPathToFile(xmlFile);
-
-    if (xmlFilePath) {
-      const content = getContentFile(xmlFilePath);
-
-      return content;
-    }
-  } catch (error) {
-    core.error(`Could not get the xml string successfully. ${error.message}`);
-  }
-
-  return null;
-};
+const { getContent } = __nccwpck_require__(1608);
 
 // return parsed xml
 const getParsedXml = (options) => {
-  const content = getXmlContent(options);
+  const content = getContent(options.xmlFile);
 
   if (content) {
     return getSummary(content);
@@ -16808,7 +16790,7 @@ const getNotSuccessTest = (options) => {
   const initData = { count: 0, failures: [], errors: [], skipped: [] };
 
   try {
-    const content = getXmlContent(options);
+    const content = getContent(options.xmlFile);
 
     if (content) {
       const testCaseToOutput = (testcase) => {
@@ -16976,7 +16958,7 @@ module.exports = { getMultipleReport };
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const core = __nccwpck_require__(2186);
-const { getPathToFile, getContentFile } = __nccwpck_require__(1608);
+const { getPathToFile, getContentFile, getCoverageColor } = __nccwpck_require__(1608);
 
 // return true if "covergae file" include all special words
 const isValidCoverageContent = (data) => {
@@ -17006,9 +16988,7 @@ const getCoverageReport = (options) => {
     const isValid = isValidCoverageContent(content);
 
     if (content && !isValid) {
-      core.error(
-        `Error: coverage file "${covFilePath}" has bad format or wrong data`
-      );
+      core.error(`Coverage file "${covFilePath}" has bad format or wrong data`);
     }
 
     if (content && isValid) {
@@ -17024,41 +17004,6 @@ const getCoverageReport = (options) => {
   }
 
   return { html: '', coverage: '0', color: 'red', warnings: 0 };
-};
-
-// get coverage color
-const getCoverageColor = (percentage) => {
-  // https://shields.io/category/coverage
-  const rangeColors = [
-    {
-      color: 'red',
-      range: [0, 40],
-    },
-    {
-      color: 'orange',
-      range: [40, 60],
-    },
-    {
-      color: 'yellow',
-      range: [60, 80],
-    },
-    {
-      color: 'green',
-      range: [80, 90],
-    },
-    {
-      color: 'brightgreen',
-      range: [90, 101],
-    },
-  ];
-
-  const num = parseFloat(percentage);
-
-  const { color } =
-    rangeColors.find(({ range: [min, max] }) => num >= min && num < max) ||
-    rangeColors[0];
-
-  return color;
 };
 
 // get actual lines from coverage-file
@@ -17192,7 +17137,7 @@ const getTotalCoverage = (data) => {
 };
 
 // convert all data to html output
-const toHtml = (data, options) => {
+const toHtml = (data, options, dataFromXml = null) => {
   const {
     badgeTitle,
     title,
@@ -17201,8 +17146,8 @@ const toHtml = (data, options) => {
     reportOnlyChangedFiles,
     removeLinkFromBadge,
   } = options;
-  const table = hideReport ? '' : toTable(data, options);
-  const total = getTotal(data);
+  const table = hideReport ? '' : toTable(data, options, dataFromXml);
+  const total = dataFromXml ? dataFromXml.total : getTotal(data);
   const color = getCoverageColor(total.cover);
   const onlyChnaged = reportOnlyChangedFiles ? '• ' : '';
   const readmeHref = `https://github.com/${options.repository}/blob/${options.commit}/README.md`;
@@ -17219,15 +17164,15 @@ const toHtml = (data, options) => {
 };
 
 // make html table from coverage-file
-const toTable = (data, options) => {
-  const coverage = parse(data);
+const toTable = (data, options, dataFromXml = null) => {
+  const coverage = dataFromXml ? dataFromXml.coverage : parse(data);
   const { reportOnlyChangedFiles, changedFiles } = options;
 
   if (!coverage) {
     core.warning(`Coverage file not well formed`);
     return null;
   }
-  const totalLine = getTotal(data);
+  const totalLine = dataFromXml ? dataFromXml.total : getTotal(data);
   options.hasMissing = coverage.some((c) => c.missing);
 
   core.info(`Generating coverage report`);
@@ -17284,7 +17229,8 @@ const toRow = (item, indent = false, options) => {
   const missing = toMissingTd(item, options);
   const lastTd = options.hasMissing ? `<td>${missing}</td>` : '';
 
-  return `<tr><td>${name}</td><td>${stmts}</td><td>${miss}</td><td>${cover}</td>${lastTd}</tr>`;
+  // prettier-ignore
+  return `<tr><td>${name.replace(/__/g, '\\_\\_')}</td><td>${stmts}</td><td>${miss}</td><td>${cover}</td>${lastTd}</tr>`;
 };
 
 // make summary row - tr
@@ -17318,7 +17264,7 @@ const toFolderTd = (path, options) => {
 
 // make missing cell - td
 const toMissingTd = (item, options) => {
-  if (!item.missing) {
+  if (!item.missing || !item.missing.length) {
     return '&nbsp;';
   }
 
@@ -17335,7 +17281,192 @@ const toMissingTd = (item, options) => {
     .join(', ');
 };
 
-module.exports = { getCoverageReport };
+module.exports = { getCoverageReport, getCoverageColor, toTable, toHtml };
+
+
+/***/ }),
+
+/***/ 6238:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const xml2js = __nccwpck_require__(6189);
+const core = __nccwpck_require__(2186);
+const { getContent, getCoverageColor } = __nccwpck_require__(1608);
+const { toHtml } = __nccwpck_require__(3248);
+
+// return parsed xml
+const getParsedXml = (options) => {
+  const content = getContent(options.covXmlFile);
+
+  if (content) {
+    return getXmlContent(content);
+  }
+
+  return '';
+};
+
+const getTotalCoverage = (parsedXml) => {
+  if (!parsedXml) {
+    return null;
+  }
+
+  const coverage = parsedXml['$'];
+  const cover = parseInt(parseFloat(coverage['line-rate']) * 100);
+  const linesValid = parseInt(coverage['lines-valid']);
+  const linesCovered = parseInt(coverage['lines-covered']);
+
+  return {
+    name: 'TOTAL',
+    stmts: linesValid,
+    miss: linesValid - linesCovered,
+    cover: cover !== '0' ? `${cover}%` : '0',
+  };
+};
+
+// return true if "covergae file" include right structure
+const isValidCoverageContent = (parsedXml) => {
+  if (!parsedXml || !parsedXml.packages || !parsedXml.packages.length) {
+    return false;
+  }
+
+  const { packages } = parsedXml;
+  if (!packages[0] || !packages[0].package || !packages[0].package.length) {
+    return false;
+  }
+
+  return true;
+};
+
+// return summary report in markdown format
+const getCoverageXmlReport = (options) => {
+  try {
+    const parsedXml = getParsedXml(options);
+
+    const coverage = getTotalCoverage(parsedXml);
+    // const coverage = getCoverageReportXml(getContent(options.covXmlFile));
+    const isValid = isValidCoverageContent(parsedXml);
+
+    if (parsedXml && !isValid) {
+      // prettier-ignore
+      core.error(`Error: coverage file "${options.covXmlFile}" has bad format or wrong data`);
+    }
+
+    if (parsedXml && isValid) {
+      const coverageObj = coverageXmlToFiles(parsedXml);
+      const dataFromXml = { coverage: coverageObj, total: coverage };
+      const html = toHtml(null, options, dataFromXml);
+      const color = getCoverageColor(coverage ? coverage.cover : '0');
+
+      return { html, coverage, color };
+    }
+    return null;
+  } catch (error) {
+    // prettier-ignore
+    core.error(`Generating coverage report from "${options.covXmlFile}". ${error.message}`);
+  }
+
+  return '';
+};
+
+// get content from coverage xml
+const getXmlContent = (data) => {
+  try {
+    if (!data || !data.length) {
+      return null;
+    }
+
+    const parser = new xml2js.Parser();
+
+    const parsed = parser.parseString(data);
+    if (!parsed || !parser.resultObject) {
+      core.warning(`Coverage xml file is not XML or not well formed`);
+      return '';
+    }
+
+    return parser.resultObject.coverage;
+  } catch (error) {
+    core.error(`Parsing coverage xml. ${error.message}`);
+  }
+
+  return '';
+};
+
+// parse coverage xml to Files structure
+const coverageXmlToFiles = (coverageXml) => {
+  let files = [];
+
+  coverageXml.packages[0].package
+    .filter((package) => package.classes && package.classes.length)
+    .forEach((package) => {
+      package.classes[0].class
+        .filter((c) => c.lines)
+        .forEach((c) => {
+          const fileObj = parseClass(c);
+
+          if (fileObj) {
+            files.push(fileObj);
+          }
+        });
+    });
+
+  return files;
+};
+
+const parseClass = (classObj) => {
+  if (!classObj || !classObj.lines) {
+    return null;
+  }
+
+  const { stmts, missing, totalMissing: miss } = parseLines(classObj.lines);
+  const { filename: name, 'line-rate': lineRate } = classObj['$'];
+
+  const isFullCoverage = lineRate === '1';
+  const cover = isFullCoverage
+    ? '100%'
+    : `${parseInt(parseFloat(lineRate) * 100)}%`;
+
+  return { name, stmts, miss, cover, missing };
+};
+
+const parseLines = (lines) => {
+  if (!lines || !lines.length || !lines[0].line) {
+    return { stmts: '0', missing: '', totalMissing: '0' };
+  }
+
+  let stmts = '0';
+  const missingLines = [];
+
+  lines[0].line.forEach((line) => {
+    const { hits, number } = line['$'];
+
+    if (hits === '0') {
+      missingLines.push(parseInt(number));
+    }
+  });
+
+  const missing = missingLines.reduce((arr, val, i, a) => {
+    if (!i || val !== a[i - 1] + 1) arr.push([]);
+    arr[arr.length - 1].push(val);
+    return arr;
+  }, []);
+
+  const missingText = [];
+  missing.forEach((m) => {
+    if (m.length === 1) {
+      missingText.push(`${m[0]}`);
+    } else {
+      missingText.push(`${m[0]}-${m[m.length - 1]}`);
+    }
+  });
+
+  return {
+    stmts,
+    missing: missingText,
+    totalMissing: missingLines.length.toString(),
+  };
+};
+
+module.exports = { getCoverageXmlReport };
 
 
 /***/ }),
@@ -17380,7 +17511,63 @@ const getContentFile = (pathToFile) => {
   return content;
 };
 
-module.exports = { getPathToFile, getContentFile };
+const getContent = (filePath) => {
+  try {
+    const fullFilePath = getPathToFile(filePath);
+
+    if (fullFilePath) {
+      const content = getContentFile(fullFilePath);
+
+      return content;
+    }
+  } catch (error) {
+    core.error(`Could not get content of "${filePath}". ${error.message}`);
+  }
+
+  return null;
+};
+
+// get coverage color from coverage percentage
+const getCoverageColor = (percentage) => {
+  // https://shields.io/category/coverage
+  const rangeColors = [
+    {
+      color: 'red',
+      range: [0, 40],
+    },
+    {
+      color: 'orange',
+      range: [40, 60],
+    },
+    {
+      color: 'yellow',
+      range: [60, 80],
+    },
+    {
+      color: 'green',
+      range: [80, 90],
+    },
+    {
+      color: 'brightgreen',
+      range: [90, 101],
+    },
+  ];
+
+  const num = parseFloat(percentage);
+
+  const { color } =
+    rangeColors.find(({ range: [min, max] }) => num >= min && num < max) ||
+    rangeColors[0];
+
+  return color;
+};
+
+module.exports = {
+  getPathToFile,
+  getContentFile,
+  getContent,
+  getCoverageColor,
+};
 
 
 /***/ }),
@@ -17581,6 +17768,7 @@ var __webpack_exports__ = {};
 const core = __nccwpck_require__(2186);
 const github = __nccwpck_require__(5438);
 const { getCoverageReport } = __nccwpck_require__(3248);
+const { getCoverageXmlReport } = __nccwpck_require__(6238);
 const {
   getSummaryReport,
   getParsedXml,
@@ -17615,6 +17803,9 @@ const main = async () => {
   });
   const defaultBranch = core.getInput('default-branch', { required: false });
   const covFile = core.getInput('pytest-coverage-path', { required: false });
+  const covXmlFile = core.getInput('pytest-xml-coverage-path', {
+    required: false,
+  });
   const pathPrefix = core.getInput('coverage-path-prefix', { required: false });
   const xmlFile = core.getInput('junitxml-path', { required: false });
   const xmlTitle = core.getInput('junitxml-title', { required: false });
@@ -17633,6 +17824,7 @@ const main = async () => {
     prefix: `${process.env.GITHUB_WORKSPACE}/`,
     pathPrefix,
     covFile,
+    covXmlFile,
     xmlFile,
     title,
     badgeTitle,
@@ -17661,7 +17853,9 @@ const main = async () => {
     options.changedFiles = changedFiles;
   }
 
-  let report = getCoverageReport(options);
+  let report = options.covFile
+    ? getCoverageReport(options)
+    : getCoverageXmlReport(options);
   const { coverage, color, html, warnings } = report;
   const summaryReport = getSummaryReport(options);
 
@@ -17692,14 +17886,15 @@ const main = async () => {
     multipleFilesHtml = `\n\n${getMultipleReport(options)}`;
   }
 
-  if (html.length + summaryReport.length > MAX_COMMENT_LENGTH) {
+  if (
+    !options.hideReport &&
+    html.length + summaryReport.length > MAX_COMMENT_LENGTH
+  ) {
     // generate new html without report
-    core.warning(
-      `Your comment is too long (maximum is ${MAX_COMMENT_LENGTH} characters), coverage report will not be added.`
-    );
-    core.warning(
-      `Try add: "--cov-report=term-missing:skip-covered", or add "hide-report: true", or add "report-only-changed-files: true", or switch to "multiple-files" mode`
-    );
+    // prettier-ignore
+    core.warning(`Your comment is too long (maximum is ${MAX_COMMENT_LENGTH} characters), coverage report will not be added.`);
+    // prettier-ignore
+    core.warning(`Try add: "--cov-report=term-missing:skip-covered", or add "hide-report: true", or add "report-only-changed-files: true", or switch to "multiple-files" mode`);
     report = getSummaryReport({ ...options, hideReport: true });
   }
 

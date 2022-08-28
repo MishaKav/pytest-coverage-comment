@@ -1,0 +1,182 @@
+============================= test session starts ==============================
+platform linux -- Python 3.8.12, pytest-6.2.3, py-1.11.0, pluggy-0.13.1
+rootdir: /usr/app/tests, configfile: pytest.ini
+plugins: github-actions-annotate-failures-0.1.5, forked-1.4.0, cov-2.11.1, xdist-2.5.0, env-0.6.2, jira-0.3.15
+gw0 I / gw1 I / gw2 I / gw3 I / gw4 I / gw5 I / gw6 I / gw7 I
+
+[gw0] Python 3.8.12 (default, Mar  2 2022, 05:04:35)  -- [GCC 10.2.1 20210110]
+
+[gw1] Python 3.8.12 (default, Mar  2 2022, 05:04:35)  -- [GCC 10.2.1 20210110]
+
+[gw2] Python 3.8.12 (default, Mar  2 2022, 05:04:35)  -- [GCC 10.2.1 20210110]
+
+[gw3] Python 3.8.12 (default, Mar  2 2022, 05:04:35)  -- [GCC 10.2.1 20210110]
+
+[gw5] Python 3.8.12 (default, Mar  2 2022, 05:04:35)  -- [GCC 10.2.1 20210110]
+
+[gw4] Python 3.8.12 (default, Mar  2 2022, 05:04:35)  -- [GCC 10.2.1 20210110]
+
+[gw6] Python 3.8.12 (default, Mar  2 2022, 05:04:35)  -- [GCC 10.2.1 20210110]
+
+[gw7] Python 3.8.12 (default, Mar  2 2022, 05:04:35)  -- [GCC 10.2.1 20210110]
+gw0 [33] / gw1 [33] / gw2 [33] / gw3 [33] / gw4 [33] / gw5 [33] / gw6 [33] / gw7 [33]
+
+scheduling tests via LoadScheduling
+
+tests/test_account_helper.py::TestAccountHelper::test_session_name 
+tests/test_account_helper.py::TestAccountHelper::test_is_blocked_account 
+tests/test_account_helper.py::TestAccountHelper::test_transform_credentials 
+tests/test_db_helper.py::TestUtils::test_none_should_be_retrieved_as_none 
+tests/test_get_function_url_config.py::TestFunctionUrl::test_function_url_with_latest_config 
+tests/test_get_function_url_config.py::TestFunctionUrl::test_list_function_urls_config_returns_with_error 
+tests/test_account_helper.py::TestAccountHelper::test_account_parser 
+tests/test_get_function_url_config.py::TestFunctionUrl::test_function_without_function_url 
+[gw2] [  3%] PASSED tests/test_account_helper.py::TestAccountHelper::test_session_name 
+tests/test_logger_utils.py::TestLoggerUtils::test_log_event_should_default_to_trace_level 
+[gw1] [  6%] PASSED tests/test_account_helper.py::TestAccountHelper::test_is_blocked_account 
+tests/test_get_function_url_config.py::TestFunctionUrl::test_list_function_urls_config_returns_with_version_configs_with_latest 
+[gw5] [  9%] PASSED tests/test_db_helper.py::TestUtils::test_none_should_be_retrieved_as_none 
+tests/test_logger_utils.py::TestLoggerUtils::test_should_obfuscate_cross_account_role_and_external_id 
+[gw3] [ 12%] PASSED tests/test_account_helper.py::TestAccountHelper::test_transform_credentials 
+tests/test_logger_utils.py::TestLoggerUtils::test_set_logger_conf 
+[gw0] [ 15%] PASSED tests/test_account_helper.py::TestAccountHelper::test_account_parser 
+tests/test_get_function_url_config.py::TestFunctionUrl::test_list_function_urls_config_returns_with_version_configs_no_latest 
+[gw2] [ 18%] PASSED tests/test_logger_utils.py::TestLoggerUtils::test_log_event_should_default_to_trace_level 
+tests/test_risk_rating_common.py::TestRiskRatingCommon::test_risk_rating_average_should_include_0 
+[gw5] [ 21%] PASSED tests/test_logger_utils.py::TestLoggerUtils::test_should_obfuscate_cross_account_role_and_external_id 
+tests/test_risk_rating_common.py::TestRiskRatingCommon::test_set_score 
+[gw3] [ 24%] PASSED tests/test_logger_utils.py::TestLoggerUtils::test_set_logger_conf 
+tests/test_scrubbing.py::TestScrubbing::test_should_not_modify_original_event 
+[gw2] [ 27%] PASSED tests/test_risk_rating_common.py::TestRiskRatingCommon::test_risk_rating_average_should_include_0 
+tests/test_step_result_storage.py::TestStepResultStorage::test_step_result_storage_set 
+[gw5] [ 30%] PASSED tests/test_risk_rating_common.py::TestRiskRatingCommon::test_set_score 
+tests/test_step_result_storage.py::TestStepResultStorage::test_step_result_storage_set_storage 
+[gw3] [ 33%] PASSED tests/test_scrubbing.py::TestScrubbing::test_should_not_modify_original_event 
+tests/test_utils.py::TestUtils::test_batch_utils 
+[gw3] [ 36%] PASSED tests/test_utils.py::TestUtils::test_batch_utils 
+[gw5] [ 39%] PASSED tests/test_step_result_storage.py::TestStepResultStorage::test_step_result_storage_set_storage 
+tests/test_utils.py::TestUtils::test_singleton 
+tests/test_utils.py::TestUtils::test_is_local 
+[gw2] [ 42%] PASSED tests/test_step_result_storage.py::TestStepResultStorage::test_step_result_storage_set 
+tests/test_utils.py::TestUtils::test_cn_request_ctx 
+[gw3] [ 45%] PASSED tests/test_utils.py::TestUtils::test_singleton 
+[gw5] [ 48%] PASSED tests/test_utils.py::TestUtils::test_is_local 
+tests/test_utils.py::TestUtils::test_ts_request_ctx_with_invalid_jwt_should_return_403 
+tests/test_utils.py::TestUtils::test_ts_request_ctx 
+[gw2] [ 51%] PASSED tests/test_utils.py::TestUtils::test_cn_request_ctx 
+tests/test_utils.py::TestUtils::test_ts_request_ctx_without_accounts 
+[gw5] [ 54%] PASSED tests/test_utils.py::TestUtils::test_ts_request_ctx_with_invalid_jwt_should_return_403 
+tests/test_validations.py::TestValidation::test_invalid_scan_configurations 
+[gw3] [ 57%] PASSED tests/test_utils.py::TestUtils::test_ts_request_ctx 
+tests/test_utils.py::TestUtils::test_unquote_if_needed 
+[gw2] [ 60%] PASSED tests/test_utils.py::TestUtils::test_ts_request_ctx_without_accounts 
+tests/test_validations.py::TestValidation::test_valid_scan_configurations 
+[gw5] [ 63%] PASSED tests/test_validations.py::TestValidation::test_invalid_scan_configurations 
+[gw2] [ 66%] PASSED tests/test_validations.py::TestValidation::test_valid_scan_configurations 
+[gw3] [ 69%] PASSED tests/test_utils.py::TestUtils::test_unquote_if_needed 
+[gw7] [ 72%] PASSED tests/test_get_function_url_config.py::TestFunctionUrl::test_list_function_urls_config_returns_with_error 
+tests/test_risk_rating_common.py::TestRiskRatingCommon::test_risk_rating_average_should_consider_only_available_values 
+[gw4] [ 75%] PASSED tests/test_get_function_url_config.py::TestFunctionUrl::test_function_url_with_latest_config 
+tests/test_logger_utils.py::TestLoggerUtils::test_should_obfuscate_cross_account_role_and_external_id_for_json 
+[gw6] [ 78%] PASSED tests/test_get_function_url_config.py::TestFunctionUrl::test_function_without_function_url 
+tests/test_risk_rating_common.py::TestRiskRatingCommon::test_risk_rating_average_all_scores 
+[gw7] [ 81%] PASSED tests/test_risk_rating_common.py::TestRiskRatingCommon::test_risk_rating_average_should_consider_only_available_values 
+[gw4] [ 84%] PASSED tests/test_logger_utils.py::TestLoggerUtils::test_should_obfuscate_cross_account_role_and_external_id_for_json 
+[gw6] [ 87%] PASSED tests/test_risk_rating_common.py::TestRiskRatingCommon::test_risk_rating_average_all_scores 
+[gw1] [ 90%] PASSED tests/test_get_function_url_config.py::TestFunctionUrl::test_list_function_urls_config_returns_with_version_configs_with_latest 
+[gw0] [ 93%] PASSED tests/test_get_function_url_config.py::TestFunctionUrl::test_list_function_urls_config_returns_with_version_configs_no_latest 
+tests/test_risk_rating_common.py::TestRiskRatingCommon::test_risk_rating_average_should_return_none_if_no_ratings_are_available 
+tests/test_scrubbing.py::TestScrubbing::test_should_obfuscate_cross_account_role_and_external_id 
+[gw1] [ 96%] PASSED tests/test_risk_rating_common.py::TestRiskRatingCommon::test_risk_rating_average_should_return_none_if_no_ratings_are_available 
+[gw0] [100%] PASSED tests/test_scrubbing.py::TestScrubbing::test_should_obfuscate_cross_account_role_and_external_id 
+
+---------- coverage: platform linux, python 3.8.12-final-0 -----------
+Name                                                               Stmts   Miss  Cover   Missing
+------------------------------------------------------------------------------------------------
+cn/logger/config.py                                                   29      6    79%   23, 57-61
+cn/logger/utils.py                                                    16      3    81%   22-24
+cn/monitor/monitor_client.py                                          35     35     0%   1-75
+cn/step_utils/step_result_storage.py                                  49     16    67%   36-37, 46-48, 52-61, 65
+cn/testing/api.py                                                     20     20     0%   1-99
+cn/testing/assertions.py                                              13     13     0%   1-17
+cn/testing/aws.py                                                    281    192    32%   33-43, 47, 54-71, 76-103, 107-124, 128-130, 145-158, 162-170, 174-192, 196-214, 218-236, 240-258, 262-280, 288-290, 294-296, 304-315, 323-326, 330-338, 342-359, 363-367, 382-407, 442-449, 463, 497-503, 507-508, 512-566, 570-588, 592-611, 615-633, 645-650, 656-671, 677-685, 696-705, 709-712, 716-721, 747-902, 906-910, 917, 921-956
+cn/testing/events.py                                                  35     35     0%   1-253
+cn/utils/account_helper.py                                            64     26    59%   39-41, 46-55, 69-81, 95-97
+cn/utils/agent_helper.py                                              13     13     0%   1-28
+cn/utils/api_client.py                                                20     20     0%   1-25
+cn/utils/azure_utils.py                                               30     30     0%   1-39
+cn/utils/cors_utils.py                                                18      3    83%   22-24
+cn/utils/create_pre_signed_url.py                                     16     16     0%   1-42
+cn/utils/db_helper.py                                                240    184    23%   18-19, 23, 27-29, 33-35, 39-44, 48-51, 55-62, 72-84, 88-97, 101-105, 121, 161-170, 186-207, 230-244, 248-252, 256-260, 266-290, 299-331, 335-350, 354-365, 369-381, 385-391, 395-397, 401, 405-427, 436, 442, 447-463, 471-475, 479-485, 490-491, 496-497
+cn/utils/discovery/aws_policy_transform.py                            30     26    13%   5-15, 19-40, 44-45
+cn/utils/discovery/function_utils.py                                  64     28    56%   17-24, 28-48, 57, 74
+cn/utils/external_jwt.py                                              60     60     0%   1-124
+cn/utils/json_utils.py                                                 9      5    44%   7-12
+cn/utils/locale_helper.py                                             15     15     0%   1-19
+cn/utils/policy_converter.py                                          12     12     0%   1-33
+cn/utils/request_ctx.py                                              135     48    64%   24-29, 32-33, 68, 89-92, 100-105, 110, 117, 121-122, 124, 152-156, 160-179, 183-194
+cn/utils/risk_rating/aws/utils.py                                      6      6     0%   1-46
+cn/utils/risk_rating/azure/service_access_levels_risk_ratings.py       1      1     0%   1
+cn/utils/risk_rating/azure/utils.py                                   11     11     0%   1-22
+cn/utils/risk_rating/common/discovery_risk_rating_base.py             52     52     0%   1-76
+cn/utils/risk_rating/common/risk_rating.py                            12     12     0%   1-16
+cn/utils/risk_rating/common/risk_rating_base.py                       37     37     0%   1-62
+cn/utils/risk_rating/common/utils.py                                  48      9    81%   96-98, 110-116
+cn/utils/risk_rating/common/vulnerability_risk_rating_base.py         35     35     0%   1-54
+cn/utils/runtime_utils.py                                              2      2     0%   1-2
+cn/utils/scan_helper.py                                               25     25     0%   1-36
+cn/utils/sqs_helper.py                                                45     45     0%   1-69
+------------------------------------------------------------------------------------------------
+TOTAL                                                               1530   1041    32%
+
+14 files skipped due to complete coverage.
+Coverage XML written to file coverage.xml
+
+
+============================== slowest durations ===============================
+1.84s setup    test_get_function_url_config.py::TestFunctionUrl::test_function_without_function_url
+1.80s setup    test_get_function_url_config.py::TestFunctionUrl::test_function_url_with_latest_config
+1.79s setup    test_get_function_url_config.py::TestFunctionUrl::test_list_function_urls_config_returns_with_error
+1.29s setup    test_get_function_url_config.py::TestFunctionUrl::test_list_function_urls_config_returns_with_version_configs_no_latest
+1.28s setup    test_get_function_url_config.py::TestFunctionUrl::test_list_function_urls_config_returns_with_version_configs_with_latest
+0.69s setup    test_account_helper.py::TestAccountHelper::test_transform_credentials
+0.68s setup    test_account_helper.py::TestAccountHelper::test_account_parser
+0.68s setup    test_db_helper.py::TestUtils::test_none_should_be_retrieved_as_none
+0.67s setup    test_account_helper.py::TestAccountHelper::test_is_blocked_account
+0.67s setup    test_account_helper.py::TestAccountHelper::test_session_name
+0.25s setup    test_step_result_storage.py::TestStepResultStorage::test_step_result_storage_set
+0.24s setup    test_utils.py::TestUtils::test_batch_utils
+0.24s setup    test_step_result_storage.py::TestStepResultStorage::test_step_result_storage_set_storage
+0.16s setup    test_utils.py::TestUtils::test_unquote_if_needed
+0.12s setup    test_validations.py::TestValidation::test_valid_scan_configurations
+0.11s call     test_get_function_url_config.py::TestFunctionUrl::test_list_function_urls_config_returns_with_version_configs_with_latest
+0.11s setup    test_validations.py::TestValidation::test_invalid_scan_configurations
+0.10s call     test_get_function_url_config.py::TestFunctionUrl::test_list_function_urls_config_returns_with_error
+0.10s call     test_get_function_url_config.py::TestFunctionUrl::test_function_url_with_latest_config
+0.10s setup    test_risk_rating_common.py::TestRiskRatingCommon::test_risk_rating_average_all_scores
+0.09s call     test_get_function_url_config.py::TestFunctionUrl::test_function_without_function_url
+0.09s setup    test_utils.py::TestUtils::test_ts_request_ctx_without_accounts
+0.09s call     test_get_function_url_config.py::TestFunctionUrl::test_list_function_urls_config_returns_with_version_configs_no_latest
+0.09s setup    test_scrubbing.py::TestScrubbing::test_should_not_modify_original_event
+0.09s setup    test_utils.py::TestUtils::test_ts_request_ctx
+0.09s setup    test_scrubbing.py::TestScrubbing::test_should_obfuscate_cross_account_role_and_external_id
+0.09s setup    test_risk_rating_common.py::TestRiskRatingCommon::test_risk_rating_average_should_include_0
+0.09s setup    test_risk_rating_common.py::TestRiskRatingCommon::test_set_score
+0.09s setup    test_utils.py::TestUtils::test_is_local
+0.09s setup    test_logger_utils.py::TestLoggerUtils::test_set_logger_conf
+0.09s setup    test_utils.py::TestUtils::test_cn_request_ctx
+0.09s setup    test_utils.py::TestUtils::test_singleton
+0.08s setup    test_utils.py::TestUtils::test_ts_request_ctx_with_invalid_jwt_should_return_403
+0.08s setup    test_risk_rating_common.py::TestRiskRatingCommon::test_risk_rating_average_should_consider_only_available_values
+0.08s setup    test_logger_utils.py::TestLoggerUtils::test_should_obfuscate_cross_account_role_and_external_id
+0.08s setup    test_risk_rating_common.py::TestRiskRatingCommon::test_risk_rating_average_should_return_none_if_no_ratings_are_available
+0.08s setup    test_logger_utils.py::TestLoggerUtils::test_log_event_should_default_to_trace_level
+0.08s setup    test_logger_utils.py::TestLoggerUtils::test_should_obfuscate_cross_account_role_and_external_id_for_json
+0.03s call     test_step_result_storage.py::TestStepResultStorage::test_step_result_storage_set
+0.03s call     test_step_result_storage.py::TestStepResultStorage::test_step_result_storage_set_storage
+0.01s call     test_utils.py::TestUtils::test_cn_request_ctx
+0.01s call     test_utils.py::TestUtils::test_ts_request_ctx_with_invalid_jwt_should_return_403
+0.01s call     test_utils.py::TestUtils::test_ts_request_ctx
+
+(56 durations < 0.005s hidden.  Use -vv to show these durations.)
+============================== 33 passed in 4.68s ==============================

@@ -35,12 +35,60 @@ const getContentFile = (pathToFile) => {
   return content;
 };
 
-const getFileExtension = (pathToFile) => {
-  if (!pathToFile) {
-    return null;
+const getContent = (filePath) => {
+  try {
+    const fullFilePath = getPathToFile(filePath);
+
+    if (fullFilePath) {
+      const content = getContentFile(fullFilePath);
+
+      return content;
+    }
+  } catch (error) {
+    core.error(`Could not get content of "${filePath}". ${error.message}`);
   }
 
-  return pathToFile.split('.').pop().toLowerCase();
+  return null;
 };
 
-module.exports = { getPathToFile, getContentFile, getFileExtension };
+// get coverage color from coverage percentage
+const getCoverageColor = (percentage) => {
+  // https://shields.io/category/coverage
+  const rangeColors = [
+    {
+      color: 'red',
+      range: [0, 40],
+    },
+    {
+      color: 'orange',
+      range: [40, 60],
+    },
+    {
+      color: 'yellow',
+      range: [60, 80],
+    },
+    {
+      color: 'green',
+      range: [80, 90],
+    },
+    {
+      color: 'brightgreen',
+      range: [90, 101],
+    },
+  ];
+
+  const num = parseFloat(percentage);
+
+  const { color } =
+    rangeColors.find(({ range: [min, max] }) => num >= min && num < max) ||
+    rangeColors[0];
+
+  return color;
+};
+
+module.exports = {
+  getPathToFile,
+  getContentFile,
+  getContent,
+  getCoverageColor,
+};

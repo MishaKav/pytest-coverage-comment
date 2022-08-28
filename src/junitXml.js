@@ -1,28 +1,10 @@
 const xml2js = require('xml2js');
 const core = require('@actions/core');
-const { getPathToFile, getContentFile } = require('./utils');
-
-const getXmlContent = (options) => {
-  const { xmlFile } = options;
-
-  try {
-    const xmlFilePath = getPathToFile(xmlFile);
-
-    if (xmlFilePath) {
-      const content = getContentFile(xmlFilePath);
-
-      return content;
-    }
-  } catch (error) {
-    core.error(`Could not get the xml string successfully. ${error.message}`);
-  }
-
-  return null;
-};
+const { getContent } = require('./utils');
 
 // return parsed xml
 const getParsedXml = (options) => {
-  const content = getXmlContent(options);
+  const content = getContent(options.xmlFile);
 
   if (content) {
     return getSummary(content);
@@ -83,7 +65,7 @@ const getNotSuccessTest = (options) => {
   const initData = { count: 0, failures: [], errors: [], skipped: [] };
 
   try {
-    const content = getXmlContent(options);
+    const content = getContent(options.xmlFile);
 
     if (content) {
       const testCaseToOutput = (testcase) => {

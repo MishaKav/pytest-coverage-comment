@@ -1,18 +1,19 @@
 const fs = require('fs');
 const path = require('path');
-const { getCoverageReport } = require('./coverage');
+const { getCoverageReport } = require('./parse');
 const {
   getSummaryReport,
   getParsedXml,
   getNotSuccessTest,
 } = require('./junitXml');
 const { getMultipleReport } = require('./multiFiles');
+const { getCoverageXmlReport } = require('./parseXml');
 
-/*
+/*  
   Usefull git commands
-  git tag -a -m "Export coverage example" v1.1.7 && git push --follow-tags
-  git tag -d v1.0
-  git tag -d origin v1.0
+  git tag -a -m "Export coverage example" v1.1.7 && git push --follow-tags 
+  git tag -d v1.0 
+  git tag -d origin v1.0  
 
   # remove all workflows from repo
   gh api repos/MishaKav/pytest-coverage-comment/actions/runs \
@@ -35,6 +36,7 @@ const getPathToFile = (pathToFile) => {
 const main = async () => {
   const covFile = './../data/pytest-coverage_4.txt';
   const xmlFile = './../data/pytest_1.xml';
+  const covXmlFile = './../data/coverage_1.xml';
   const prefix = path.dirname(path.dirname(path.resolve(covFile))) + '/';
   // eslint-disable-next-line
   const multipleFiles = [
@@ -53,6 +55,7 @@ const main = async () => {
     pathPrefix: '',
     covFile: getPathToFile(covFile),
     xmlFile: getPathToFile(xmlFile),
+    covXmlFile: getPathToFile(covXmlFile),
     defaultBranch: 'main',
     head: 'feat/test',
     base: 'main',
@@ -75,7 +78,10 @@ const main = async () => {
     },
   };
 
-  const { html } = getCoverageReport(options);
+  const { html } = options.covFile
+    ? getCoverageReport(options)
+    : getCoverageXmlReport(options);
+
   const summaryReport = getSummaryReport(options);
 
   // set to output junitxml values
