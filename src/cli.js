@@ -78,9 +78,9 @@ const main = async () => {
     },
   };
 
-  const { html } = options.covFile
-    ? getCoverageReport(options)
-    : getCoverageXmlReport(options);
+  const { html } = options.covXmlFile
+    ? getCoverageXmlReport(options)
+    : getCoverageReport(options);
 
   const summaryReport = getSummaryReport(options);
 

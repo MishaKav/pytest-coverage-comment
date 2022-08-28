@@ -86,9 +86,9 @@ const main = async () => {
     options.changedFiles = changedFiles;
   }
 
-  let report = options.covFile
-    ? getCoverageReport(options)
-    : getCoverageXmlReport(options);
+  let report = options.covXmlFile
+    ? getCoverageXmlReport(options)
+    : getCoverageReport(options);
   const { coverage, color, html, warnings } = report;
   const summaryReport = getSummaryReport(options);
 
