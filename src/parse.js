@@ -20,11 +20,11 @@ const isValidCoverageContent = (data) => {
 
 // return full html coverage report and coverage percenatge
 const getCoverageReport = (options) => {
-  const { covFile } = options;
+  const { covFile, covXmlFile } = options;
 
   try {
     const covFilePath = getPathToFile(covFile);
-    const content = getContentFile(covFilePath);
+    const content = getContentFile(covFilePath, covXmlFile != null);
     const coverage = getTotalCoverage(content);
     const isValid = isValidCoverageContent(content);
 

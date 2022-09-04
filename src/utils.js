@@ -12,8 +12,8 @@ const getPathToFile = (pathToFile) => {
     : `${process.env.GITHUB_WORKSPACE}/${pathToFile}`;
 };
 
-const getContentFile = (pathToFile) => {
-  if (!pathToFile) {
+const getContentFile = (pathToFile, skipWarning = false) => {
+  if (!pathToFile || skipWarning) {
     return null;
   }
 
