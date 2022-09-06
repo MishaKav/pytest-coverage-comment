@@ -17862,6 +17862,10 @@ const main = async () => {
   const { coverage, color, html, warnings } = report;
   const summaryReport = getSummaryReport(options);
 
+  if (summaryReport && summaryReport.html) {
+    core.setOutput('coverageHtml', summaryReport.html);
+  }
+
   if (html) {
     const newOptions = { ...options, commit: defaultBranch };
     const output = getCoverageReport(newOptions);
