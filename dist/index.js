@@ -16979,28 +16979,31 @@ const isValidCoverageContent = (data) => {
 
 // return full html coverage report and coverage percenatge
 const getCoverageReport = (options) => {
-  const { covFile } = options;
+  const { covFile, covXmlFile } = options;
 
-  try {
-    const covFilePath = getPathToFile(covFile);
-    const content = getContentFile(covFilePath);
-    const coverage = getTotalCoverage(content);
-    const isValid = isValidCoverageContent(content);
+  if (!covXmlFile) {
+    try {
+      const covFilePath = getPathToFile(covFile);
+      const content = getContentFile(covFilePath);
+      const coverage = getTotalCoverage(content);
+      const isValid = isValidCoverageContent(content);
 
-    if (content && !isValid) {
-      core.error(`Coverage file "${covFilePath}" has bad format or wrong data`);
+      if (content && !isValid) {
+        // prettier-ignore
+        core.error(`Coverage file "${covFilePath}" has bad format or wrong data`);
+      }
+
+      if (content && isValid) {
+        const html = toHtml(content, options);
+        const total = getTotal(content);
+        const warnings = getWarnings(content);
+        const color = getCoverageColor(total ? total.cover : '0');
+
+        return { html, coverage, color, warnings };
+      }
+    } catch (error) {
+      core.error(`Generating coverage report. ${error.message}`);
     }
-
-    if (content && isValid) {
-      const html = toHtml(content, options);
-      const total = getTotal(content);
-      const warnings = getWarnings(content);
-      const color = getCoverageColor(total ? total.cover : '0');
-
-      return { html, coverage, color, warnings };
-    }
-  } catch (error) {
-    core.error(`Generating coverage report. ${error.message}`);
   }
 
   return { html: '', coverage: '0', color: 'red', warnings: 0 };
@@ -17858,6 +17861,10 @@ const main = async () => {
     : getCoverageReport(options);
   const { coverage, color, html, warnings } = report;
   const summaryReport = getSummaryReport(options);
+
+  if (summaryReport && summaryReport.html) {
+    core.setOutput('coverageHtml', summaryReport.html);
+  }
 
   if (html) {
     const newOptions = { ...options, commit: defaultBranch };
