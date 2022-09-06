@@ -22,7 +22,7 @@ const isValidCoverageContent = (data) => {
 const getCoverageReport = (options) => {
   const { covFile, covXmlFile } = options;
 
-  if (covXmlFile != null) {
+  if (covXmlFile == null) {
     try {
       const covFilePath = getPathToFile(covFile);
       const content = getContentFile(covFilePath);
