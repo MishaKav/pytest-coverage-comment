@@ -235,9 +235,13 @@ const toTable = (data, options, dataFromXml = null) => {
         (f) => f.name
       );
 
-      return allFilesInFolder.every((f) =>
+      folders[folderPath] = folders[folderPath].filter((f) =>
+        changedFiles.all.some((c) => c.includes(f.name))
+      );
+      const fileExistsInFolder = allFilesInFolder.some((f) =>
         changedFiles.all.some((c) => c.includes(f))
       );
+      return fileExistsInFolder;
     })
     .reduce(
       (acc, key) => [
