@@ -12,10 +12,6 @@ jobs:
           persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
           fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
 
-      - name: Extract branch name
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-        id: extract_branch
-
       - name: Pytest coverage comment
         if: ${{ github.ref == 'refs/heads/main' }}
         id: coverageComment
@@ -23,13 +19,6 @@ jobs:
         with:
           hide-comment: true
           pytest-coverage-path: ./data/pytest-coverage_4.txt
-          junitxml-path: ./data/pytest_1.xml
-
-      - name: Create Variable of Summary Report
-        id: summary_report
-        run: |
-          SUMMARY_REPORT=${{ steps.coverageComment.outputs.summaryReport }}
-          echo "::set-output name=content::$SUMMARY_REPORT"
 
       - name: Update Readme with Coverage Html
         if: ${{ github.ref == 'refs/heads/main' }}
