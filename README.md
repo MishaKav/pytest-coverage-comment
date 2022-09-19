@@ -232,10 +232,6 @@ jobs:
           persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
           fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
 
-      - name: Extract branch name
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-        id: extract_branch
-
       - name: Pytest coverage comment
         if: ${{ github.ref == 'refs/heads/main' }}
         id: coverageComment
@@ -247,7 +243,7 @@ jobs:
       - name: Update Readme with Coverage Html
         if: ${{ github.ref == 'refs/heads/main' }}
         run: |
-          sed -i '/<!-- Pytest Coverage Comment:Begin -->/,/<!-- Pytest Coverage Comment:End -->/c\<!-- Pytest Coverage Comment:Begin -->\n\${{ steps.coverageComment.outputs.coverageHtml }}\n${{ steps.coverageComment.outputs.summaryReport }}\n<!-- Pytest Coverage Comment:End -->' ./README.md
+          sed -i '/<!-- Pytest Coverage Comment:Begin -->/,/<!-- Pytest Coverage Comment:End -->/c\<!-- Pytest Coverage Comment:Begin -->\n\${{ steps.coverageComment.outputs.coverageHtml }}\n<!-- Pytest Coverage Comment:End -->' ./README.md
 
       - name: Commit & Push changes to Readme
         if: ${{ github.ref == 'refs/heads/main' }}
