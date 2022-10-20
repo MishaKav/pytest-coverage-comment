@@ -1,4 +1,4 @@
-const fs = require('fs');
+const { mkdirSync, writeFileSync } = require('fs');
 const path = require('path');
 const { getCoverageReport } = require('./parse');
 const {
@@ -115,9 +115,9 @@ const main = async () => {
     return;
   }
 
-  const resultFile = __dirname + '/../tmp/result.md';
-  fs.promises.mkdir(__dirname + '/../tmp').catch(console.error);
-  fs.writeFileSync(resultFile, finalHtml);
+  const resultFile = `${__dirname}/../tmp/result.md`;
+  mkdirSync(`${__dirname}/../tmp`, { recursive: true });
+  writeFileSync(resultFile, finalHtml);
   console.log(resultFile);
 };
 
