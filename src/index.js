@@ -84,6 +84,11 @@ const main = async () => {
   if (options.reportOnlyChangedFiles) {
     const changedFiles = await getChangedFiles(options);
     options.changedFiles = changedFiles;
+
+    // when github event come different from `pull_request` or `push`
+    if (!changedFiles) {
+      options.reportOnlyChangedFiles = false;
+    }
   }
 
   let report = options.covXmlFile
@@ -171,9 +176,7 @@ const main = async () => {
       commit_sha: options.commit,
       body,
     });
-  }
-
-  if (eventName === 'pull_request') {
+  } else if (eventName === 'pull_request') {
     if (createNewComment) {
       core.info('Creating a new comment');
 
@@ -214,6 +217,11 @@ const main = async () => {
         });
       }
     }
+  } else {
+    if (!options.hideComment) {
+      // prettier-ignore
+      core.warning(`This action supports comments only on \`pull_request\` and \`push\` events. \`${eventName}\` events are not supported.\nYou can use the output of the action.`)
+    }
   }
 };
 
@@ -238,10 +246,9 @@ const getChangedFiles = async (options) => {
         head = payload.after;
         break;
       default:
-        core.setFailed(
-          `This action only supports pull requests and pushes, ${eventName} events are not supported. ` +
-            "Please submit an issue on this action's GitHub repo if you believe this in correct."
-        );
+        // prettier-ignore
+        core.warning(`\`report-only-changed-files: true\` supports only on \`pull_request\` and \`push\`, \`${eventName}\` events are not supported.`)
+        return null;
     }
 
     core.startGroup('Changed files');
@@ -306,11 +313,8 @@ const getChangedFiles = async (options) => {
           renamed.push(filename);
           break;
         default:
-          core.setFailed(
-            `One of your files includes an unsupported file status '${status}', expected ${Object.values(
-              FILE_STATUSES
-            ).join(',')}.`
-          );
+          // prettier-ignore
+          core.setFailed(`One of your files includes an unsupported file status '${status}', expected ${Object.values(FILE_STATUSES).join(',')}.`);
       }
     }
 
