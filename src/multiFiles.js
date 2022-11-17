@@ -13,7 +13,7 @@ const parseLine = (line) => {
   return {
     title: lineArr[0].trim(),
     covFile: lineArr[1].trim(),
-    xmlFile: lineArr.length > 1 ? lineArr[2].trim() : '',
+    xmlFile: lineArr.length > 2 ? lineArr[2].trim() : '',
   };
 };
 
