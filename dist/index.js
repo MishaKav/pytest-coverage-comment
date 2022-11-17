@@ -16898,7 +16898,7 @@ const getMultipleReport = (options) => {
     const lineReports = multipleFiles.map(parseLine).filter((l) => l);
     const hasXmlReports = lineReports.some((l) => l.xmlFile);
     const miniTable = `| Title | Coverage |
-| ----- | ----- | ----- |
+| ----- | ----- |
 `;
     const fullTable = `| Title | Coverage | Tests | Skipped | Failures | Errors | Time |
 | ----- | ----- | ----- | ------- | -------- | -------- | ------------------ |
