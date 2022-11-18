@@ -17168,7 +17168,7 @@ const toHtml = (data, options, dataFromXml = null) => {
   const total = dataFromXml ? dataFromXml.total : getTotal(data);
   const color = getCoverageColor(total.cover);
   const onlyChnaged = reportOnlyChangedFiles ? '• ' : '';
-  const readmeHref = `https://github.com/${options.repository}/blob/${options.commit}/README.md`;
+  const readmeHref = `${options.repoUrl}/blob/${options.commit}/README.md`;
   const badge = `<img alt="${badgeTitle}" src="https://img.shields.io/badge/${badgeTitle}-${total.cover}25-${color}.svg" />`;
   const badgeWithLink = removeLinkFromBadge
     ? badge
@@ -17266,7 +17266,7 @@ const toTotalRow = (item, options) => {
 // make fileName cell - td
 const toFileNameTd = (item, indent = false, options) => {
   const relative = item.name.replace(options.prefix, '');
-  const href = `https://github.com/${options.repository}/blob/${options.commit}/${options.pathPrefix}${relative}`;
+  const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}`;
   const parts = relative.split('/');
   const last = parts[parts.length - 1];
   const space = indent ? '&nbsp; &nbsp;' : '';
@@ -17295,7 +17295,7 @@ const toMissingTd = (item, options) => {
       const [start, end = start] = range.split('-');
       const fragment = start === end ? `L${start}` : `L${start}-L${end}`;
       const relative = item.name;
-      const href = `https://github.com/${options.repository}/blob/${options.commit}/${options.pathPrefix}${relative}#${fragment}`;
+      const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}#${fragment}`;
       const text = start === end ? start : `${start}&ndash;${end}`;
 
       return `<a href="${href}">${text}</a>`;
@@ -17866,6 +17866,8 @@ const main = async () => {
     xmlTitle,
     multipleFiles,
   };
+  options.repoUrl =
+    payload.repository?.html_url || `https://github.com/${options.repository}`;
 
   if (eventName === 'pull_request') {
     options.commit = payload.pull_request.head.sha;
