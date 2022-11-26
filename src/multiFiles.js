@@ -13,7 +13,7 @@ const parseLine = (line) => {
   return {
     title: lineArr[0].trim(),
     covFile: lineArr[1].trim(),
-    xmlFile: lineArr.length > 1 ? lineArr[2].trim() : '',
+    xmlFile: lineArr.length > 2 ? lineArr[2].trim() : '',
   };
 };
 
@@ -35,7 +35,7 @@ const getMultipleReport = (options) => {
     const lineReports = multipleFiles.map(parseLine).filter((l) => l);
     const hasXmlReports = lineReports.some((l) => l.xmlFile);
     const miniTable = `| Title | Coverage |
-| ----- | ----- | ----- |
+| ----- | ----- |
 `;
     const fullTable = `| Title | Coverage | Tests | Skipped | Failures | Errors | Time |
 | ----- | ----- | ----- | ------- | -------- | -------- | ------------------ |

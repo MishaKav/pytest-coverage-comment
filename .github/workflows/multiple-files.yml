@@ -13,3 +13,27 @@ jobs:
           multiple-files: |
             My Title 1, ./data/pytest-coverage_3.txt, ./data/pytest_1.xml
             My Title 2, ./data/pytest-coverage_4.txt, ./data/pytest_2.xml
+
+      - name: Pytest coverage comment multiple-files no test report
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          create-new-comment: true
+          multiple-files: |
+            My Title 1 w/o report, ./data/pytest-coverage_3.txt
+            My Title 2 w/o report, ./data/pytest-coverage_4.txt
+
+      - name: Pytest coverage comment multiple-files mixed 1
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          create-new-comment: true
+          multiple-files: |
+            My Title 1 w/ report, ./data/pytest-coverage_3.txt, ./data/pytest_1.xml
+            My Title 2 w/o report, ./data/pytest-coverage_4.txt
+
+      - name: Pytest coverage comment multiple-files mixed 2
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          create-new-comment: true
+          multiple-files: |
+            My Title 1 w/o report, ./data/pytest-coverage_3.txt
+            My Title 2 w/ report, ./data/pytest-coverage_4.txt, ./data/pytest_2.xml
