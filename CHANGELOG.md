@@ -1,5 +1,13 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.1.39](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.39)
+
+**Release Date:** 2022-11-26
+
+#### Changes
+
+- Support matrix with individual comments. When you run in a matrix, and you want that every job will post a comment, you can use the `unique-id-for-comment: ${{ matrix.python-version }}`. This will post a comment for every job, and will update them on every run.
+
 ## [Pytest Coverage Comment 1.1.38](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.38)
 
 **Release Date:** 2022-11-26
