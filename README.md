@@ -47,6 +47,7 @@ You can add this action to your GitHub workflow for Ubuntu runners (e.g. runs-on
 | `default-branch`            |          | `main`                  | This branch name is usefull when generate "coverageHtml", it points direct links to files on this branch (instead of commit).<br/>Usually "main" or "master"                                                                                                                                                                                                                  |
 | `multiple-files`            |          | ''                      | You can pass array of titles and files to generate single comment with table of results.<br/>Single line should look like `Title, ./path/to/pytest-coverage.txt, ./path/to/pytest.xml`<br/> example:<br/> `My Title 1, ./data/pytest-coverage_3.txt, ./data/pytest_1.xml`<br/>**Note:** In that mode the `output` for `coverage` and `color` will be for the first file only. |
 | `remove-link-from-badge`    |          | false                   | When true, it will remove the link from badge to readme                                                                                                                                                                                                                                                                                                                       |
+| `unique-id-for-comment`     |          | ''                      | When running in a matrix, pass the matrix value, so each comment will be updated its own comment                                                                                                                                                                                                                                                                              |
 
 ## Output Variables
 
@@ -178,6 +179,7 @@ Example GitHub Action workflow that passes all params to Pytest Coverage Comment
     hide-comment: false
     report-only-changed-files: false
     remove-link-from-badge: false
+    unique-id-for-comment: python3.8
     junitxml-path: ./path-to-file/pytest.xml
     junitxml-title: My JUnit Xml Summary Title
 ```
@@ -264,17 +266,15 @@ Expanded comment
 Multiple Files Mode (can be useful on mono-repo projects)
 ![Result Multiple Files Mode Example](https://user-images.githubusercontent.com/289035/122121939-ddd0c500-ce34-11eb-8546-89a8a769e065.png)
 
-## Badges colors
+## Badge Colors
 
-![Coverage 0-40](https://img.shields.io/badge/Coverage-20%25-red.svg) [0, 40]
-
-![Coverage 40-60](https://img.shields.io/badge/Coverage-50%25-orange.svg) [40, 60]
-
-![Coverage 60-80](https://img.shields.io/badge/Coverage-70%25-yellow.svg) [60, 80]
-
-![Coverage 80-90](https://img.shields.io/badge/Coverage-85%25-green.svg) [80, 90]
-
-![Coverage 90-100](https://img.shields.io/badge/Coverage-95%25-brightgreen.svg) [90, 100]
+| Badge                                                                           | Range    |
+| ------------------------------------------------------------------------------- | -------- |
+| ![Coverage 0-40](https://img.shields.io/badge/Coverage-20%25-red.svg)           | 0 - 40   |
+| ![Coverage 40-60](https://img.shields.io/badge/Coverage-50%25-orange.svg)       | 40 - 60  |
+| ![Coverage 60-80](https://img.shields.io/badge/Coverage-70%25-yellow.svg)       | 60 - 80  |
+| ![Coverage 80-90](https://img.shields.io/badge/Coverage-85%25-green.svg)        | 80 - 90  |
+| ![Coverage 90-100](https://img.shields.io/badge/Coverage-95%25-brightgreen.svg) | 90 - 100 |
 
 ## Auto updating badge on README
 
