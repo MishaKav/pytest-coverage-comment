@@ -15,7 +15,7 @@ inputs:
     description: 'The location of the txt output of pytest-coverage'
     default: './pytest-coverage.txt'
     required: false
-  
+
   pytest-xml-coverage-path:
     description: 'The location of coverage-xml from pytest-coverage'
     default: ''
@@ -88,6 +88,11 @@ inputs:
   remove-link-from-badge:
     description: 'When true, it will remove the link from badge to readme'
     default: 'false'
+    required: false
+
+  unique-id-for-comment:
+    description: 'When running in a matrix, pass the matrix value, so each comment will be updated its own comment'
+    default: ''
     required: false
 
 outputs:

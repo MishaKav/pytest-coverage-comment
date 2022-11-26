@@ -34,6 +34,9 @@ const main = async () => {
   const removeLinkFromBadge = core.getBooleanInput('remove-link-from-badge', {
     required: false,
   });
+  const uniqueIdForComment = core.getInput('unique-id-for-comment', {
+    required: false,
+  });
   const defaultBranch = core.getInput('default-branch', { required: false });
   const covFile = core.getInput('pytest-coverage-path', { required: false });
   const covXmlFile = core.getInput('pytest-xml-coverage-path', {
@@ -48,7 +51,10 @@ const main = async () => {
   const { context, repository } = github;
   const { repo, owner } = context.repo;
   const { eventName, payload } = context;
-  const WATERMARK = `<!-- Pytest Coverage Comment: ${context.job} -->\n`;
+  const watermarkUniqueId = uniqueIdForComment
+    ? `| ${uniqueIdForComment} `
+    : '';
+  const WATERMARK = `<!-- Pytest Coverage Comment: ${context.job} ${watermarkUniqueId}-->\n`;
   let finalHtml = '';
 
   const options = {
