@@ -1,5 +1,13 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.1.38](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.38)
+
+**Release Date:** 2022-11-26
+
+#### Changes
+
+- Fix when using `multiple-files` table is not formatted correctly, because of the column count mismatch thanks to [@jbcumming](https://github.com/jbcumming) for contribution
+
 ## [Pytest Coverage Comment 1.1.37](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.37)
 
 **Release Date:** 2022-10-20

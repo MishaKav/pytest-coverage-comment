@@ -1,6 +1,11 @@
 name: My Pytest Coverage Comment
 on:
   pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   live-test:
     name: Live Test
