@@ -77,6 +77,8 @@ const main = async () => {
     xmlTitle,
     multipleFiles,
   };
+  options.repoUrl =
+    payload.repository?.html_url || `https://github.com/${options.repository}`;
 
   if (eventName === 'pull_request') {
     options.commit = payload.pull_request.head.sha;
