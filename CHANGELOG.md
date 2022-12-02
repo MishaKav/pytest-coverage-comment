@@ -1,5 +1,13 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.1.40](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.40)
+
+**Release Date:** 2022-12-03
+
+#### Changes
+
+- Support for url for github enterprise repositories, thanks to [@jbcumming](https://github.com/jbcumming) for contribution
+
 ## [Pytest Coverage Comment 1.1.39](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.39)
 
 **Release Date:** 2022-11-26
