@@ -7,6 +7,7 @@
 #### Changes
 
 - Support for url for github enterprise repositories, thanks to [@jbcumming](https://github.com/jbcumming) for contribution
+- Minor readme improvements, thanks to [@AlexanderLanin](https://github.com/AlexanderLanin) for contribution
 
 ## [Pytest Coverage Comment 1.1.39](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.39)
 
