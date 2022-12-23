@@ -17944,13 +17944,26 @@ const main = async () => {
     : multipleFilesHtml;
   core.setOutput('summaryReport', JSON.stringify(finalHtml));
 
-  if (coverage) {
+  if (coverage && typeof coverage === 'string') {
     core.startGroup(options.covFile);
     core.info(`coverage: ${coverage}`);
     core.info(`color: ${color}`);
     core.info(`warnings: ${warnings}`);
 
     core.setOutput('coverage', coverage);
+    core.setOutput('color', color);
+    core.setOutput('warnings', warnings);
+    core.endGroup();
+  }
+
+  // support for output for `pytest-xml-coverage-path`
+  if (coverage && coverage.cover) {
+    core.startGroup(options.covXmlFile);
+    core.info(`coverage: ${coverage.cover}`);
+    core.info(`color: ${color}`);
+    core.info(`warnings: ${warnings}`);
+
+    core.setOutput('coverage', coverage.cover);
     core.setOutput('color', color);
     core.setOutput('warnings', warnings);
     core.endGroup();
