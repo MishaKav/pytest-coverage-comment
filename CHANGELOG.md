@@ -1,5 +1,13 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.1.41](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.41)
+
+**Release Date:** 2022-12-24
+
+#### Changes
+
+- Fix output of the `coverage` when using only `pytest-xml-coverage-path`
+
 ## [Pytest Coverage Comment 1.1.40](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.40)
 
 **Release Date:** 2022-12-03
