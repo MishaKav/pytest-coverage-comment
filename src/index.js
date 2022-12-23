@@ -159,11 +159,9 @@ const main = async () => {
     core.startGroup(options.covFile);
     core.info(`coverage: ${coverage}`);
     core.info(`color: ${color}`);
-    core.info(`warnings: ${warnings}`);
 
     core.setOutput('coverage', coverage);
     core.setOutput('color', color);
-    core.setOutput('warnings', warnings);
     core.endGroup();
   }
 
