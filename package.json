@@ -32,9 +32,9 @@
     "xml2js": "^0.4.23"
   },
   "devDependencies": {
-    "@vercel/ncc": "^0.34.0",
-    "eslint": "^8.29.0",
-    "prettier": "^2.8.0"
+    "@vercel/ncc": "^0.36.0",
+    "eslint": "^8.30.0",
+    "prettier": "^2.8.1"
   },
   "prettier": {
     "semi": true,
