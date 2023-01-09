@@ -18002,10 +18002,7 @@ const main = async () => {
         issue_number,
       });
 
-      const comment = comments.find(
-        (c) =>
-          c.user.login === 'github-actions[bot]' && c.body.startsWith(WATERMARK)
-      );
+      const comment = comments.find((c) => c.body.startsWith(WATERMARK));
 
       if (comment) {
         core.info('Founded previous comment, updating');

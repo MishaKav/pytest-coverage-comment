@@ -1,5 +1,13 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.1.42](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.42)
+
+**Release Date:** 2023-03-09
+
+#### Changes
+
+- Update the previous comment with non-default github-token
+
 ## [Pytest Coverage Comment 1.1.41](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.41)
 
 **Release Date:** 2022-12-24
