@@ -34,7 +34,7 @@
   "devDependencies": {
     "@vercel/ncc": "^0.36.0",
     "eslint": "^8.31.0",
-    "prettier": "^2.8.1"
+    "prettier": "^2.8.2"
   },
   "prettier": {
     "semi": true,
