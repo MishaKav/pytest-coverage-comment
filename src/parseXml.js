@@ -32,7 +32,7 @@ const getTotalCoverage = (parsedXml) => {
   };
 };
 
-// return true if "covergae file" include right structure
+// return true if "coverage file" include right structure
 const isValidCoverageContent = (parsedXml) => {
   if (!parsedXml || !parsedXml.packages || !parsedXml.packages.length) {
     return false;
@@ -142,10 +142,11 @@ const parseLines = (lines) => {
     return { stmts: '0', missing: '', totalMissing: '0' };
   }
 
-  let stmts = '0';
+  let stmts = 0;
   const missingLines = [];
 
   lines[0].line.forEach((line) => {
+    stmts++;
     const { hits, number } = line['$'];
 
     if (hits === '0') {
