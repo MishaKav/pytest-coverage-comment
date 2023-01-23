@@ -1,8 +1,17 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.1.43](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.43)
+
+**Release Date:** 2023-01-23
+
+#### Changes
+
+- Export right `stms` when using `pytest-xml-coverage-path`, thanks to [@ricardolsmendes](https://github.com/ricardolsmendes) for contribution
+- Fix some typos in comments
+
 ## [Pytest Coverage Comment 1.1.42](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.42)
 
-**Release Date:** 2023-03-09
+**Release Date:** 2023-01-09
 
 #### Changes
 
