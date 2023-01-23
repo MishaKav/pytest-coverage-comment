@@ -10,7 +10,7 @@ const { getMultipleReport } = require('./multiFiles');
 const { getCoverageXmlReport } = require('./parseXml');
 
 /*  
-  Usefull git commands
+  Useful git commands
   git tag -a -m "Export coverage example" v1.1.7 && git push --follow-tags 
   git tag -d v1.0 
   git tag -d origin v1.0  
@@ -29,7 +29,7 @@ const getPathToFile = (pathToFile) => {
     return null;
   }
 
-  // suports absolute path like '/tmp/pytest-coverage.txt'
+  // supports absolute path like '/tmp/pytest-coverage.txt'
   return pathToFile.startsWith('/') ? pathToFile : `${__dirname}/${pathToFile}`;
 };
 

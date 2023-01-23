@@ -6,7 +6,7 @@ const getPathToFile = (pathToFile) => {
     return null;
   }
 
-  // suports absolute path like '/tmp/pytest-coverage.txt'
+  // supports absolute path like '/tmp/pytest-coverage.txt'
   return pathToFile.startsWith('/')
     ? pathToFile
     : `${process.env.GITHUB_WORKSPACE}/${pathToFile}`;
