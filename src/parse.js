@@ -1,7 +1,7 @@
 const core = require('@actions/core');
 const { getPathToFile, getContentFile, getCoverageColor } = require('./utils');
 
-// return true if "covergae file" include all special words
+// return true if "coverage file" include all special words
 const isValidCoverageContent = (data) => {
   if (!data || !data.length) {
     return false;
@@ -18,7 +18,7 @@ const isValidCoverageContent = (data) => {
   return wordsToInclude.every((w) => data.includes(w));
 };
 
-// return full html coverage report and coverage percenatge
+// return full html coverage report and coverage percentage
 const getCoverageReport = (options) => {
   const { covFile, covXmlFile } = options;
 
@@ -116,7 +116,7 @@ const parseOneLine = (line) => {
   const missing = isFullCoverage
     ? null
     : parsedLine[parsedLine.length - 1] &&
-      parsedLine[parsedLine.length - 1].split(', ');
+    parsedLine[parsedLine.length - 1].split(', ');
 
   return {
     name: parsedLine[0],
