@@ -170,7 +170,7 @@ const parseLines = (lines) => {
   });
 
   return {
-    stmts,
+    stmts: stmts.toString(),
     missing: missingText,
     totalMissing: missingLines.length.toString(),
   };

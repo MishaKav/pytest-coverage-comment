@@ -16975,7 +16975,7 @@ module.exports = { getMultipleReport };
 const core = __nccwpck_require__(2186);
 const { getPathToFile, getContentFile, getCoverageColor } = __nccwpck_require__(1608);
 
-// return true if "covergae file" include all special words
+// return true if "coverage file" include all special words
 const isValidCoverageContent = (data) => {
   if (!data || !data.length) {
     return false;
@@ -16992,7 +16992,7 @@ const isValidCoverageContent = (data) => {
   return wordsToInclude.every((w) => data.includes(w));
 };
 
-// return full html coverage report and coverage percenatge
+// return full html coverage report and coverage percentage
 const getCoverageReport = (options) => {
   const { covFile, covXmlFile } = options;
 
@@ -17345,7 +17345,7 @@ const getTotalCoverage = (parsedXml) => {
   };
 };
 
-// return true if "covergae file" include right structure
+// return true if "coverage file" include right structure
 const isValidCoverageContent = (parsedXml) => {
   if (!parsedXml || !parsedXml.packages || !parsedXml.packages.length) {
     return false;
@@ -17455,10 +17455,11 @@ const parseLines = (lines) => {
     return { stmts: '0', missing: '', totalMissing: '0' };
   }
 
-  let stmts = '0';
+  let stmts = 0;
   const missingLines = [];
 
   lines[0].line.forEach((line) => {
+    stmts++;
     const { hits, number } = line['$'];
 
     if (hits === '0') {
@@ -17482,7 +17483,7 @@ const parseLines = (lines) => {
   });
 
   return {
-    stmts,
+    stmts: stmts.toString(),
     missing: missingText,
     totalMissing: missingLines.length.toString(),
   };
@@ -17504,7 +17505,7 @@ const getPathToFile = (pathToFile) => {
     return null;
   }
 
-  // suports absolute path like '/tmp/pytest-coverage.txt'
+  // supports absolute path like '/tmp/pytest-coverage.txt'
   return pathToFile.startsWith('/')
     ? pathToFile
     : `${process.env.GITHUB_WORKSPACE}/${pathToFile}`;

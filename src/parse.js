@@ -116,7 +116,7 @@ const parseOneLine = (line) => {
   const missing = isFullCoverage
     ? null
     : parsedLine[parsedLine.length - 1] &&
-    parsedLine[parsedLine.length - 1].split(', ');
+      parsedLine[parsedLine.length - 1].split(', ');
 
   return {
     name: parsedLine[0],
