@@ -1,5 +1,14 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.1.44](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.44)
+
+**Release Date:** 2023-01-31
+
+#### Changes
+
+- Support `pull_request_target` event to add comments
+- Bump dev dependencies
+
 ## [Pytest Coverage Comment 1.1.43](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.43)
 
 **Release Date:** 2023-01-23
