@@ -17870,7 +17870,7 @@ const main = async () => {
   options.repoUrl =
     payload.repository?.html_url || `https://github.com/${options.repository}`;
 
-  if (eventName === 'pull_request') {
+  if (eventName === 'pull_request' || eventName === 'pull_request_target') {
     options.commit = payload.pull_request.head.sha;
     options.head = payload.pull_request.head.ref;
     options.base = payload.pull_request.base.ref;
@@ -18047,6 +18047,7 @@ const getChangedFiles = async (options) => {
 
     switch (eventName) {
       case 'pull_request':
+      case 'pull_request_target':
         base = payload.pull_request.base.sha;
         head = payload.pull_request.head.sha;
         break;

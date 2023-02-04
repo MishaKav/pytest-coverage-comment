@@ -1,5 +1,13 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.1.45](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.45)
+
+**Release Date:** 2023-02-04
+
+#### Changes
+
+- Fix commit sha in links when event is `pull_request_target`
+
 ## [Pytest Coverage Comment 1.1.44](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.44)
 
 **Release Date:** 2023-01-31

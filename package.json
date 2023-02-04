@@ -1,6 +1,6 @@
 {
   "name": "pytest-coverage-comment",
-  "version": "1.1.44",
+  "version": "1.1.45",
   "description": "Comments a pull request with the pytest code coverage badge, full report and tests summary",
   "author": "Misha Kav",
   "license": "MIT",
