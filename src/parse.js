@@ -277,8 +277,7 @@ const toRow = (item, indent = false, options) => {
   const missing = toMissingTd(item, options);
   const lastTd = options.hasMissing ? `<td>${missing}</td>` : '';
 
-  // prettier-ignore
-  return `<tr><td>${name.replace(/__/g, '\\_\\_')}</td><td>${stmts}</td><td>${miss}</td><td>${cover}</td>${lastTd}</tr>`;
+  return `<tr><td>${name}</td><td>${stmts}</td><td>${miss}</td><td>${cover}</td>${lastTd}</tr>`;
 };
 
 // make summary row - tr
@@ -297,7 +296,7 @@ const toFileNameTd = (item, indent = false, options) => {
   const last = parts[parts.length - 1];
   const space = indent ? '&nbsp; &nbsp;' : '';
 
-  return `${space}<a href="${href}">${last}</a>`;
+  return `${space}<a href="${href}">${last.replace(/__/g, '\\_\\_')}</a>`;
 };
 
 // make folder row - tr
