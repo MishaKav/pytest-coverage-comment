@@ -1,5 +1,13 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.1.46](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.46)
+
+**Release Date:** 2023-03-03
+
+#### Changes
+
+- Fix broken links that include double underscores like `__init__.py`
+
 ## [Pytest Coverage Comment 1.1.45](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.45)
 
 **Release Date:** 2023-02-04
