@@ -7,6 +7,7 @@
 #### Changes
 
 - Fix broken links that include double underscores like `__init__.py`
+- Bump dev dependencies
 
 ## [Pytest Coverage Comment 1.1.45](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.45)
 
