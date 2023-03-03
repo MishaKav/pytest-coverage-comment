@@ -1,0 +1,28 @@
+============================= test session starts ==============================
+platform linux -- Python 3.8.12, pytest-6.2.3, py-1.11.0, pluggy-0.13.1
+
+---------- coverage: platform linux, python 3.8.12-final-0 -----------
+Name                                                             Stmts   Miss Branch BrPart  Cover   Missing
+------------------------------------------------------------------------------------------------------------
+common/id_generator.py                                    58      1     12      1    97%   18
+common/image_vulnerabilities/db.py                        96     46     22      5    52%   26->36, 29, 33, 45, 56-58, 62-92, 96-114, 135-144, 151-153
+common/response_mapper.py                                117      2     46      4    96%   127->126, 130->exit, 131->exit, 135-136, 144->146
+common/save_vulnerabs.py                                  79      3     22      0    97%   73-75
+common/vulnerabs_db.py                                   156     21     34      3    87%   133->141, 151-152, 157-159, 178-180, 199-205, 212-214, 234-236, 273-275
+deactivation/deactivation.py                              20      5      2      1    73%   18-19, 22-24
+deactivation/vulnerabilities_deactivation_handler.py      45      2      4      0    96%   62-63
+evaluation/evaluation.py                                  20      5      2      1    73%   18-19, 22-24
+evaluation/evaluation_handler_base.py                     22      3      0      0    86%   13, 17, 29
+evaluation/exploits_evaluation_handler.py                 38      4     12      3    86%   27, 30, 32->35, 46-47
+image_save_vulnerabs/image_save_vulnerabs.py              71     17     18      5    69%   59-61, 68, 78-91, 99, 103, 107
+image_vulnerabilities/image_vulnerabilities.py            57      9     16      3    81%   41, 56-61, 77, 84
+malware_analysis/malware_analysis.py                     101     34     26      5    61%   39, 72-106, 134->155, 137, 149-153
+risk_rating_refresh_util/risk_rating_refresh_util.py      61     23     12      0    58%   25-54, 88-90
+sast_evaluator/sast_evaluator.py                          99      0     14      1    99%   35->43
+sast_evaluator/sast_rules_data_mapper.py                 105      0     18      1    99%   117->119
+scan_completed/scan_completed.py                          82      3     20      0    97%   57-59
+vulnerabilities/vulnerabilities.py                        87      8     24      2    91%   76, 94-96, 151-154
+------------------------------------------------------------------------------------------------------------
+TOTAL                                                             1344    186    306     35    85%
+
+13 files skipped due to complete coverage.

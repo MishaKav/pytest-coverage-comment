@@ -1,0 +1,14 @@
+============================= test session starts ==============================
+platform linux -- Python 3.8.12, pytest-6.2.3, py-1.11.0, pluggy-0.13.1
+
+---------- coverage: platform linux, python 3.8.12-final-0 -----------
+Name                                                             Stmts   Miss  Cover   Missing
+----------------------------------------------------------------------------------------------
+common/id.py                                              58      1    98%   18
+common/image_sample/db.py                                 96     46    52%   29, 33, 45, 56-58, 62-92, 96-114, 135-144, 151-153
+common/mapper.py                                         117      2    98%   135-136
+common/save.py                                            79      3    96%   73-75
+----------------------------------------------------------------------------------------------
+TOTAL                                                             1344    186    86%
+
+15 files skipped due to complete coverage.
