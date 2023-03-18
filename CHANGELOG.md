@@ -1,5 +1,13 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.1.47](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.47)
+
+**Release Date:** 2023-03-18
+
+#### Changes
+
+- Fix generating coverage report when all files `skip-covered`
+
 ## [Pytest Coverage Comment 1.1.46](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.46)
 
 **Release Date:** 2023-03-03
