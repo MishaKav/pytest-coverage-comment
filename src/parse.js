@@ -73,7 +73,7 @@ const getTotal = (data) => {
   }
 
   const lines = data.split('\n');
-  const line = lines.find((l) => l.includes('TOTAL     '));
+  const line = lines.find((l) => l.includes('TOTAL    '));
 
   return parseTotalLine(line);
 };

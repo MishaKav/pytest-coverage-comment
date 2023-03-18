@@ -1,0 +1,11 @@
+============================= test session starts ==============================
+platform linux -- Python 3.8.12, pytest-6.2.3, py-1.11.0, pluggy-0.13.1
+
+---------- coverage: platform darwin, python 3.10.6-final-0 ----------
+Name    Stmts   Miss  Cover   Missing
+-------------------------------------
+-------------------------------------
+TOTAL    2922      0   100%
+
+86 files skipped due to complete coverage.
+Coverage XML written to file coverage.xml
