@@ -213,7 +213,7 @@ const toTable = (data, options, dataFromXml = null) => {
   const { reportOnlyChangedFiles, changedFiles } = options;
 
   if (!coverage) {
-    core.warning(`Coverage file not well formed`);
+    core.warning(`Coverage file not well-formed`);
     return null;
   }
   const totalLine = dataFromXml ? dataFromXml.total : getTotal(data);

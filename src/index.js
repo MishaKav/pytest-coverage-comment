@@ -219,7 +219,7 @@ const main = async () => {
       const comment = comments.find((c) => c.body.startsWith(WATERMARK));
 
       if (comment) {
-        core.info('Founded previous comment, updating');
+        core.info('Found previous comment, updating');
         await octokit.issues.updateComment({
           repo,
           owner,
@@ -227,7 +227,7 @@ const main = async () => {
           body,
         });
       } else {
-        core.info('No previous comment founded, creating a new one');
+        core.info('No previous comment found, creating a new one');
         await octokit.issues.createComment({
           repo,
           owner,

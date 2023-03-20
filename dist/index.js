@@ -16762,7 +16762,7 @@ const getSummaryReport = (options) => {
       return toMarkdown(parsedXml, options);
     }
   } catch (error) {
-    core.error(`Error on generating summary report. ${error.message}`);
+    core.error(`Error generating summary report. ${error.message}`);
   }
 
   return '';
@@ -16778,7 +16778,7 @@ const getSummary = (data) => {
 
   const parsed = parser.parseString(data);
   if (!parsed) {
-    core.warning(`JUnitXml file is not XML or not well formed`);
+    core.warning(`JUnitXml file is not XML or not well-formed`);
     return '';
   }
 
@@ -16794,7 +16794,7 @@ const getTestCases = (data) => {
 
   const parsed = parser.parseString(data);
   if (!parsed) {
-    core.warning(`JUnitXml file is not XML or not well formed`);
+    core.warning(`JUnitXml file is not XML or not well-formed`);
     return '';
   }
 
@@ -16958,7 +16958,7 @@ const getMultipleReport = (options) => {
 
     return table;
   } catch (error) {
-    core.error(`Error on generating summary report. ${error.message}`);
+    core.error(`Error generating summary report. ${error.message}`);
   }
 
   return '';
@@ -17187,7 +17187,7 @@ const toTable = (data, options, dataFromXml = null) => {
   const { reportOnlyChangedFiles, changedFiles } = options;
 
   if (!coverage) {
-    core.warning(`Coverage file not well formed`);
+    core.warning(`Coverage file not well-formed`);
     return null;
   }
   const totalLine = dataFromXml ? dataFromXml.total : getTotal(data);
@@ -17383,7 +17383,7 @@ const getCoverageXmlReport = (options) => {
     return null;
   } catch (error) {
     // prettier-ignore
-    core.error(`Generating coverage report from "${options.covXmlFile}". ${error.message}`);
+    core.error(`Error generating coverage report from "${options.covXmlFile}". ${error.message}`);
   }
 
   return '';
@@ -17400,13 +17400,13 @@ const getXmlContent = (data) => {
 
     const parsed = parser.parseString(data);
     if (!parsed || !parser.resultObject) {
-      core.warning(`Coverage xml file is not XML or not well formed`);
+      core.warning(`Coverage xml file is not XML or not well-formed`);
       return '';
     }
 
     return parser.resultObject.coverage;
   } catch (error) {
-    core.error(`Parsing coverage xml. ${error.message}`);
+    core.error(`Error parsing coverage xml. ${error.message}`);
   }
 
   return '';
@@ -18008,7 +18008,7 @@ const main = async () => {
       const comment = comments.find((c) => c.body.startsWith(WATERMARK));
 
       if (comment) {
-        core.info('Founded previous comment, updating');
+        core.info('Found previous comment, updating');
         await octokit.issues.updateComment({
           repo,
           owner,
@@ -18016,7 +18016,7 @@ const main = async () => {
           body,
         });
       } else {
-        core.info('No previous comment founded, creating a new one');
+        core.info('No previous comment found, creating a new one');
         await octokit.issues.createComment({
           repo,
           owner,
