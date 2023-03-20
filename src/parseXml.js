@@ -71,7 +71,7 @@ const getCoverageXmlReport = (options) => {
     return null;
   } catch (error) {
     // prettier-ignore
-    core.error(`Generating coverage report from "${options.covXmlFile}". ${error.message}`);
+    core.error(`Error generating coverage report from "${options.covXmlFile}". ${error.message}`);
   }
 
   return '';
@@ -88,13 +88,13 @@ const getXmlContent = (data) => {
 
     const parsed = parser.parseString(data);
     if (!parsed || !parser.resultObject) {
-      core.warning(`Coverage xml file is not XML or not well formed`);
+      core.warning(`Coverage xml file is not XML or not well-formed`);
       return '';
     }
 
     return parser.resultObject.coverage;
   } catch (error) {
-    core.error(`Parsing coverage xml. ${error.message}`);
+    core.error(`Error parsing coverage xml. ${error.message}`);
   }
 
   return '';

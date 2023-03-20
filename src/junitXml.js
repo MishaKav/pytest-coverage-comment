@@ -22,7 +22,7 @@ const getSummaryReport = (options) => {
       return toMarkdown(parsedXml, options);
     }
   } catch (error) {
-    core.error(`Error on generating summary report. ${error.message}`);
+    core.error(`Error generating summary report. ${error.message}`);
   }
 
   return '';
@@ -38,7 +38,7 @@ const getSummary = (data) => {
 
   const parsed = parser.parseString(data);
   if (!parsed) {
-    core.warning(`JUnitXml file is not XML or not well formed`);
+    core.warning(`JUnitXml file is not XML or not well-formed`);
     return '';
   }
 
@@ -54,7 +54,7 @@ const getTestCases = (data) => {
 
   const parsed = parser.parseString(data);
   if (!parsed) {
-    core.warning(`JUnitXml file is not XML or not well formed`);
+    core.warning(`JUnitXml file is not XML or not well-formed`);
     return '';
   }
 
