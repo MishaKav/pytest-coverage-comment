@@ -12110,14 +12110,14 @@ function wrappy (fn, cb) {
       this.saxParser.onopentag = (function(_this) {
         return function(node) {
           var key, newValue, obj, processedKey, ref;
-          obj = {};
+          obj = Object.create(null);
           obj[charkey] = "";
           if (!_this.options.ignoreAttrs) {
             ref = node.attributes;
             for (key in ref) {
               if (!hasProp.call(ref, key)) continue;
               if (!(attrkey in obj) && !_this.options.mergeAttrs) {
-                obj[attrkey] = {};
+                obj[attrkey] = Object.create(null);
               }
               newValue = _this.options.attrValueProcessors ? processItem(_this.options.attrValueProcessors, node.attributes[key], key) : node.attributes[key];
               processedKey = _this.options.attrNameProcessors ? processItem(_this.options.attrNameProcessors, key) : key;
@@ -12167,7 +12167,11 @@ function wrappy (fn, cb) {
             }
           }
           if (isEmpty(obj)) {
-            obj = _this.options.emptyTag !== '' ? _this.options.emptyTag : emptyStr;
+            if (typeof _this.options.emptyTag === 'function') {
+              obj = _this.options.emptyTag();
+            } else {
+              obj = _this.options.emptyTag !== '' ? _this.options.emptyTag : emptyStr;
+            }
           }
           if (_this.options.validator != null) {
             xpath = "/" + ((function() {
@@ -12191,7 +12195,7 @@ function wrappy (fn, cb) {
           }
           if (_this.options.explicitChildren && !_this.options.mergeAttrs && typeof obj === 'object') {
             if (!_this.options.preserveChildrenOrder) {
-              node = {};
+              node = Object.create(null);
               if (_this.options.attrkey in obj) {
                 node[_this.options.attrkey] = obj[_this.options.attrkey];
                 delete obj[_this.options.attrkey];
@@ -12206,7 +12210,7 @@ function wrappy (fn, cb) {
               obj = node;
             } else if (s) {
               s[_this.options.childkey] = s[_this.options.childkey] || [];
-              objClone = {};
+              objClone = Object.create(null);
               for (key in obj) {
                 if (!hasProp.call(obj, key)) continue;
                 objClone[key] = obj[key];
@@ -12223,7 +12227,7 @@ function wrappy (fn, cb) {
           } else {
             if (_this.options.explicitRoot) {
               old = obj;
-              obj = {};
+              obj = Object.create(null);
               obj[nodeName] = old;
             }
             _this.resultObject = obj;
@@ -17866,6 +17870,7 @@ const main = async () => {
     xmlTitle,
     multipleFiles,
   };
+
   options.repoUrl =
     payload.repository?.html_url || `https://github.com/${options.repository}`;
 
@@ -17875,6 +17880,9 @@ const main = async () => {
     options.base = payload.pull_request.base.ref;
   } else if (eventName === 'push') {
     options.commit = payload.after;
+    options.head = context.ref;
+  } else if (eventName === 'workflow_dispatch') {
+    options.commit = context.sha;
     options.head = context.ref;
   }
 
@@ -17927,7 +17935,8 @@ const main = async () => {
 
   if (
     !options.hideReport &&
-    html.length + summaryReport.length > MAX_COMMENT_LENGTH
+    html.length + summaryReport.length > MAX_COMMENT_LENGTH &&
+    eventName != 'workflow_dispatch'
   ) {
     // generate new html without report
     // prettier-ignore
@@ -18025,10 +18034,12 @@ const main = async () => {
         });
       }
     }
+  } else if (eventName === 'workflow_dispatch') {
+    await core.summary.addRaw(body, true).write();
   } else {
     if (!options.hideComment) {
       // prettier-ignore
-      core.warning(`This action supports comments only on \`pull_request\`, \`pull_request_target\` and \`push\` events. \`${eventName}\` events are not supported.\nYou can use the output of the action.`)
+      core.warning(`This action supports comments only on \`pull_request\`, \`pull_request_target\`, \`push\` and \`workflow_dispatch\`  events. \`${eventName}\` events are not supported.\nYou can use the output of the action.`)
     }
   }
 };
