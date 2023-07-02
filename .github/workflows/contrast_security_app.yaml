@@ -1,0 +1,57 @@
+# DISCLAIMER: This workflow file has been auto-generated and committed to the repo by the GitHub App from Contrast Security.
+# Manual edits to this file could cause the integration to produce unexpected behavior or break.
+# Version: 1.0.0
+# Last updated: 2023-07-02T06:12:45.032746137Z
+name: Contrast Security App Workflow
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+jobs:
+  fingerprint_repo:
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+      - name: Run Contrast SCA Fingerprint
+        id: fingerprint
+        uses: 'Contrast-Security-OSS/contrast-sca-action@v2'
+        with:
+          apiKey: ${{ secrets.CONTRAST_GITHUB_APP_API_KEY }}
+          authHeader: ${{ secrets.CONTRAST_GITHUB_APP_AUTH_HEADER }}
+          orgId: ${{ vars.CONTRAST_GITHUB_APP_ORG_ID }}
+          apiUrl: ${{ vars.CONTRAST_GITHUB_APP_TS_URL }}
+          repoUrl: ${{ github.server_url }}/${{ github.repository }}
+          repoName: ${{ github.repository }}
+          externalId: ${{ vars.CONTRAST_GITHUB_APP_ID }}
+          command: fingerprint
+    outputs:
+      fingerprint: ${{ steps.fingerprint.outputs.fingerprint }}
+  analyze_dependencies:
+    if: ${{ needs.fingerprint_repo.outputs.fingerprint != '' }}
+    needs: fingerprint_repo
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        manifest:
+          - ${{ fromJson(needs.fingerprint_repo.outputs.fingerprint) }}
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+      - name: Run Contrast SCA Audit
+        uses: 'Contrast-Security-OSS/contrast-sca-action@v2'
+        with:
+          apiKey: ${{ secrets.CONTRAST_GITHUB_APP_API_KEY }}
+          authHeader: ${{ secrets.CONTRAST_GITHUB_APP_AUTH_HEADER }}
+          orgId: ${{ vars.CONTRAST_GITHUB_APP_ORG_ID }}
+          apiUrl: ${{ vars.CONTRAST_GITHUB_APP_TS_URL }}
+          filePath: ${{ matrix.manifest.filePath }}
+          repositoryId: ${{ matrix.manifest.repositoryId }}
+          projectGroupId: ${{ matrix.manifest.projectGroupId }}
