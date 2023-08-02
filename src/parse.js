@@ -141,9 +141,9 @@ const parseTotalLine = (line) => {
 
   return {
     name: parsedLine[0],
-    stmts: parsedLine[1].trimStart(),
-    miss: parsedLine[2].trimStart(),
-    cover: parsedLine[parsedLine.length - 1].trimStart(),
+    stmts: parsedLine[1].trim(),
+    miss: parsedLine[2].trim(),
+    cover: parsedLine[parsedLine.length - 1].trim(),
   };
 };
 
