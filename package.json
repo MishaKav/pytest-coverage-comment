@@ -24,6 +24,7 @@
     "format-check": "prettier --check src/**/*.js",
     "lint": "eslint src/**/*.js",
     "build": "ncc build src/index.js --license licenses.txt",
+    "bump-version": "npm version patch",
     "all": "npm run lint && npm run format && npm run build"
   },
   "dependencies": {
