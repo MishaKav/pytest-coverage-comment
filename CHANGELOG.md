@@ -1,5 +1,13 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.1.48](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.48)
+
+**Release Date:** 2023-08-02
+
+#### Changes
+
+- Fix wrong badge link when have an empty space in total coverage
+
 ## [Pytest Coverage Comment 1.1.47](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.47)
 
 **Release Date:** 2023-03-18
