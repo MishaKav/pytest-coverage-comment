@@ -112,7 +112,7 @@ const parseOneLine = (line) => {
   const isFullCoverage = lastItem === '100%';
   const cover = isFullCoverage
     ? '100%'
-    : parsedLine[parsedLine.length - 2].trimStart();
+    : parsedLine[parsedLine.length - 2].trim();
   const missing = isFullCoverage
     ? null
     : parsedLine[parsedLine.length - 1] &&
@@ -120,8 +120,8 @@ const parseOneLine = (line) => {
 
   return {
     name: parsedLine[0],
-    stmts: parsedLine[1].trimStart(),
-    miss: parsedLine[2].trimStart(),
+    stmts: parsedLine[1].trim(),
+    miss: parsedLine[2].trim(),
     cover,
     missing,
   };
