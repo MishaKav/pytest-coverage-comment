@@ -1,6 +1,6 @@
 {
   "name": "pytest-coverage-comment",
-  "version": "1.1.47",
+  "version": "1.1.48",
   "description": "Comments a pull request with the pytest code coverage badge, full report and tests summary",
   "author": "Misha Kav",
   "license": "MIT",
@@ -24,6 +24,7 @@
     "format-check": "prettier --check src/**/*.js",
     "lint": "eslint src/**/*.js",
     "build": "ncc build src/index.js --license licenses.txt",
+    "bump-version": "npm version patch",
     "all": "npm run lint && npm run format && npm run build"
   },
   "dependencies": {
