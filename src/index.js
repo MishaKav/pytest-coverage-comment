@@ -123,13 +123,16 @@ const main = async () => {
   } else if (eventName === 'push') {
     options.commit = payload.after;
     options.head = context.ref;
+  } else if (eventName === 'workflow_dispatch') {
+    options.commit = context.sha;
+    options.head = context.ref;
   }
 
   if (options.reportOnlyChangedFiles) {
     const changedFiles = await getChangedFiles(options);
     options.changedFiles = changedFiles;
 
-    // when github event come different from `pull_request` or `push`
+    // when github event is different from `pull_request`, `workflow_dispatch` or `push`
     if (!changedFiles) {
       options.reportOnlyChangedFiles = false;
     }
@@ -292,6 +295,9 @@ const getChangedFiles = async (options) => {
         base = payload.before;
         head = payload.after;
         break;
+      case 'workflow_dispatch':
+        base = context.sha;
+        head = context.ref;
       default:
         // prettier-ignore
         core.warning(`\`report-only-changed-files: true\` supports only on \`pull_request\` and \`push\`, \`${eventName}\` events are not supported.`)
