@@ -17810,6 +17810,41 @@ const FILE_STATUSES = Object.freeze({
   RENAMED: 'renamed',
 });
 
+const createOrEditComment = async (
+  octokit,
+  repo,
+  owner,
+  issue_number,
+  body
+) => {
+  // Now decide if we should issue a new comment or edit an old one
+  const { data: comments } = await octokit.issues.listComments({
+    repo,
+    owner,
+    issue_number,
+  });
+
+  const comment = comments.find((c) => c.body.startsWith(WATERMARK));
+
+  if (comment) {
+    core.info('Found previous comment, updating');
+    await octokit.issues.updateComment({
+      repo,
+      owner,
+      comment_id: comment.id,
+      body,
+    });
+  } else {
+    core.info('No previous comment found, creating a new one');
+    await octokit.issues.createComment({
+      repo,
+      owner,
+      issue_number,
+      body,
+    });
+  }
+};
+
 const main = async () => {
   const token = core.getInput('github-token', { required: true });
   const title = core.getInput('title', { required: false });
@@ -17832,6 +17867,7 @@ const main = async () => {
   });
   const defaultBranch = core.getInput('default-branch', { required: false });
   const covFile = core.getInput('pytest-coverage-path', { required: false });
+  const issueNumberInput = core.getInput('issue-number', { required: false });
   const covXmlFile = core.getInput('pytest-xml-coverage-path', {
     required: false,
   });
@@ -17978,7 +18014,11 @@ const main = async () => {
   const body = WATERMARK + finalHtml;
   const octokit = github.getOctokit(token);
 
-  const issue_number = payload.pull_request ? payload.pull_request.number : 0;
+  const issue_number = payload.pull_request
+    ? payload.pull_request.number
+    : issueNumberInput
+    ? issueNumberInput
+    : 0;
 
   if (eventName === 'push') {
     core.info('Create commit comment');
@@ -18002,37 +18042,24 @@ const main = async () => {
         body,
       });
     } else {
-      // Now decide if we should issue a new comment or edit an old one
-      const { data: comments } = await octokit.issues.listComments({
-        repo,
-        owner,
-        issue_number,
-      });
-
-      const comment = comments.find((c) => c.body.startsWith(WATERMARK));
-
-      if (comment) {
-        core.info('Found previous comment, updating');
-        await octokit.issues.updateComment({
-          repo,
-          owner,
-          comment_id: comment.id,
-          body,
-        });
-      } else {
-        core.info('No previous comment found, creating a new one');
+      await createOrEditComment(octokit, repo, owner, issue_number, body);
+    }
+  } else {
+    if (!issueNumberInput) {
+      // prettier-ignore
+      core.warning(`To use this action on a \`${eventName}\, you need to pass an pull request number.`)
+    } else {
+      if (createNewComment) {
+        core.info('Creating a new comment');
         await octokit.issues.createComment({
           repo,
           owner,
           issue_number,
           body,
         });
+      } else {
+        await createOrEditComment(octokit, repo, owner, issue_number, body);
       }
-    }
-  } else {
-    if (!options.hideComment) {
-      // prettier-ignore
-      core.warning(`This action supports comments only on \`pull_request\`, \`pull_request_target\` and \`push\` events. \`${eventName}\` events are not supported.\nYou can use the output of the action.`)
     }
   }
 };
