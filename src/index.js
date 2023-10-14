@@ -300,7 +300,7 @@ const getChangedFiles = async (options) => {
         head = context.ref;
       default:
         // prettier-ignore
-        core.warning(`\`report-only-changed-files: true\` supports only on \`pull_request\` and \`push\`, \`${eventName}\` events are not supported.`)
+        core.warning(`\`report-only-changed-files: true\` supports only on \`pull_request\`, \`workflow_dispatch\` and \`push\`, \`${eventName}\` events are not supported.`)
         return null;
     }
 
