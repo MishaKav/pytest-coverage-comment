@@ -16,6 +16,11 @@ inputs:
     default: './pytest-coverage.txt'
     required: false
 
+  issue-number:
+    description: 'PR number for the PR you want the comment to post to.'
+    default: ''
+    required: false
+
   pytest-xml-coverage-path:
     description: 'The location of coverage-xml from pytest-coverage'
     default: ''
