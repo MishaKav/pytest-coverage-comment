@@ -130,7 +130,6 @@ const main = async () => {
 
   if (options.reportOnlyChangedFiles) {
     const changedFiles = await getChangedFiles(options, issueNumberInput);
-    core.warning(changedFiles);
     options.changedFiles = changedFiles;
 
     // when github event is different from `pull_request`, `workflow_dispatch` or `push`
@@ -283,8 +282,6 @@ const getChangedFiles = async (options, pr_number) => {
     const { repo, owner } = context.repo;
     const octokit = github.getOctokit(options.token);
 
-    core.warning(eventName);
-
     // Define the base and head commits to be extracted from the payload
     let base, head;
 
@@ -307,8 +304,6 @@ const getChangedFiles = async (options, pr_number) => {
     
         base = data.base.ref;
         head = data.head.ref
-        core.warning(base);
-        core.warning(head);
         break;
       default:
         // prettier-ignore
