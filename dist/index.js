@@ -18096,6 +18096,7 @@ const getChangedFiles = async (options) => {
       case 'workflow_dispatch':
         base = context.sha;
         head = context.ref;
+        break;
       default:
         // prettier-ignore
         core.warning(`\`report-only-changed-files: true\` supports only on \`pull_request\`, \`workflow_dispatch\` and \`push\`. Other \`${eventName}\` events are not supported.`)
