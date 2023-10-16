@@ -17921,7 +17921,6 @@ const main = async () => {
     options.head = context.ref;
   }
 
-  core.warning(options.reportOnlyChangedFiles);
   if (options.reportOnlyChangedFiles) {
     const changedFiles = await getChangedFiles(options);
     core.warning(changedFiles);
@@ -18078,7 +18077,6 @@ const getChangedFiles = async (options) => {
     const octokit = github.getOctokit(options.token);
 
     core.warning(eventName);
-    core.warning(context)
 
     // Define the base and head commits to be extracted from the payload
     let base, head;
