@@ -129,7 +129,7 @@ const main = async () => {
   }
 
   if (options.reportOnlyChangedFiles) {
-    const changedFiles = await getChangedFiles(options);
+    const changedFiles = await getChangedFiles(options, issueNumberInput);
     core.warning(changedFiles);
     options.changedFiles = changedFiles;
 
@@ -276,7 +276,7 @@ const main = async () => {
 };
 
 // generate object of all files that changed based on commit through Github API
-const getChangedFiles = async (options) => {
+const getChangedFiles = async (options, pr_number) => {
   try {
     const { context } = github;
     const { eventName, payload } = context;
@@ -288,8 +288,6 @@ const getChangedFiles = async (options) => {
     // Define the base and head commits to be extracted from the payload
     let base, head;
 
-    core.warning(context.sha);
-    core.warning(context.ref);
     switch (eventName) {
       case 'pull_request':
       case 'pull_request_target':
@@ -301,8 +299,16 @@ const getChangedFiles = async (options) => {
         head = payload.after;
         break;
       case 'workflow_dispatch':
-        base = context.sha;
-        head = context.ref;
+        const { data } = await octokit.pulls.get({
+          owner,
+          repo,
+          pull_number: pr_number
+        });
+    
+        base = data.base.ref;
+        head = data.head.ref
+        core.warning(base);
+        core.warning(head);
         break;
       default:
         // prettier-ignore
