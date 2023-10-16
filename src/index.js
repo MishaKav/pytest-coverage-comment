@@ -288,6 +288,8 @@ const getChangedFiles = async (options) => {
     // Define the base and head commits to be extracted from the payload
     let base, head;
 
+    core.warning(context.sha);
+    core.warning(context.ref);
     switch (eventName) {
       case 'pull_request':
       case 'pull_request_target':
