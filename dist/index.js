@@ -17921,8 +17921,10 @@ const main = async () => {
     options.head = context.ref;
   }
 
+  core.warning(options.reportOnlyChangedFiles);
   if (options.reportOnlyChangedFiles) {
     const changedFiles = await getChangedFiles(options);
+    core.warning(changedFiles);
     options.changedFiles = changedFiles;
 
     // when github event is different from `pull_request`, `workflow_dispatch` or `push`
@@ -18075,6 +18077,9 @@ const getChangedFiles = async (options) => {
     const { repo, owner } = context.repo;
     const octokit = github.getOctokit(options.token);
 
+    core.warning(eventName);
+    core.warning(context)
+
     // Define the base and head commits to be extracted from the payload
     let base, head;
 
@@ -18093,7 +18098,7 @@ const getChangedFiles = async (options) => {
         head = context.ref;
       default:
         // prettier-ignore
-        core.warning(`\`report-only-changed-files: true\` supports only on \`pull_request\` and \`push\`, \`${eventName}\` events are not supported.`)
+        core.warning(`\`report-only-changed-files: true\` supports only on \`pull_request\`, \`workflow_dispatch\` and \`push\`. Other \`${eventName}\` events are not supported.`)
         return null;
     }
 
