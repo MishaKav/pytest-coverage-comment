@@ -120,5 +120,5 @@ outputs:
     description: 'Info from testcase that has failures/errors/skipped, get from `junitxml`'
 
 runs:
-  using: 'node16'
+  using: 'node20'
   main: 'dist/index.js'
