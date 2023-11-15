@@ -88,7 +88,7 @@ const getNotSuccessTest = (options) => {
     }
   } catch (error) {
     core.warning(
-      `Could not get notSuccessTestInfo successfully. ${error.message}`
+      `Could not get notSuccessTestInfo successfully. ${error.message}`,
     );
   }
 
