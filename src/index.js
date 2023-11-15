@@ -29,7 +29,7 @@ const main = async () => {
   const hideComment = core.getBooleanInput('hide-comment', { required: false });
   const reportOnlyChangedFiles = core.getBooleanInput(
     'report-only-changed-files',
-    { required: false }
+    { required: false },
   );
   const removeLinkFromBadge = core.getBooleanInput('remove-link-from-badge', {
     required: false,
@@ -305,7 +305,7 @@ const getChangedFiles = async (options) => {
     if (response.status !== 200) {
       core.setFailed(
         `The GitHub API for comparing the base and head commits for this ${eventName} event returned ${response.status}, expected 200. ` +
-          "Please submit an issue on this action's GitHub repo."
+          "Please submit an issue on this action's GitHub repo.",
       );
     }
 
