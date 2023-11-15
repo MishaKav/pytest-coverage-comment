@@ -1,5 +1,14 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.1.49](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.49)
+
+**Release Date:** 2023-11-15
+
+#### Changes
+
+- remove warning by run in `node20` instead `node16`
+- add support for `workflow_dispatch` event, thanks to [@f100024](https://github.com/f100024) for contribution
+
 ## [Pytest Coverage Comment 1.1.48](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.48)
 
 **Release Date:** 2023-08-02
