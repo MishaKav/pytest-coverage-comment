@@ -17884,7 +17884,7 @@ const main = async () => {
   options.repoUrl =
     payload.repository?.html_url || `https://github.com/${options.repository}`;
 
-  if (eventName === 'pull_request' || eventName === 'pull_request_target') {
+  if (eventName === 'pull_request' || eventName === 'pull_request_target' || eventName === 'pull_request_review') {
     options.commit = payload.pull_request.head.sha;
     options.head = payload.pull_request.head.ref;
     options.base = payload.pull_request.base.ref;
@@ -18005,7 +18005,8 @@ const main = async () => {
     });
   } else if (
     eventName === 'pull_request' ||
-    eventName === 'pull_request_target'
+    eventName === 'pull_request_target' ||
+    eventName === 'pull_request_review'
   ) {
     if (createNewComment) {
       core.info('Creating a new comment');
@@ -18049,7 +18050,7 @@ const main = async () => {
   } else {
     if (!options.hideComment) {
       // prettier-ignore
-      core.warning(`This action supports comments only on \`pull_request\`, \`pull_request_target\`, \`push\` and \`workflow_dispatch\`  events. \`${eventName}\` events are not supported.\nYou can use the output of the action.`)
+      core.warning(`This action supports comments only on \`pull_request\`, \`pull_request_target\`, \`pull_request_review\`, \`push\` and \`workflow_dispatch\`  events. \`${eventName}\` events are not supported.\nYou can use the output of the action.`)
     }
   }
 };
@@ -18068,6 +18069,7 @@ const getChangedFiles = async (options) => {
     switch (eventName) {
       case 'pull_request':
       case 'pull_request_target':
+      case 'pull_request_review':
         base = payload.pull_request.base.sha;
         head = payload.pull_request.head.sha;
         break;
