@@ -64,7 +64,7 @@ const main = async () => {
   const hideComment = core.getBooleanInput('hide-comment', { required: false });
   const reportOnlyChangedFiles = core.getBooleanInput(
     'report-only-changed-files',
-    { required: false }
+    { required: false },
   );
   const removeLinkFromBadge = core.getBooleanInput('remove-link-from-badge', {
     required: false,
@@ -113,6 +113,7 @@ const main = async () => {
     xmlTitle,
     multipleFiles,
   };
+
   options.repoUrl =
     payload.repository?.html_url || `https://github.com/${options.repository}`;
 
@@ -177,7 +178,8 @@ const main = async () => {
 
   if (
     !options.hideReport &&
-    html.length + summaryReport.length > MAX_COMMENT_LENGTH
+    html.length + summaryReport.length > MAX_COMMENT_LENGTH &&
+    eventName != 'workflow_dispatch'
   ) {
     // generate new html without report
     // prettier-ignore
@@ -254,22 +256,28 @@ const main = async () => {
     } else {
       await createOrEditComment(octokit, repo, owner, issue_number, body);
     }
-  } else {
-    if (!issueNumberInput) {
-      // prettier-ignore
-      core.warning(`To use this action on a \`${eventName}\, you need to pass an pull request number.`)
-    } else {
-      if (createNewComment) {
-        core.info('Creating a new comment');
-        await octokit.issues.createComment({
-          repo,
-          owner,
-          issue_number,
-          body,
-        });
+  } else if (eventName === 'workflow_dispatch') {
+      await core.summary.addRaw(body, true).write();
+      if (!issueNumberInput) {
+        // prettier-ignore
+        core.warning(`To use this action on a \`${eventName}\, you need to pass an pull request number.`)
       } else {
-        await createOrEditComment(octokit, repo, owner, issue_number, body);
+        if (createNewComment) {
+          core.info('Creating a new comment');
+          await octokit.issues.createComment({
+            repo,
+            owner,
+            issue_number,
+            body,
+          });
+        } else {
+          await createOrEditComment(octokit, repo, owner, issue_number, body);
+        }
       }
+  } else {
+    if (!options.hideComment) {
+      // prettier-ignore
+      core.warning(`This action supports comments only on \`pull_request\`, \`pull_request_target\`, \`push\` and \`workflow_dispatch\`  events. \`${eventName}\` events are not supported.\nYou can use the output of the action.`)
     }
   }
 };
@@ -338,7 +346,7 @@ const getChangedFiles = async (options, pr_number) => {
     if (response.status !== 200) {
       core.setFailed(
         `The GitHub API for comparing the base and head commits for this ${eventName} event returned ${response.status}, expected 200. ` +
-          "Please submit an issue on this action's GitHub repo."
+          "Please submit an issue on this action's GitHub repo.",
       );
     }
 

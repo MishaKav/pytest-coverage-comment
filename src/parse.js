@@ -232,14 +232,14 @@ const toTable = (data, options, dataFromXml = null) => {
       }
 
       const allFilesInFolder = Object.values(folders[folderPath]).map(
-        (f) => f.name
+        (f) => f.name,
       );
 
       folders[folderPath] = folders[folderPath].filter((f) =>
-        changedFiles.all.some((c) => c.includes(f.name))
+        changedFiles.all.some((c) => c.includes(f.name)),
       );
       const fileExistsInFolder = allFilesInFolder.some((f) =>
-        changedFiles.all.some((c) => c.includes(f))
+        changedFiles.all.some((c) => c.includes(f)),
       );
       return fileExistsInFolder;
     })
@@ -249,7 +249,7 @@ const toTable = (data, options, dataFromXml = null) => {
         toFolderTd(key, options),
         ...folders[key].map((file) => toRow(file, key !== '', options)),
       ],
-      []
+      [],
     );
 
   const hasLines = rows.length > 0;
