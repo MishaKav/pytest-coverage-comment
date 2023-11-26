@@ -22,7 +22,8 @@ const createOrEditComment = async (
   repo,
   owner,
   issue_number,
-  body
+  body,
+  WATERMARK,
 ) => {
   // Now decide if we should issue a new comment or edit an old one
   const { data: comments } = await octokit.issues.listComments({
@@ -229,8 +230,8 @@ const main = async () => {
   const issue_number = payload.pull_request
     ? payload.pull_request.number
     : issueNumberInput
-    ? issueNumberInput
-    : 0;
+      ? issueNumberInput
+      : 0;
 
   if (eventName === 'push') {
     core.info('Create commit comment');
@@ -254,26 +255,40 @@ const main = async () => {
         body,
       });
     } else {
-      await createOrEditComment(octokit, repo, owner, issue_number, body);
+      await createOrEditComment(
+        octokit,
+        repo,
+        owner,
+        issue_number,
+        body,
+        WATERMARK,
+      );
     }
   } else if (eventName === 'workflow_dispatch') {
-      await core.summary.addRaw(body, true).write();
-      if (!issueNumberInput) {
-        // prettier-ignore
-        core.warning(`To use this action on a \`${eventName}\, you need to pass an pull request number.`)
+    await core.summary.addRaw(body, true).write();
+    if (!issueNumberInput) {
+      // prettier-ignore
+      core.warning(`To use this action on a \`${eventName}\`, you need to pass an pull request number.`)
+    } else {
+      if (createNewComment) {
+        core.info('Creating a new comment');
+        await octokit.issues.createComment({
+          repo,
+          owner,
+          issue_number,
+          body,
+        });
       } else {
-        if (createNewComment) {
-          core.info('Creating a new comment');
-          await octokit.issues.createComment({
-            repo,
-            owner,
-            issue_number,
-            body,
-          });
-        } else {
-          await createOrEditComment(octokit, repo, owner, issue_number, body);
-        }
+        await createOrEditComment(
+          octokit,
+          repo,
+          owner,
+          issue_number,
+          body,
+          WATERMARK,
+        );
       }
+    }
   } else {
     if (!options.hideComment) {
       // prettier-ignore
@@ -303,16 +318,17 @@ const getChangedFiles = async (options, pr_number) => {
         base = payload.before;
         head = payload.after;
         break;
-      case 'workflow_dispatch':
+      case 'workflow_dispatch': {
         const { data } = await octokit.pulls.get({
           owner,
           repo,
-          pull_number: pr_number
+          pull_number: pr_number,
         });
-    
+
         base = data.base.ref;
-        head = data.head.ref
+        head = data.head.ref;
         break;
+      }
       default:
         // prettier-ignore
         core.warning(`\`report-only-changed-files: true\` supports only on \`pull_request\`, \`workflow_dispatch\` and \`push\`. Other \`${eventName}\` events are not supported.`)
