@@ -1,5 +1,13 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.1.50](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.50)
+
+**Release Date:** 2023-11-26
+
+#### Changes
+
+- add support for updateing the comment in PR through `workflow_dispatch` event by passing manually issue number, thanks to [@alexjyong](https://github.com/alexjyong) for contribution
+
 ## [Pytest Coverage Comment 1.1.49](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.49)
 
 **Release Date:** 2023-11-15
