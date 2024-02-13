@@ -125,7 +125,10 @@ const main = async () => {
   } else if (eventName === 'push') {
     options.commit = payload.after;
     options.head = context.ref;
-  } else if (eventName === 'workflow_dispatch') {
+  } else if (
+    eventName === 'workflow_dispatch' ||
+    eventName === 'workflow_run'
+  ) {
     options.commit = context.sha;
     options.head = context.ref;
   }
@@ -134,7 +137,7 @@ const main = async () => {
     const changedFiles = await getChangedFiles(options, issueNumberInput);
     options.changedFiles = changedFiles;
 
-    // when github event is different from `pull_request`, `workflow_dispatch` or `push`
+    // when github event is different from `pull_request`, `workflow_dispatch`, `workflow_run` or `push`
     if (!changedFiles) {
       options.reportOnlyChangedFiles = false;
     }
@@ -180,7 +183,8 @@ const main = async () => {
   if (
     !options.hideReport &&
     html.length + summaryReport.length > MAX_COMMENT_LENGTH &&
-    eventName != 'workflow_dispatch'
+    eventName != 'workflow_dispatch' &&
+    eventName != 'workflow_run'
   ) {
     // generate new html without report
     // prettier-ignore
@@ -264,7 +268,10 @@ const main = async () => {
         WATERMARK,
       );
     }
-  } else if (eventName === 'workflow_dispatch') {
+  } else if (
+    eventName === 'workflow_dispatch' ||
+    eventName === 'workflow_run'
+  ) {
     await core.summary.addRaw(body, true).write();
     if (!issueNumberInput) {
       // prettier-ignore
@@ -292,7 +299,7 @@ const main = async () => {
   } else {
     if (!options.hideComment) {
       // prettier-ignore
-      core.warning(`This action supports comments only on \`pull_request\`, \`pull_request_target\`, \`push\` and \`workflow_dispatch\`  events. \`${eventName}\` events are not supported.\nYou can use the output of the action.`)
+      core.warning(`This action supports comments only on \`pull_request\`, \`pull_request_target\`, \`push\`, \`workflow_run\` and \`workflow_dispatch\`  events. \`${eventName}\` events are not supported.\nYou can use the output of the action.`)
     }
   }
 };
@@ -318,6 +325,7 @@ const getChangedFiles = async (options, pr_number) => {
         base = payload.before;
         head = payload.after;
         break;
+      case 'workflow_run':
       case 'workflow_dispatch': {
         const { data } = await octokit.pulls.get({
           owner,
@@ -331,7 +339,7 @@ const getChangedFiles = async (options, pr_number) => {
       }
       default:
         // prettier-ignore
-        core.warning(`\`report-only-changed-files: true\` supports only on \`pull_request\`, \`workflow_dispatch\` and \`push\`. Other \`${eventName}\` events are not supported.`)
+        core.warning(`\`report-only-changed-files: true\` supports only on \`pull_request\`, \`workflow_run\`, \`workflow_dispatch\` and \`push\`. Other \`${eventName}\` events are not supported.`)
         return null;
     }
 
