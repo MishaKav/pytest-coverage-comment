@@ -17928,7 +17928,10 @@ const main = async () => {
   } else if (eventName === 'push') {
     options.commit = payload.after;
     options.head = context.ref;
-  } else if (eventName === 'workflow_dispatch' || eventName === 'workflow_run') {
+  } else if (
+    eventName === 'workflow_dispatch' ||
+    eventName === 'workflow_run'
+  ) {
     options.commit = context.sha;
     options.head = context.ref;
   }
@@ -17983,7 +17986,8 @@ const main = async () => {
   if (
     !options.hideReport &&
     html.length + summaryReport.length > MAX_COMMENT_LENGTH &&
-    (eventName != 'workflow_dispatch' && eventName != 'workflow_run')
+    eventName != 'workflow_dispatch' &&
+    eventName != 'workflow_run'
   ) {
     // generate new html without report
     // prettier-ignore
@@ -18067,7 +18071,10 @@ const main = async () => {
         WATERMARK,
       );
     }
-  } else if (eventName === 'workflow_dispatch' || eventName === 'workflow_run') {
+  } else if (
+    eventName === 'workflow_dispatch' ||
+    eventName === 'workflow_run'
+  ) {
     await core.summary.addRaw(body, true).write();
     if (!issueNumberInput) {
       // prettier-ignore
@@ -18166,7 +18173,7 @@ const getChangedFiles = async (options, pr_number) => {
     if (response.status !== 200) {
       core.setFailed(
         `The GitHub API for comparing the base and head commits for this ${eventName} event returned ${response.status}, expected 200. ` +
-        "Please submit an issue on this action's GitHub repo.",
+          "Please submit an issue on this action's GitHub repo.",
       );
     }
 
