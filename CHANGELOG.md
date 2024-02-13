@@ -1,5 +1,13 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.1.51](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.51)
+
+**Release Date:** 2024-01-13
+
+#### Changes
+
+- add `workflow_run` to the events that can trigger this action, big thanks to [@Bouni](https://github.com/Bouni) for contribution
+
 ## [Pytest Coverage Comment 1.1.50](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.50)
 
 **Release Date:** 2023-11-26
