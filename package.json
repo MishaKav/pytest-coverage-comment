@@ -1,56 +1,56 @@
 {
-  "name": "pytest-coverage-comment",
-  "version": "1.1.51",
-  "description": "Comments a pull request with the pytest code coverage badge, full report and tests summary",
-  "author": "Misha Kav",
-  "license": "MIT",
-  "keywords": [
-    "actions",
-    "pull-request",
-    "push",
-    "comment",
-    "message",
-    "python",
-    "pytest",
-    "coverage"
-  ],
-  "bugs": {
-    "url": "https://github.com/MishaKav/pytest-coverage-comment/issues"
-  },
-  "homepage": "https://github.com/MishaKav/pytest-coverage-comment/#readme",
-  "main": "src/index.js",
-  "scripts": {
-    "format": "prettier --write src/**/*.js",
-    "format-check": "prettier --check src/**/*.js",
-    "lint": "eslint src/**/*.js",
-    "build": "ncc build src/index.js --license licenses.txt",
-    "bump-version": "npm version patch",
-    "all": "npm run lint && npm run format && npm run build"
-  },
-  "dependencies": {
-    "@actions/core": "^1.10.1",
-    "@actions/github": "^4.0.0",
-    "xml2js": "^0.6.2"
-  },
-  "devDependencies": {
-    "@vercel/ncc": "^0.38.1",
-    "eslint": "^8.53.0",
-    "prettier": "^3.1.0"
-  },
-  "prettier": {
-    "semi": true,
-    "singleQuote": true
-  },
-  "eslintConfig": {
-    "parserOptions": {
-      "ecmaVersion": 2020
-    },
-    "extends": [
-      "eslint:recommended"
+    "name": "pytest-coverage-comment",
+    "version": "1.1.51",
+    "description": "Comments a pull request with the pytest code coverage badge, full report and tests summary",
+    "author": "Misha Kav",
+    "license": "MIT",
+    "keywords": [
+        "actions",
+        "pull-request",
+        "push",
+        "comment",
+        "message",
+        "python",
+        "pytest",
+        "coverage"
     ],
-    "env": {
-      "es6": true,
-      "node": true
+    "bugs": {
+        "url": "https://github.com/MishaKav/pytest-coverage-comment/issues"
+    },
+    "homepage": "https://github.com/MishaKav/pytest-coverage-comment/#readme",
+    "main": "src/index.js",
+    "scripts": {
+        "format": "prettier --write src/**/*.js",
+        "format-check": "prettier --check src/**/*.js",
+        "lint": "eslint src/**/*.js",
+        "build": "ncc build src/index.js --license licenses.txt",
+        "bump-version": "npm version patch",
+        "all": "npm run lint && npm run format && npm run build"
+    },
+    "dependencies": {
+        "@actions/core": "^1.10.1",
+        "@actions/github": "^4.0.0",
+        "xml2js": "^0.6.2"
+    },
+    "devDependencies": {
+        "@vercel/ncc": "^0.38.1",
+        "eslint": "^8.53.0",
+        "prettier": "^3.1.0"
+    },
+    "prettier": {
+        "semi": true,
+        "singleQuote": true
+    },
+    "eslintConfig": {
+        "parserOptions": {
+            "ecmaVersion": 2020
+        },
+        "extends": [
+            "eslint:recommended"
+        ],
+        "env": {
+            "es6": true,
+            "node": true
+        }
     }
-  }
 }
