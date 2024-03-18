@@ -129,10 +129,8 @@ const main = async () => {
     options.commit = context.sha;
     options.head = context.ref;
   } else if (eventName === 'workflow_run') {
-    options.commit =
-      payload.workflow_run.pull_requests[0]?.head.sha ?? context.sha;
-    options.head =
-      payload.workflow_run.pull_requests[0]?.head.ref ?? context.ref;
+    options.commit = payload.workflow_run.head_sha;
+    options.head = payload.workflow_run.head_branch;
   }
 
   if (options.reportOnlyChangedFiles) {
