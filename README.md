@@ -105,6 +105,7 @@ on:
 # `pull-requests` is for permission to pull request
 permissions:
   contents: write
+  checks: write
   pull-requests: write
 
 jobs:
@@ -240,6 +241,7 @@ on:
 # `pull-requests` is for permission to pull request
 permissions:
   contents: write
+  checks: write
   pull-requests: write
 
 jobs:
