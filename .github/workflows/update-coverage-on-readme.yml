@@ -3,6 +3,12 @@ on:
   push:
     branches:
       - test-branch
+
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+
 jobs:
   update-coverage-on-readme:
     runs-on: ubuntu-latest

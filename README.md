@@ -99,6 +99,15 @@ on:
   pull_request:
     branches:
       - '*'
+
+# https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs
+# `contents` is for permission to the contents of the repository.
+# `pull-requests` is for permission to pull request
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -226,6 +235,15 @@ If your coverage html report will not change, it wouldn't push any changes to re
 name: Update Coverage on Readme
 on:
   push:
+
+# https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs
+# `contents` is for permission to the contents of the repository.
+# `pull-requests` is for permission to pull request
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+
 jobs:
   update-coverage-on-readme:
     runs-on: ubuntu-latest

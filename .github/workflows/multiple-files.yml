@@ -1,6 +1,12 @@
 name: Test Multipli File
 on:
   pull_request:
+
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+
 jobs:
   test-multiple-files:
     runs-on: ubuntu-latest
