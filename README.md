@@ -34,7 +34,7 @@ You can add this action to your GitHub workflow for Ubuntu runners (e.g. runs-on
 | `github-token`              | ✓        | `${{github.token}}`     | An alternative GitHub token, other than the default provided by GitHub Actions runner                                                                                                                                                                                                                                                                                               |
 | `issue-number`              |        | ''   | PR Number where you'd like your comments to be posted to. Required to post a comment when running the workflow on an event that isn't `push` or `pull-request`    .                                                                                                                                                                                                                                                                                      |
 | `pytest-coverage-path`      |          | `./pytest-coverage.txt` | The location of the txt output of pytest-coverage. Used to determine coverage percentage                                                                                                                                                                                                                                                                                            |
-| `pytest-xml-coverage-path`  |          | ''                      | The location of coverage-xml from pytest-coverage (--cov-report "xml:coverage.xml)                                                                                                                                                                                                                                                                                                  |
+| `pytest-xml-coverage-path`  |          | ''                      | The location of coverage-xml from pytest-coverage (-cov-report "xml:coverage.xml)                                                                                                                                                                                                                                                                                                  |
 | `coverage-path-prefix`      |          | ''                      | Prefix for path when link to files in comment                                                                                                                                                                                                                                                                                                                                       |
 | `title`                     |          | `Coverage Report`       | Title for the coverage report. Useful for monorepo projects                                                                                                                                                                                                                                                                                                                         |
 | `badge-title`               |          | `Coverage`              | Title for the badge icon                                                                                                                                                                                                                                                                                                                                                            |
@@ -90,6 +90,7 @@ the format will be JSON.stringify in current structure
 ## Example usage
 
 The following is an example GitHub Action workflow that uses the Pytest Coverage Comment to extract the coverage report to comment at pull request:
+_Be aware with paths that you specify for your projects enviorment. Particularly for arguments with pytest in "Build coverage file" step._
 
 ```yaml
 # This workflow will install dependencies, create coverage tests and run Pytest Coverage Comment
@@ -127,7 +128,7 @@ jobs:
 
       - name: Build coverage file
         run: |
-          pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=app tests/ | tee pytest-coverage.txt
+          pytest --junit-xml=pytest.xml -cov-report=term-missing:skip-covered -cov=app tests/ | tee pytest-coverage.txt
 
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@main
@@ -164,7 +165,7 @@ Example GitHub Action workflow that uses coverage percentage as output (see the 
 ```
 
 Example GitHub Action workflow that get coverage report from coverage-xml instead of coverage.txt
-`pytest --cov-report "xml:coverage.xml" --cov=src tests/`
+`pytest -cov-report "xml:coverage.xml" --cov=src tests/`
 
 ```yaml
 - name: Pytest coverage comment
@@ -202,7 +203,7 @@ It will generate `pytest-coverage.txt` and `pytest.xml` in `/tmp` directory insi
 ```yaml
 - name: Run unit tests (pytest)
   run: |
-    docker run -v /tmp:/tmp $IMAGE_TAG python3 -m pytest --cov-report=term-missing:skip-covered --junitxml=/tmp/pytest.xml --cov=src tests/ | tee /tmp/pytest-coverage.txt
+    docker run -v /tmp:/tmp $IMAGE_TAG python3 -m pytest -cov-report=term-missing:skip-covered -junit-xml=/tmp/pytest.xml --cov=src tests/ | tee /tmp/pytest-coverage.txt
 
 - name: Pytest coverage comment
   uses: MishaKav/pytest-coverage-comment@main
