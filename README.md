@@ -148,7 +148,7 @@ Example GitHub Action workflow that uses coverage percentage as output (see the 
 
 - name: Check the output coverage
   run: |
-    echo "Coverage Percantage - ${{ steps.coverageComment.outputs.coverage }}"
+    echo "Coverage Percentage - ${{ steps.coverageComment.outputs.coverage }}"
     echo "Coverage Color - ${{ steps.coverageComment.outputs.color }}"
     echo "Coverage Html - ${{ steps.coverageComment.outputs.coverageHtml }}"
     echo "Summary Report - ${{ steps.coverageComment.outputs.summaryReport }}"
