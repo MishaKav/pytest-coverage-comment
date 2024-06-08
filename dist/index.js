@@ -17205,7 +17205,8 @@ const toTable = (data, options, dataFromXml = null) => {
     return null;
   }
   const totalLine = dataFromXml ? dataFromXml.total : getTotal(data);
-  options.hasMissing = coverage.some((c) => c.missing);
+  options.hasMissing = totalLine.miss > 0;
+  options.hasBranches = totalLine.branches > 0;
 
   core.info(`Generating coverage report`);
   const headTr = toHeadRow(options);
@@ -17252,9 +17253,10 @@ const toTable = (data, options, dataFromXml = null) => {
 
 // make html head row - th
 const toHeadRow = (options) => {
+  const branchTd = options.hasBranches ? '<th>Branch</th><th>BrPart</th>' : '';
   const lastTd = options.hasMissing ? '<th>Missing</th>' : '';
 
-  return `<tr><th>File</th><th>Stmts</th><th>Miss</th><th>Cover</th>${lastTd}</tr>`;
+  return `<tr><th>File</th><th>Stmts</th><th>Miss</th>${branchTd}<th>Cover</th>${lastTd}</tr>`;
 };
 
 // make html row - tr
@@ -17263,17 +17265,26 @@ const toRow = (item, indent = false, options) => {
 
   const name = toFileNameTd(item, indent, options);
   const missing = toMissingTd(item, options);
+  const branchTd = options.hasBranches
+    ? `<td>${item.branches}</td><td>${item.partBranches}</td>`
+    : '';
   const lastTd = options.hasMissing ? `<td>${missing}</td>` : '';
 
-  return `<tr><td>${name}</td><td>${stmts}</td><td>${miss}</td><td>${cover}</td>${lastTd}</tr>`;
+  return `<tr><td>${name}</td><td>${stmts}</td><td>${miss}</td>${branchTd}<td>${cover}</td>${lastTd}</tr>`;
 };
 
 // make summary row - tr
 const toTotalRow = (item, options) => {
   const { name, stmts, miss, cover } = item;
+  const branchTd = options.hasBranches
+    ? `<td><b>${item.branches}</b></td><td><b>${item.partBranches}</b></td>`
+    : '';
   const emptyCell = options.hasMissing ? '<td>&nbsp;</td>' : '';
 
-  return `<tr><td><b>${name}</b></td><td><b>${stmts}</b></td><td><b>${miss}</b></td><td><b>${cover}</b></td>${emptyCell}</tr>`;
+  return `
+    <tr><td><b>${name}</b></td><td><b>${stmts}</b></td><td><b>${miss}</b></td>
+    ${branchTd}<td><b>${cover}</b></td>${emptyCell}</tr>
+  `;
 };
 
 // make fileName cell - td
@@ -17293,7 +17304,8 @@ const toFolderTd = (path, options) => {
     return '';
   }
 
-  const colspan = options.hasMissing ? 5 : 4;
+  const colspan =
+    4 + (options.hasBranches ? 2 : 0) + (options.hasMissing ? 1 : 0);
   return `<tr><td colspan="${colspan}"><b>${path}</b></td></tr>`;
 };
 
@@ -17305,11 +17317,13 @@ const toMissingTd = (item, options) => {
 
   return item.missing
     .map((range) => {
-      const [start, end = start] = range.split('-');
-      const fragment = start === end ? `L${start}` : `L${start}-L${end}`;
+      const isBranch = range.includes('->');
+      const [start, end] = isBranch ? range.split('->') : range.split('-');
+      const fragment = end === undefined ? `L${start}` : `L${start}-L${end}`;
       const relative = item.name;
       const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}#${fragment}`;
-      const text = start === end ? start : `${start}&ndash;${end}`;
+      const sign = isBranch ? '&rarrc;' : '&ndash;';
+      const text = end === undefined ? start : `${start}${sign}${end}`;
 
       return `<a href="${href}">${text}</a>`;
     })
@@ -17340,21 +17354,37 @@ const getParsedXml = (options) => {
   return '';
 };
 
+const coveragePct = (num, denom) => {
+  // follow the same logic as coverage.py: only return 0 when there are no hits,
+  // only return 100% when all lines are covered, otherwise round.
+  // https://github.com/nedbat/coveragepy/blob/0957c07064f8cd89a2a81a0ff1e51ca4bab77c69/coverage/results.py#L276
+  if (num === denom) return '100%';
+  if (num === 0) return '0%';
+  const cover = Math.max(1, Math.min(99, Math.round((100 * num) / denom)));
+  return `${cover}%`;
+};
+
 const getTotalCoverage = (parsedXml) => {
   if (!parsedXml) {
     return null;
   }
 
   const coverage = parsedXml['$'];
-  const cover = parseInt(parseFloat(coverage['line-rate']) * 100);
   const linesValid = parseInt(coverage['lines-valid']);
   const linesCovered = parseInt(coverage['lines-covered']);
+  const branchesValid = parseInt(coverage['branches-valid']);
+  const branchesCovered = parseInt(coverage['branches-covered']);
 
   return {
     name: 'TOTAL',
     stmts: linesValid,
     miss: linesValid - linesCovered,
-    cover: cover !== '0' ? `${cover}%` : '0',
+    branches: branchesValid,
+    partBranches: branchesValid - branchesCovered,
+    cover: coveragePct(
+      linesCovered + branchesCovered,
+      linesValid + branchesValid,
+    ),
   };
 };
 
@@ -17377,8 +17407,6 @@ const getCoverageXmlReport = (options) => {
   try {
     const parsedXml = getParsedXml(options);
 
-    const coverage = getTotalCoverage(parsedXml);
-    // const coverage = getCoverageReportXml(getContent(options.covXmlFile));
     const isValid = isValidCoverageContent(parsedXml);
 
     if (parsedXml && !isValid) {
@@ -17388,6 +17416,7 @@ const getCoverageXmlReport = (options) => {
 
     if (parsedXml && isValid) {
       const coverageObj = coverageXmlToFiles(parsedXml);
+      const coverage = getTotalCoverage(parsedXml);
       const dataFromXml = { coverage: coverageObj, total: coverage };
       const html = toHtml(null, options, dataFromXml);
       const color = getCoverageColor(coverage ? coverage.cover : '0');
@@ -17452,31 +17481,60 @@ const parseClass = (classObj) => {
     return null;
   }
 
-  const { stmts, missing, totalMissing: miss } = parseLines(classObj.lines);
-  const { filename: name, 'line-rate': lineRate } = classObj['$'];
+  const { stmts, missingStmts, branches, partBranches, missing } = parseLines(
+    classObj.lines,
+  );
+  const { filename: name } = classObj['$'];
+  const cover = coveragePct(
+    stmts + branches - missingStmts - partBranches,
+    stmts + branches,
+  );
 
-  const isFullCoverage = lineRate === '1';
-  const cover = isFullCoverage
-    ? '100%'
-    : `${parseInt(parseFloat(lineRate) * 100)}%`;
-
-  return { name, stmts, miss, cover, missing };
+  return {
+    name,
+    stmts,
+    miss: missingStmts,
+    branches,
+    partBranches,
+    cover,
+    missing,
+  };
 };
 
 const parseLines = (lines) => {
   if (!lines || !lines.length || !lines[0].line) {
-    return { stmts: '0', missing: '', totalMissing: '0' };
+    return {
+      stmts: 0,
+      missingStmts: 0,
+      branches: 0,
+      partBranches: 0,
+      missing: [],
+    };
   }
 
-  let stmts = 0;
-  const missingLines = [];
+  let stmts = 0,
+    branches = 0;
+  const missingLines = [],
+    partBranchesText = [];
 
   lines[0].line.forEach((line) => {
     stmts++;
-    const { hits, number } = line['$'];
+    const { hits, number, branch } = line['$'];
 
     if (hits === '0') {
       missingLines.push(parseInt(number));
+    }
+    if (branch === 'true') {
+      const { 'condition-coverage': cc, 'missing-branches': mb } = line['$'];
+      // 'condition-coverage' is usually formatted like "50% (1/2)". Parse the total number
+      // of targets (the second number in parentheses). Default to 2 if not available.
+      const numTargets = cc && cc.match(/\(\d+\/(\d+)\)/);
+      branches += numTargets ? +numTargets[1] : 2;
+      if (mb) {
+        for (const target of mb.split(',')) {
+          partBranchesText.push(`${number}->${target}`);
+        }
+      }
     }
   });
 
@@ -17494,11 +17552,14 @@ const parseLines = (lines) => {
       missingText.push(`${m[0]}-${m[m.length - 1]}`);
     }
   });
+  missingText.push(...partBranchesText);
 
   return {
-    stmts: stmts.toString(),
+    stmts,
+    missingStmts: missingLines.length,
+    branches,
+    partBranches: partBranchesText.length,
     missing: missingText,
-    totalMissing: missingLines.length.toString(),
   };
 };
 
