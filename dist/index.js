@@ -16796,7 +16796,16 @@ const getSummary = (data) => {
     return '';
   }
 
-  return parser.resultObject.testsuites.testsuite[0]['$'];
+  const summary = { errors: 0, failures: 0, skipped: 0, tests: 0, time: 0 };
+  for (const testsuite of parser.resultObject.testsuites.testsuite) {
+    const { errors, failures, skipped, tests, time } = testsuite['$'];
+    summary.errors += +errors;
+    summary.failures += +failures;
+    summary.skipped += +skipped;
+    summary.tests += +tests;
+    summary.time += +time;
+  }
+  return summary;
 };
 
 const getTestCases = (data) => {
@@ -16812,7 +16821,7 @@ const getTestCases = (data) => {
     return '';
   }
 
-  return parser.resultObject.testsuites.testsuite[0].testcase;
+  return parser.resultObject.testsuites.testsuite.map((t) => t.testcase).flat();
 };
 
 const getNotSuccessTest = (options) => {
@@ -16853,7 +16862,7 @@ const getNotSuccessTest = (options) => {
 const toMarkdown = (summary, options) => {
   const { errors, failures, skipped, tests, time } = summary;
   const displayTime =
-    time > 60 ? `${(time / 60) | 0}m ${time % 60 | 0}s` : `${time}s`;
+    time > 60 ? `${(time / 60) | 0}m ${time % 60 | 0}s` : `${time.toFixed(3)}s`;
   const table = `| Tests | Skipped | Failures | Errors | Time |
 | ----- | ------- | -------- | -------- | ------------------ |
 | ${tests} | ${skipped} :zzz: | ${failures} :x: | ${errors} :fire: | ${displayTime} :stopwatch: |
