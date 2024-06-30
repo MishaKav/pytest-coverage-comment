@@ -18145,8 +18145,8 @@ const getChangedFiles = async (options, pr_number) => {
           pull_number: pr_number,
         });
 
-        base = data.base.ref;
-        head = data.head.ref;
+        base = data.base.label;
+        head = data.head.label;
         break;
       }
       default:
