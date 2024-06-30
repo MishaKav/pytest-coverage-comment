@@ -18163,7 +18163,7 @@ const getChangedFiles = async (options, pr_number) => {
       repo,
       pull_number: pr_number,
     });
-    core.ingo('MISHA0');
+    core.info('MISHA0');
     core.info(`data.base.label: ${data.base.label}`);
     core.info(`data.head.label: ${data.head.label}`);
     core.info(`DATA: ${JSON.stringify(data)}`);
