@@ -125,12 +125,12 @@ const main = async () => {
   } else if (eventName === 'push') {
     options.commit = payload.after;
     options.head = context.ref;
-  } else if (
-    eventName === 'workflow_dispatch' ||
-    eventName === 'workflow_run'
-  ) {
+  } else if (eventName === 'workflow_dispatch') {
     options.commit = context.sha;
     options.head = context.ref;
+  } else if (eventName === 'workflow_run') {
+    options.commit = payload.workflow_run.head_sha;
+    options.head = payload.workflow_run.head_branch;
   }
 
   if (options.reportOnlyChangedFiles) {
