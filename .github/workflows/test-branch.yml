@@ -20,6 +20,7 @@ jobs:
         uses: MishaKav/pytest-coverage-comment@check-workflows-labels
         with:
           # pytest-xml-coverage-path: ./data/coverage_1.xml
+          issue-number: 171
           pytest-coverage-path: ./data/pytest-coverage_4.txt
           report-only-changed-files: true
           # junitxml-path: ./data/pytest_1.xml
