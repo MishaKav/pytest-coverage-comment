@@ -1,5 +1,15 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.1.52](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.52)
+
+**Release Date:** 2024-06-30
+
+#### Changes
+
+- fix commit `sha` and `ref` for `workflow_run`, instead of from the default branch, thanks to [@cecheta](https://github.com/cecheta) for contribution
+- use `label` instead of `ref` for `workflow_run` and `workflow_dispatch`, thanks to [@cecheta](https://github.com/cecheta) for contribution
+- use data from all testsuites instead the first one, thanks to [@eltoder](https://github.com/eltoder) for contribution
+
 ## [Pytest Coverage Comment 1.1.51](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.51)
 
 **Release Date:** 2024-01-13
