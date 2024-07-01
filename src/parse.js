@@ -217,7 +217,8 @@ const toTable = (data, options, dataFromXml = null) => {
     return null;
   }
   const totalLine = dataFromXml ? dataFromXml.total : getTotal(data);
-  options.hasMissing = coverage.some((c) => c.missing);
+  options.hasMissing = totalLine.miss > 0;
+  options.hasBranches = totalLine.branches > 0;
 
   core.info(`Generating coverage report`);
   const headTr = toHeadRow(options);
@@ -264,9 +265,10 @@ const toTable = (data, options, dataFromXml = null) => {
 
 // make html head row - th
 const toHeadRow = (options) => {
+  const branchTd = options.hasBranches ? '<th>Branch</th><th>BrPart</th>' : '';
   const lastTd = options.hasMissing ? '<th>Missing</th>' : '';
 
-  return `<tr><th>File</th><th>Stmts</th><th>Miss</th><th>Cover</th>${lastTd}</tr>`;
+  return `<tr><th>File</th><th>Stmts</th><th>Miss</th>${branchTd}<th>Cover</th>${lastTd}</tr>`;
 };
 
 // make html row - tr
@@ -275,17 +277,26 @@ const toRow = (item, indent = false, options) => {
 
   const name = toFileNameTd(item, indent, options);
   const missing = toMissingTd(item, options);
+  const branchTd = options.hasBranches
+    ? `<td>${item.branches}</td><td>${item.partBranches}</td>`
+    : '';
   const lastTd = options.hasMissing ? `<td>${missing}</td>` : '';
 
-  return `<tr><td>${name}</td><td>${stmts}</td><td>${miss}</td><td>${cover}</td>${lastTd}</tr>`;
+  return `<tr><td>${name}</td><td>${stmts}</td><td>${miss}</td>${branchTd}<td>${cover}</td>${lastTd}</tr>`;
 };
 
 // make summary row - tr
 const toTotalRow = (item, options) => {
   const { name, stmts, miss, cover } = item;
+  const branchTd = options.hasBranches
+    ? `<td><b>${item.branches}</b></td><td><b>${item.partBranches}</b></td>`
+    : '';
   const emptyCell = options.hasMissing ? '<td>&nbsp;</td>' : '';
 
-  return `<tr><td><b>${name}</b></td><td><b>${stmts}</b></td><td><b>${miss}</b></td><td><b>${cover}</b></td>${emptyCell}</tr>`;
+  return `
+    <tr><td><b>${name}</b></td><td><b>${stmts}</b></td><td><b>${miss}</b></td>
+    ${branchTd}<td><b>${cover}</b></td>${emptyCell}</tr>
+  `;
 };
 
 // make fileName cell - td
@@ -305,7 +316,8 @@ const toFolderTd = (path, options) => {
     return '';
   }
 
-  const colspan = options.hasMissing ? 5 : 4;
+  const colspan =
+    4 + (options.hasBranches ? 2 : 0) + (options.hasMissing ? 1 : 0);
   return `<tr><td colspan="${colspan}"><b>${path}</b></td></tr>`;
 };
 
@@ -317,11 +329,13 @@ const toMissingTd = (item, options) => {
 
   return item.missing
     .map((range) => {
-      const [start, end = start] = range.split('-');
-      const fragment = start === end ? `L${start}` : `L${start}-L${end}`;
+      const isBranch = range.includes('->');
+      const [start, end] = isBranch ? range.split('->') : range.split('-');
+      const fragment = end === undefined ? `L${start}` : `L${start}-L${end}`;
       const relative = item.name;
       const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}#${fragment}`;
-      const text = start === end ? start : `${start}&ndash;${end}`;
+      const sign = isBranch ? '&rarrc;' : '&ndash;';
+      const text = end === undefined ? start : `${start}${sign}${end}`;
 
       return `<a href="${href}">${text}</a>`;
     })
