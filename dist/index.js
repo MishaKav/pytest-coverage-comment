@@ -18050,6 +18050,26 @@ const main = async () => {
       : 0;
 
   if (eventName === 'push') {
+     if (issueNumberInput) {
+      if (createNewComment) {
+        core.info('Creating a new comment');
+        await octokit.issues.createComment({
+          repo,
+          owner,
+          issue_number,
+          body,
+        });
+      } else {
+        await createOrEditComment(
+          octokit,
+          repo,
+          owner,
+          issue_number,
+          body,
+          WATERMARK,
+        );
+      }
+    } else {
     core.info('Create commit comment');
     await octokit.repos.createCommitComment({
       repo,
@@ -18057,6 +18077,7 @@ const main = async () => {
       commit_sha: options.commit,
       body,
     });
+    }
   } else if (
     eventName === 'pull_request' ||
     eventName === 'pull_request_target'
