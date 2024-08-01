@@ -238,13 +238,35 @@ const main = async () => {
       : 0;
 
   if (eventName === 'push') {
-    core.info('Create commit comment');
-    await octokit.repos.createCommitComment({
-      repo,
-      owner,
-      commit_sha: options.commit,
-      body,
-    });
+    if (issueNumberInput) {
+      if (createNewComment) {
+        core.info('Creating a new comment');
+        await octokit.issues.createComment({
+          repo,
+          owner,
+          issue_number,
+          body,
+        });
+      } else {
+        await createOrEditComment(
+          octokit,
+          repo,
+          owner,
+          issue_number,
+          body,
+          WATERMARK,
+        );
+      }
+    } else {
+      core.info('Create commit comment');
+      await octokit.repos.createCommitComment({
+        repo,
+        owner,
+        commit_sha: options.commit,
+        body,
+      });
+    }
+
   } else if (
     eventName === 'pull_request' ||
     eventName === 'pull_request_target'
@@ -370,7 +392,7 @@ const getChangedFiles = async (options, pr_number) => {
     if (response.status !== 200) {
       core.setFailed(
         `The GitHub API for comparing the base and head commits for this ${eventName} event returned ${response.status}, expected 200. ` +
-          "Please submit an issue on this action's GitHub repo.",
+        "Please submit an issue on this action's GitHub repo.",
       );
     }
 
