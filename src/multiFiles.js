@@ -2,7 +2,7 @@ const { getCoverageReport } = require('./parse');
 const { getParsedXml } = require('./junitXml');
 const core = require('@actions/core');
 
-// parse oneline from multiple files to object
+// parse one line from multiple files to object
 const parseLine = (line) => {
   if (!line || !line.includes(',')) {
     return '';
