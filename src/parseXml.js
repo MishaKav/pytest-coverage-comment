@@ -125,15 +125,19 @@ const parseClass = (classObj, xmlSkipCovered) => {
   if (!classObj || !classObj.lines) {
     return null;
   }
+
   const { stmts, missing, totalMissing: miss } = parseLines(classObj.lines);
   const { filename: name, 'line-rate': lineRate } = classObj['$'];
   const isFullCoverage = lineRate === '1';
+
   if (xmlSkipCovered && isFullCoverage) {
     return null;
   }
+
   const cover = isFullCoverage
     ? '100%'
     : `${parseInt(parseFloat(lineRate) * 100)}%`;
+
   return { name, stmts, miss, cover, missing };
 };
 

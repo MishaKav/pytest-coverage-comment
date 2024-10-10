@@ -57,7 +57,7 @@ inputs:
     required: false
 
   xml-skip-covered:
-    description: 'Hide files from xml report with 100% coverage.'
+    description: 'Hide files from xml report with 100% coverage'
     default: 'false'
     required: false
 
