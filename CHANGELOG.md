@@ -7,6 +7,7 @@
 #### Changes
 
 - add option `xml-skip-covered` to skip lines that covered for 100% based on xml report, thanks to [@NikTerentev](https://github.com/NikTerentev) for contribution
+- bump dev dependencies and minor for `@actions/core`
 
 ## [Pytest Coverage Comment 1.1.52](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.52)
 
