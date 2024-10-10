@@ -1,5 +1,14 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.1.53](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.53)
+
+**Release Date:** 2024-10-10
+
+#### Changes
+
+- add option `xml-skip-covered` to skip lines that covered for 100% based on xml report, thanks to [@NikTerentev](https://github.com/NikTerentev) for contribution
+- bump dev dependencies and minor for `@actions/core`
+
 ## [Pytest Coverage Comment 1.1.52](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.52)
 
 **Release Date:** 2024-06-30

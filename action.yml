@@ -56,6 +56,11 @@ inputs:
     default: 'false'
     required: false
 
+  xml-skip-covered:
+    description: 'Hide files from xml report with 100% coverage'
+    default: 'false'
+    required: false
+
   report-only-changed-files:
     description: 'Show in report only changed files for this commit, and not all files'
     default: 'false'

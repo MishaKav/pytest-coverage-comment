@@ -61,7 +61,7 @@ const getCoverageXmlReport = (options) => {
     }
 
     if (parsedXml && isValid) {
-      const coverageObj = coverageXmlToFiles(parsedXml);
+      const coverageObj = coverageXmlToFiles(parsedXml, options.xmlSkipCovered);
       const dataFromXml = { coverage: coverageObj, total: coverage };
       const html = toHtml(null, options, dataFromXml);
       const color = getCoverageColor(coverage ? coverage.cover : '0');
@@ -101,7 +101,7 @@ const getXmlContent = (data) => {
 };
 
 // parse coverage xml to Files structure
-const coverageXmlToFiles = (coverageXml) => {
+const coverageXmlToFiles = (coverageXml, xmlSkipCovered) => {
   let files = [];
 
   coverageXml.packages[0].package
@@ -110,7 +110,7 @@ const coverageXmlToFiles = (coverageXml) => {
       package.classes[0].class
         .filter((c) => c.lines)
         .forEach((c) => {
-          const fileObj = parseClass(c);
+          const fileObj = parseClass(c, xmlSkipCovered);
 
           if (fileObj) {
             files.push(fileObj);
@@ -121,15 +121,19 @@ const coverageXmlToFiles = (coverageXml) => {
   return files;
 };
 
-const parseClass = (classObj) => {
+const parseClass = (classObj, xmlSkipCovered) => {
   if (!classObj || !classObj.lines) {
     return null;
   }
 
   const { stmts, missing, totalMissing: miss } = parseLines(classObj.lines);
   const { filename: name, 'line-rate': lineRate } = classObj['$'];
-
   const isFullCoverage = lineRate === '1';
+
+  if (xmlSkipCovered && isFullCoverage) {
+    return null;
+  }
+
   const cover = isFullCoverage
     ? '100%'
     : `${parseInt(parseFloat(lineRate) * 100)}%`;
