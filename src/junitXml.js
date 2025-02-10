@@ -51,6 +51,8 @@ const getSummary = (data) => {
     summary.tests += +tests;
     summary.time += +time;
   }
+  summary.notSuccessTestInfo = getNotSuccessTest(data);
+
   return summary;
 };
 
@@ -70,19 +72,18 @@ const getTestCases = (data) => {
   return parser.resultObject.testsuites.testsuite.map((t) => t.testcase).flat();
 };
 
-const getNotSuccessTest = (options) => {
+const getNotSuccessTest = (data) => {
   const initData = { count: 0, failures: [], errors: [], skipped: [] };
 
   try {
-    const content = getContent(options.xmlFile);
 
-    if (content) {
+    if (data) {
       const testCaseToOutput = (testcase) => {
         const { classname, name } = testcase['$'];
         return { classname, name };
       };
 
-      const testcases = getTestCases(content);
+      const testcases = getTestCases(data);
 
       const failures = testcases.filter((t) => t.failure).map(testCaseToOutput);
       const errors = testcases.filter((t) => t.error).map(testCaseToOutput);
@@ -109,17 +110,45 @@ const toMarkdown = (summary, options) => {
   const { errors, failures, skipped, tests, time } = summary;
   const displayTime =
     time > 60 ? `${(time / 60) | 0}m ${time % 60 | 0}s` : `${time.toFixed(3)}s`;
+
+  // Summary table
   const table = `| Tests | Skipped | Failures | Errors | Time |
 | ----- | ------- | -------- | -------- | ------------------ |
 | ${tests} | ${skipped} :zzz: | ${failures} :x: | ${errors} :fire: | ${displayTime} :stopwatch: |
 `;
 
-  if (options.xmlTitle) {
-    return `## ${options.xmlTitle}
-${table}`;
+  // Combine and sort all non-success tests
+  const allNonSuccessTests = [
+    ...summary.notSuccessTestInfo.failures.map(f => ({ ...f, type: ':x: Failure' })),
+    ...summary.notSuccessTestInfo.errors.map(e => ({ ...e, type: ':fire: Error' })),
+    ...summary.notSuccessTestInfo.skipped.map(s => ({ ...s, type: ':zzz: Skipped' }))
+  ];
+
+  // Detailed non-success tests section
+  let nonSuccessDetails = '';
+  if (allNonSuccessTests.length > 0) {
+    const detailedTestsList = allNonSuccessTests.map(test => 
+      `- ${test.type} **${test.name}** (${test.classname})
+  \`${test.message ? test.message.replace(/\n/g, ' ').replace(/\|/g, '\\|') : 'No message'}\``
+    ).join('\n');
+
+    nonSuccessDetails = `
+<details>
+<summary>:warning: Detailed Non-Success Tests (${allNonSuccessTests.length})</summary>
+
+${detailedTestsList}
+</details>
+`;
   }
 
-  return table;
+  // Combine sections
+  let output = table + nonSuccessDetails;
+
+  if (options.xmlTitle) {
+    output = `## ${options.xmlTitle}\n${output}`;
+  }
+
+  return output;
 };
 
-module.exports = { getSummaryReport, getParsedXml, getNotSuccessTest };
+module.exports = { getSummaryReport, getParsedXml };
