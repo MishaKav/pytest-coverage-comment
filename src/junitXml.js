@@ -80,7 +80,12 @@ const getNotSuccessTest = (data) => {
     if (data) {
       const testCaseToOutput = (testcase) => {
         const { classname, name } = testcase['$'];
-        return { classname, name };
+        const failure = testcase.failure ? testcase.failure[0] : null;
+        const error = testcase.error ? testcase.error[0] : null;
+        const skipped = testcase.skipped ? testcase.skipped[0] : null;
+        const message = failure ? failure['_'] : error ? error['_'] : skipped ? skipped['_'] : null;
+
+        return { classname, name, failure, error, skipped, message };
       };
 
       const testcases = getTestCases(data);
