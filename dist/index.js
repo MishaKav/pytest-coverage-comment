@@ -18686,9 +18686,7 @@ const main = async () => {
   }
 
   if (html) {
-    const newOptions = { ...options, commit: defaultBranch };
-    const output = getCoverageReport(newOptions);
-    core.setOutput('coverageHtml', output.html);
+    core.setOutput('coverageHtml', html);
   }
 
   // set to output junitxml values
