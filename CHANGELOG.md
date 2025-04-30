@@ -1,5 +1,14 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.1.54](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.54)
+
+**Release Date:** 2025-04-30
+
+#### Changes
+
+- add support for new format for `pytest-coverage-path`, basically it add support for output of `pytest-cov >= 6.0.0`
+- bump dev dependencies
+
 ## [Pytest Coverage Comment 1.1.53](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.53)
 
 **Release Date:** 2024-10-10
