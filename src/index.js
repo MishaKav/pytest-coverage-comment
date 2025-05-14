@@ -63,6 +63,9 @@ const main = async () => {
     required: false,
   });
   const hideComment = core.getBooleanInput('hide-comment', { required: false });
+  const xmlSkipCovered = core.getBooleanInput('xml-skip-covered', {
+    required: false,
+  });
   const reportOnlyChangedFiles = core.getBooleanInput(
     'report-only-changed-files',
     { required: false },
@@ -108,6 +111,7 @@ const main = async () => {
     hideReport,
     createNewComment,
     hideComment,
+    xmlSkipCovered,
     reportOnlyChangedFiles,
     removeLinkFromBadge,
     defaultBranch,

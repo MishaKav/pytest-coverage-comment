@@ -63,7 +63,12 @@ const getActualLines = (data) => {
     return null;
   }
 
-  return lines.slice(startIndex + 3, endIndex - 1);
+  const oldFormatLines = lines.slice(startIndex + 3, endIndex - 1);
+  const newFormatLines = oldFormatLines.filter(
+    (l) => !l.split('').every((c) => c === '-'),
+  );
+
+  return newFormatLines;
 };
 
 // get total line from coverage-file
