@@ -279,7 +279,7 @@ const main = async () => {
     await core.summary.addRaw(body, true).write();
     if (!issueNumberInput) {
       // prettier-ignore
-      core.warning(`To use this action on a \`${eventName}\`, you need to pass an pull request number.`)
+      core.warning(`To use this action on a \`${eventName}\`, you need to pass a pull request number.`)
     } else {
       if (createNewComment) {
         core.info('Creating a new comment');
