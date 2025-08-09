@@ -142,6 +142,8 @@ jobs:
 | `report-only-changed-files` | `false`           | Show only files changed in the current pull request                |
 | `xml-skip-covered`          | `false`           | Hide files with 100% coverage from XML coverage reports            |
 | `remove-link-from-badge`    | `false`           | Remove hyperlink from coverage badge (badge becomes plain image)   |
+| `remove-links-to-files`     | `false`           | Remove file links from coverage table to reduce comment size       |
+| `remove-links-to-lines`     | `false`           | Remove line number links from coverage table to reduce comment size |
 
 </details>
 
@@ -435,7 +437,16 @@ For large coverage reports that might exceed GitHub's comment size limits:
     hide-report: true # Show only summary and badge
     xml-skip-covered: true # Skip files with 100% coverage
     report-only-changed-files: true # Only show changed files
+    remove-links-to-files: true # Remove clickable file links
+    remove-links-to-lines: true # Remove clickable line number links
 ```
+
+**Link Removal Options:**
+
+- `remove-links-to-files: true` - Removes clickable links to files. Instead of `[example.py](link)`, shows plain `example.py`
+- `remove-links-to-lines: true` - Removes clickable links to line numbers. Instead of `[14-18](link)`, shows plain `14-18`
+
+These options significantly reduce comment size while preserving all coverage information.
 
 </details>
 
@@ -499,6 +510,8 @@ Coverage badges automatically change color based on the percentage:
 - Use `xml-skip-covered: true` to hide fully covered files
 - Enable `report-only-changed-files: true`
 - Set `hide-report: true` to show only summary
+- Use `remove-links-to-files: true` to remove clickable file links
+- Use `remove-links-to-lines: true` to remove clickable line number links
 - Use `--cov-report=term-missing:skip-covered` in pytest
 
 ### GitHub Step Summary Too Large

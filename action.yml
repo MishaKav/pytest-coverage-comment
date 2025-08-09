@@ -104,6 +104,16 @@ inputs:
     default: ''
     required: false
 
+  remove-links-to-files:
+    description: 'Remove file links from coverage table to reduce comment size'
+    default: 'false'
+    required: false
+
+  remove-links-to-lines:
+    description: 'Remove line number links from coverage table to reduce comment size'
+    default: 'false'
+    required: false
+
 outputs:
   coverage:
     description: 'Coverage percentage from pytest report (e.g., 85%)'

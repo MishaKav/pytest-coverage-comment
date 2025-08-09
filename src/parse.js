@@ -300,8 +300,11 @@ const toFileNameTd = (item, indent = false, options) => {
   const parts = relative.split('/');
   const last = parts[parts.length - 1];
   const space = indent ? '&nbsp; &nbsp;' : '';
+  const fileName = last.replace(/__/g, '\\_\\_');
 
-  return `${space}<a href="${href}">${last.replace(/__/g, '\\_\\_')}</a>`;
+  return options.removeLinksToFiles
+    ? `${space}${fileName}`
+    : `${space}<a href="${href}">${fileName}</a>`;
 };
 
 // make folder row - tr
@@ -328,7 +331,9 @@ const toMissingTd = (item, options) => {
       const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}#${fragment}`;
       const text = start === end ? start : `${start}&ndash;${end}`;
 
-      return `<a href="${href}">${text}</a>`;
+      return options.removeLinksToLines
+        ? text
+        : `<a href="${href}">${text}</a>`;
     })
     .join(', ');
 };
