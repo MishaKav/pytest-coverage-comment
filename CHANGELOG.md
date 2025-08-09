@@ -7,6 +7,8 @@
 #### Changes
 
 - fix GitHub Action Summary size limit error by implementing automatic truncation for summaries exceeding 1MB (#209)
+- improve README with collapsible sections, better examples, and comprehensive troubleshooting guide
+- align action.yml descriptions with README for consistency and clarity
 - bump dev dependencies
 
 ## [Pytest Coverage Comment 1.1.54](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.54)
