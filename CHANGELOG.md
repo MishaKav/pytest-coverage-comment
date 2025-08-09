@@ -1,5 +1,14 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.1.55](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.55)
+
+**Release Date:** 2025-08-09
+
+#### Changes
+
+- fix GitHub Action Summary size limit error by implementing automatic truncation for summaries exceeding 1MB (#209)
+- bump dev dependencies
+
 ## [Pytest Coverage Comment 1.1.54](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.54)
 
 **Release Date:** 2025-04-30
