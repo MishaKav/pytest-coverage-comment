@@ -1,5 +1,13 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.1.56](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.56)
+
+**Release Date:** 2025-08-09
+
+#### Changes
+
+- fix GitHub Actions matrix syntax parsing error in action.yml (#214)
+
 ## [Pytest Coverage Comment 1.1.55](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.55)
 
 **Release Date:** 2025-08-09
