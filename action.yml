@@ -100,7 +100,7 @@ inputs:
     required: false
 
   unique-id-for-comment:
-    description: 'Unique identifier for matrix builds to update separate comments (e.g., ${{ matrix.python-version }})'
+    description: 'Unique identifier for matrix builds to update separate comments (e.g., matrix.python-version)'
     default: ''
     required: false
 
