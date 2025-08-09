@@ -1,5 +1,6 @@
 # Pytest Coverage Comment
 
+
 ![License](https://img.shields.io/github/license/MishaKav/pytest-coverage-comment)
 ![Version](https://img.shields.io/github/package-json/v/MishaKav/pytest-coverage-comment)
 [![Wakatime](https://wakatime.com/badge/user/f838c8aa-c197-42f0-b335-cd1d26159dfd/project/b1e64a51-e518-4b91-bb00-189ffdd444c6.svg)](https://wakatime.com/badge/user/f838c8aa-c197-42f0-b335-cd1d26159dfd/project/b1e64a51-e518-4b91-bb00-189ffdd444c6)
