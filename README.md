@@ -244,6 +244,10 @@ This creates a consolidated table showing all coverage reports:
 | Frontend SDK  | 92%      | 89    | 12.1s |
 | Data Pipeline | 78%      | 234   | 45.6s |
 
+**Output**: Combined table showing coverage and test results for all packages.
+
+<img alt="Multiple Files Mode Example" src="https://user-images.githubusercontent.com/289035/122121939-ddd0c500-ce34-11eb-8546-89a8a769e065.png">
+
 </details>
 
 ### Docker Workflows
@@ -349,6 +353,16 @@ jobs:
 
 </details>
 
+## 📋 Output Example
+
+Here's what the generated coverage comment looks like:
+
+<img alt="Coverage" src="https://img.shields.io/badge/Coverage-30%25-red.svg" /><br/><details><summary>Coverage Report</summary><table><tr><th>File</th><th>Stmts</th><th>Miss</th><th>Cover</th><th>Missing</th></tr><tbody><tr><td colspan="5"><b>functions/example_completed</b></td></tr><tr><td>&nbsp; &nbsp;<a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_completed/example_completed.py">example_completed.py</a></td><td>64</td><td>19</td><td>70%</td><td><a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_completed/example_completed.py#L33">33</a>, <a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_completed/example_completed.py#L39-L45">39&ndash;45</a>, <a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_completed/example_completed.py#L48-L51">48&ndash;51</a>, <a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_completed/example_completed.py#L55-L58">55&ndash;58</a>, <a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_completed/example_completed.py#L65-L70">65&ndash;70</a>, <a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_completed/example_completed.py#L91-L92">91&ndash;92</a></td></tr><tr><td colspan="5"><b>functions/example_manager</b></td></tr><tr><td>&nbsp; &nbsp;<a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_manager/example_manager.py">example_manager.py</a></td><td>44</td><td>11</td><td>75%</td><td><a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_manager/example_manager.py#L31-L33">31&ndash;33</a>, <a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_manager/example_manager.py#L49-L55">49&ndash;55</a>, <a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_manager/example_manager.py#L67-L69">67&ndash;69</a></td></tr><tr><td>&nbsp; &nbsp;<a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_manager/example_static.py">example_static.py</a></td><td>40</td><td>2</td><td>95%</td><td><a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/example_manager/example_static.py#L60-L61">60&ndash;61</a></td></tr><tr><td colspan="5"><b>functions/my_exampels</b></td></tr><tr><td>&nbsp; &nbsp;<a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/my_exampels/example.py">example.py</a></td><td>20</td><td>20</td><td>0%</td><td><a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/my_exampels/example.py#L1-L31">1&ndash;31</a></td></tr><tr><td colspan="5"><b>functions/resources</b></td></tr><tr><td>&nbsp; &nbsp;<a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/resources/resources.py">resources.py</a></td><td>26</td><td>26</td><td>0%</td><td><a href="https://github.com/MishaKav/pytest-coverage-comment/blob/680f562642190a6a28f6c54785c767e2586b44b8/functions/resources/resources.py#L1-L37">1&ndash;37</a></td></tr><tr><td><b>TOTAL</b></td><td><b>1055</b></td><td><b>739</b></td><td><b>30%</b></td><td>&nbsp;</td></tr></tbody></table></details>
+
+| Tests | Skipped | Failures | Errors   | Time               |
+| ----- | ------- | -------- | -------- | ------------------ |
+| 109   | 2 :zzz: | 1 :x:    | 0 :fire: | 0.583s :stopwatch: |
+
 ## 🔬 Advanced Features
 
 <details>
@@ -362,7 +376,7 @@ jobs:
     pytest-coverage-path: ./pytest-coverage.txt
     junitxml-path: ./pytest.xml
 
-- name: Create coverage badge
+- name: Dynamic Badges
   uses: schneegans/dynamic-badges-action@v1.7.0
   with:
     auth: ${{ secrets.GIST_SECRET }}
@@ -461,6 +475,14 @@ Coverage badges automatically change color based on the percentage:
 | 60-80%   | ![Coverage 60-80](https://img.shields.io/badge/Coverage-70%25-yellow.svg)       | Yellow       |
 | 80-90%   | ![Coverage 80-90](https://img.shields.io/badge/Coverage-85%25-green.svg)        | Green        |
 | 90-100%  | ![Coverage 90-100](https://img.shields.io/badge/Coverage-95%25-brightgreen.svg) | Bright Green |
+
+## 🔄 Auto-Updating Badge on README
+
+If you want auto-update the coverage badge on your README, you can see the [workflow example](#auto-update-readme-badge) above.
+
+![Auto Updating Badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/MishaKav/5e90d640f8c212ab7bbac38f72323f80/raw/pytest-coverage-comment__main.json)
+
+<img alt="Auto-updating badge example" src="https://user-images.githubusercontent.com/289035/126039976-3f1bf8dd-5a6b-4103-8548-fc3eecc377d7.png">
 
 ## 📸 Result Examples
 
