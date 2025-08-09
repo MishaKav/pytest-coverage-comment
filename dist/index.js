@@ -18157,8 +18157,11 @@ const toFileNameTd = (item, indent = false, options) => {
   const parts = relative.split('/');
   const last = parts[parts.length - 1];
   const space = indent ? '&nbsp; &nbsp;' : '';
+  const fileName = last.replace(/__/g, '\\_\\_');
 
-  return `${space}<a href="${href}">${last.replace(/__/g, '\\_\\_')}</a>`;
+  return options.removeLinksToFiles
+    ? `${space}${fileName}`
+    : `${space}<a href="${href}">${fileName}</a>`;
 };
 
 // make folder row - tr
@@ -18185,7 +18188,9 @@ const toMissingTd = (item, options) => {
       const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}#${fragment}`;
       const text = start === end ? start : `${start}&ndash;${end}`;
 
-      return `<a href="${href}">${text}</a>`;
+      return options.removeLinksToLines
+        ? text
+        : `<a href="${href}">${text}</a>`;
     })
     .join(', ');
 };
@@ -18785,6 +18790,12 @@ const main = async () => {
   const removeLinkFromBadge = core.getBooleanInput('remove-link-from-badge', {
     required: false,
   });
+  const removeLinksToFiles = core.getBooleanInput('remove-links-to-files', {
+    required: false,
+  });
+  const removeLinksToLines = core.getBooleanInput('remove-links-to-lines', {
+    required: false,
+  });
   const uniqueIdForComment = core.getInput('unique-id-for-comment', {
     required: false,
   });
@@ -18826,6 +18837,8 @@ const main = async () => {
     xmlSkipCovered,
     reportOnlyChangedFiles,
     removeLinkFromBadge,
+    removeLinksToFiles,
+    removeLinksToLines,
     defaultBranch,
     xmlTitle,
     multipleFiles,
@@ -18903,10 +18916,26 @@ const main = async () => {
     eventName != 'workflow_run'
   ) {
     // generate new html without report
-    // prettier-ignore
-    core.warning(`Your comment is too long (maximum is ${MAX_COMMENT_LENGTH} characters), coverage report will not be added.`);
-    // prettier-ignore
-    core.warning(`Try add: "--cov-report=term-missing:skip-covered", or add "hide-report: true", or add "report-only-changed-files: true", or switch to "multiple-files" mode`);
+    const warningsArr = [
+      `Your comment is too long (maximum is ${MAX_COMMENT_LENGTH} characters), coverage report will not be added.`,
+      'Try one/some of the following options:',
+      '- Add "--cov-report=term-missing:skip-covered" to pytest command',
+      '- Add "hide-report: true" to hide detailed coverage table',
+      '- Add "report-only-changed-files: true" to show only changed files',
+      '- Add "xml-skip-covered: true" to hide files with 100% coverage',
+      '- Switch to "multiple-files" mode',
+    ];
+
+    if (!options.removeLinksToFiles) {
+      // prettier-ignore
+      warningsArr.push('- Add "remove-links-to-files: true" to remove file links');
+    }
+
+    if (!options.removeLinksToLines) {
+      // prettier-ignore
+      warningsArr.push('- Add "remove-links-to-lines: true" to remove line number links');
+    }
+    core.warning(warningsArr.join('\n'));
     report = getSummaryReport({ ...options, hideReport: true });
   }
 

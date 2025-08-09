@@ -1,5 +1,5 @@
 name: 'Pytest Coverage Comment'
-description: 'Comments a pull request with the pytest code coverage badge and full report'
+description: 'GitHub Action that adds pytest coverage reports as comments to pull requests with badges, test statistics, and direct file links'
 author: 'Misha Kav'
 branding:
   icon: 'message-circle'
@@ -7,127 +7,136 @@ branding:
 
 inputs:
   github-token:
-    description: 'GitHub API Access Token'
+    description: 'GitHub token for API access to create/update comments'
     default: ${{ github.token }}
     required: true
 
   pytest-coverage-path:
-    description: 'The location of the txt output of pytest-coverage'
+    description: 'Path to pytest text coverage output (from --cov-report=term-missing)'
     default: './pytest-coverage.txt'
     required: false
 
   issue-number:
-    description: 'PR number for the PR you want the comment to post to.'
+    description: 'Pull request number to comment on (required for workflow_dispatch/workflow_run events)'
     default: ''
     required: false
 
   pytest-xml-coverage-path:
-    description: 'The location of coverage-xml from pytest-coverage'
+    description: 'Path to XML coverage report (from --cov-report=xml:coverage.xml)'
     default: ''
     required: false
 
   coverage-path-prefix:
-    description: 'Prefix for path when link to files in comment'
+    description: 'Prefix to add to file paths in coverage report links'
     default: ''
     required: false
 
   title:
-    description: 'Title for the coverage report. Useful for monorepo projects'
+    description: 'Main title for the coverage comment (useful for monorepo projects)'
     default: 'Coverage Report'
     required: false
 
   badge-title:
-    description: 'Title for the badge icon'
+    description: 'Text shown on the coverage percentage badge'
     default: 'Coverage'
     required: false
 
   hide-badge:
-    description: 'Hide badge with percentage'
+    description: 'Hide the coverage percentage badge from the comment'
     default: 'false'
     required: false
 
   hide-report:
-    description: 'Hide coverage report'
+    description: 'Hide the detailed coverage table (show only summary and badge)'
     default: 'false'
     required: false
 
   hide-comment:
-    description: 'Hide the whole comment (use when you need only `output`)'
+    description: 'Skip creating PR comment entirely (useful for using outputs only)'
     default: 'false'
     required: false
 
   xml-skip-covered:
-    description: 'Hide files from xml report with 100% coverage'
+    description: 'Hide files with 100% coverage from XML coverage reports'
     default: 'false'
     required: false
 
   report-only-changed-files:
-    description: 'Show in report only changed files for this commit, and not all files'
+    description: 'Show only files changed in the current pull request'
     default: 'false'
     required: false
 
   junitxml-path:
-    description: 'The location of the junitxml path'
+    description: 'Path to JUnit XML file for test statistics (passed/failed/skipped)'
     default: ''
     required: false
 
   junitxml-title:
-    description: 'Title for summary for junitxml'
+    description: 'Title for the test summary section from JUnit XML'
     default: ''
     required: false
 
   create-new-comment:
-    description: 'When false, will update the same comment, otherwise will publish new comment on each run'
+    description: 'Create new comment on each run instead of updating existing comment'
     default: 'false'
     required: false
 
   default-branch:
-    description: 'This branch name is usefull when generate "coverageHtml", it points direct links to files on this branch (instead of commit). Usually "main" or "master"'
+    description: 'Base branch name for file links in coverage report (e.g., main, master)'
     default: 'main'
     required: false
 
   multiple-files:
     description: >
-      You can pass array of titles and files to generate single comment with table of results. 
-      Single line should look like `Title, ./path/to/pytest-coverage.txt, ./path/to/pytest.xml`
-      example: 
-        My Title 1, ./data/pytest-coverage_3.txt, ./data/pytest_1.xml
+      Generate single comment with multiple coverage reports (useful for monorepos).
+      Format: One report per line as "Title, coverage-path, junit-path".
+      Example: "Backend API, ./backend/coverage.txt, ./backend/junit.xml"
     default: ''
     required: false
 
   remove-link-from-badge:
-    description: 'When true, it will remove the link from badge to readme'
+    description: 'Remove hyperlink from coverage badge (badge becomes plain image)'
     default: 'false'
     required: false
 
   unique-id-for-comment:
-    description: 'When running in a matrix, pass the matrix value, so each comment will be updated its own comment'
+    description: 'Unique identifier for matrix builds to update separate comments (e.g., ${{ matrix.python-version }})'
     default: ''
+    required: false
+
+  remove-links-to-files:
+    description: 'Remove file links from coverage table to reduce comment size'
+    default: 'false'
+    required: false
+
+  remove-links-to-lines:
+    description: 'Remove line number links from coverage table to reduce comment size'
+    default: 'false'
     required: false
 
 outputs:
   coverage:
-    description: 'value indicating the coverage percentage of your report based on pytest, example 30%'
+    description: 'Coverage percentage from pytest report (e.g., 85%)'
   color:
-    description: 'color of coverage report'
+    description: 'Badge color based on coverage percentage (red/orange/yellow/green/brightgreen)'
   coverageHtml:
-    description: 'The html of the coverage report. Html with links to files of missing lines'
+    description: 'Full HTML coverage report with clickable links to uncovered lines'
   summaryReport:
-    description: 'Markdown with summaryof: Tests/Skipped/Failures/Errors/Time'
+    description: 'Test summary in markdown format with statistics (tests/skipped/failures/errors/time)'
   warnings:
-    description: 'Number of warnings, get from pytest-cov'
+    description: 'Number of coverage warnings from pytest-cov'
   tests:
-    description: 'Total number of tests, get from `junitxml`'
+    description: 'Total number of tests run (from JUnit XML)'
   skipped:
-    description: 'Total number of skipped tests, get from `junitxml`'
+    description: 'Number of skipped tests (from JUnit XML)'
   failures:
-    description: 'Total number of tests with failures, get from `junitxml`'
+    description: 'Number of failed tests (from JUnit XML)'
   errors:
-    description: 'Total number of tests with errors, get from `junitxml`'
+    description: 'Number of test errors (from JUnit XML)'
   time:
-    description: 'Seconds the took to run all the tests, get from `junitxml`'
+    description: 'Test execution time in seconds (from JUnit XML)'
   notSuccessTestInfo:
-    description: 'Info from testcase that has failures/errors/skipped, get from `junitxml`'
+    description: 'JSON details of failed, errored, and skipped tests (from JUnit XML)'
 
 runs:
   using: 'node20'
