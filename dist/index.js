@@ -18697,12 +18697,37 @@ const {
 const { getMultipleReport } = __nccwpck_require__(7221);
 
 const MAX_COMMENT_LENGTH = 65536;
+const MAX_SUMMARY_LENGTH = 1024 * 1024; // 1MB limit for GitHub step summary
 const FILE_STATUSES = Object.freeze({
   ADDED: 'added',
   MODIFIED: 'modified',
   REMOVED: 'removed',
   RENAMED: 'renamed',
 });
+
+const truncateSummary = (content, maxLength) => {
+  if (content.length <= maxLength) {
+    return content;
+  }
+
+  // prettier-ignore
+  const truncationMessage = '\n\n**Warning: Summary truncated due to GitHub\'s 1MB limit**';
+  const messageLength = truncationMessage.length;
+  // prettier-ignore
+  const truncatedContent = content.substring(0, maxLength - messageLength - 100); // Leave some buffer
+
+  // Try to find a good break point (end of line or closing tag)
+  const lastNewline = truncatedContent.lastIndexOf('\n');
+  const lastClosingTag = truncatedContent.lastIndexOf('</');
+  const breakPoint = Math.max(lastNewline, lastClosingTag);
+
+  // If we found a good break point
+  if (breakPoint > maxLength * 0.8) {
+    return truncatedContent.substring(0, breakPoint) + truncationMessage;
+  }
+
+  return truncatedContent + truncationMessage;
+};
 
 const createOrEditComment = async (
   octokit,
@@ -18963,7 +18988,12 @@ const main = async () => {
     eventName === 'workflow_dispatch' ||
     eventName === 'workflow_run'
   ) {
-    await core.summary.addRaw(body, true).write();
+    const truncatedBody = truncateSummary(body, MAX_SUMMARY_LENGTH);
+    if (body.length > MAX_SUMMARY_LENGTH) {
+      // prettier-ignore
+      core.warning(`GitHub step summary was truncated from ${body.length} to ${truncatedBody.length} characters due to the 1MB limit.`);
+    }
+    await core.summary.addRaw(truncatedBody, true).write();
     if (!issueNumberInput) {
       // prettier-ignore
       core.warning(`To use this action on a \`${eventName}\`, you need to pass an pull request number.`)
