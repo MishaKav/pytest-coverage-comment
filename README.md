@@ -118,12 +118,12 @@ jobs:
 <details>
 <summary>📝 Core Inputs</summary>
 
-| Name                       | Required | Default                 | Description                                                             |
-| -------------------------- | -------- | ----------------------- | ----------------------------------------------------------------------- |
-| `github-token`             | ✓        | `${{github.token}}`     | GitHub token for API access to create/update comments                  |
-| `pytest-coverage-path`     |          | `./pytest-coverage.txt` | Path to pytest text coverage output (from `--cov-report=term-missing`) |
-| `pytest-xml-coverage-path` |          |                         | Path to XML coverage report (from `--cov-report=xml:coverage.xml`)     |
-| `junitxml-path`            |          |                         | Path to JUnit XML file for test statistics (passed/failed/skipped)     |
+| Name                       | Required | Default                 | Description                                                                            |
+| -------------------------- | -------- | ----------------------- | -------------------------------------------------------------------------------------- |
+| `github-token`             | ✓        | `${{github.token}}`     | GitHub token for API access to create/update comments                                  |
+| `pytest-coverage-path`     |          | `./pytest-coverage.txt` | Path to pytest text coverage output (from `--cov-report=term-missing`)                 |
+| `pytest-xml-coverage-path` |          |                         | Path to XML coverage report (from `--cov-report=xml:coverage.xml`)                     |
+| `junitxml-path`            |          |                         | Path to JUnit XML file for test statistics (passed/failed/skipped)                     |
 | `issue-number`             |          |                         | Pull request number to comment on (required for workflow_dispatch/workflow_run events) |
 
 </details>
@@ -131,18 +131,18 @@ jobs:
 <details>
 <summary>🎨 Display Options</summary>
 
-| Name                        | Default           | Description                                                        |
-| --------------------------- | ----------------- | ------------------------------------------------------------------ |
-| `title`                     | `Coverage Report` | Main title for the coverage comment (useful for monorepo projects) |
-| `badge-title`               | `Coverage`        | Text shown on the coverage percentage badge                        |
-| `junitxml-title`            |                   | Title for the test summary section from JUnit XML                  |
-| `hide-badge`                | `false`           | Hide the coverage percentage badge from the comment                |
-| `hide-report`               | `false`           | Hide the detailed coverage table (show only summary and badge)     |
-| `hide-comment`              | `false`           | Skip creating PR comment entirely (useful for using outputs only)  |
-| `report-only-changed-files` | `false`           | Show only files changed in the current pull request                |
-| `xml-skip-covered`          | `false`           | Hide files with 100% coverage from XML coverage reports            |
-| `remove-link-from-badge`    | `false`           | Remove hyperlink from coverage badge (badge becomes plain image)   |
-| `remove-links-to-files`     | `false`           | Remove file links from coverage table to reduce comment size       |
+| Name                        | Default           | Description                                                         |
+| --------------------------- | ----------------- | ------------------------------------------------------------------- |
+| `title`                     | `Coverage Report` | Main title for the coverage comment (useful for monorepo projects)  |
+| `badge-title`               | `Coverage`        | Text shown on the coverage percentage badge                         |
+| `junitxml-title`            |                   | Title for the test summary section from JUnit XML                   |
+| `hide-badge`                | `false`           | Hide the coverage percentage badge from the comment                 |
+| `hide-report`               | `false`           | Hide the detailed coverage table (show only summary and badge)      |
+| `hide-comment`              | `false`           | Skip creating PR comment entirely (useful for using outputs only)   |
+| `report-only-changed-files` | `false`           | Show only files changed in the current pull request                 |
+| `xml-skip-covered`          | `false`           | Hide files with 100% coverage from XML coverage reports             |
+| `remove-link-from-badge`    | `false`           | Remove hyperlink from coverage badge (badge becomes plain image)    |
+| `remove-links-to-files`     | `false`           | Remove file links from coverage table to reduce comment size        |
 | `remove-links-to-lines`     | `false`           | Remove line number links from coverage table to reduce comment size |
 
 </details>
@@ -150,13 +150,13 @@ jobs:
 <details>
 <summary>🔧 Advanced Options</summary>
 
-| Name                    | Default | Description                                                                            |
-| ----------------------- | ------- | -------------------------------------------------------------------------------------- |
-| `create-new-comment`    | `false` | Create new comment on each run instead of updating existing comment                   |
+| Name                    | Default | Description                                                                                            |
+| ----------------------- | ------- | ------------------------------------------------------------------------------------------------------ |
+| `create-new-comment`    | `false` | Create new comment on each run instead of updating existing comment                                    |
 | `unique-id-for-comment` |         | Unique identifier for matrix builds to update separate comments (e.g., `${{ matrix.python-version }}`) |
-| `default-branch`        | `main`  | Base branch name for file links in coverage report (e.g., main, master)               |
-| `coverage-path-prefix`  |         | Prefix to add to file paths in coverage report links                                  |
-| `multiple-files`        |         | Generate single comment with multiple coverage reports (useful for monorepos)          |
+| `default-branch`        | `main`  | Base branch name for file links in coverage report (e.g., main, master)                                |
+| `coverage-path-prefix`  |         | Prefix to add to file paths in coverage report links                                                   |
+| `multiple-files`        |         | Generate single comment with multiple coverage reports (useful for monorepos)                          |
 
 </details>
 
@@ -165,19 +165,19 @@ jobs:
 <details>
 <summary>📤 Available Outputs</summary>
 
-| Name                 | Example         | Description                                                                     |
-| -------------------- | --------------- | ------------------------------------------------------------------------------- |
-| `coverage`           | `85%`           | Coverage percentage from pytest report                                         |
-| `color`              | `green`         | Badge color based on coverage percentage (red/orange/yellow/green/brightgreen) |
-| `coverageHtml`       | HTML string     | Full HTML coverage report with clickable links to uncovered lines              |
+| Name                 | Example         | Description                                                                          |
+| -------------------- | --------------- | ------------------------------------------------------------------------------------ |
+| `coverage`           | `85%`           | Coverage percentage from pytest report                                               |
+| `color`              | `green`         | Badge color based on coverage percentage (red/orange/yellow/green/brightgreen)       |
+| `coverageHtml`       | HTML string     | Full HTML coverage report with clickable links to uncovered lines                    |
 | `summaryReport`      | Markdown string | Test summary in markdown format with statistics (tests/skipped/failures/errors/time) |
-| `warnings`           | `42`            | Number of coverage warnings from pytest-cov                                    |
-| `tests`              | `109`           | Total number of tests run (from JUnit XML)                                     |
-| `skipped`            | `2`             | Number of skipped tests (from JUnit XML)                                       |
-| `failures`           | `0`             | Number of failed tests (from JUnit XML)                                        |
-| `errors`             | `0`             | Number of test errors (from JUnit XML)                                         |
-| `time`               | `12.5`          | Test execution time in seconds (from JUnit XML)                                |
-| `notSuccessTestInfo` | JSON string     | JSON details of failed, errored, and skipped tests (from JUnit XML)            |
+| `warnings`           | `42`            | Number of coverage warnings from pytest-cov                                          |
+| `tests`              | `109`           | Total number of tests run (from JUnit XML)                                           |
+| `skipped`            | `2`             | Number of skipped tests (from JUnit XML)                                             |
+| `failures`           | `0`             | Number of failed tests (from JUnit XML)                                              |
+| `errors`             | `0`             | Number of test errors (from JUnit XML)                                               |
+| `time`               | `12.5`          | Test execution time in seconds (from JUnit XML)                                      |
+| `notSuccessTestInfo` | JSON string     | JSON details of failed, errored, and skipped tests (from JUnit XML)                  |
 
 </details>
 
