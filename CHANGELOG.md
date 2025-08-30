@@ -1,5 +1,14 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.1.57](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.57)
+
+**Release Date:** 2025-08-30
+
+#### Changes
+
+- fix coverageHtml output empty when using XML coverage files (#204)
+- ensure proper HTML generation for both text and XML coverage file types
+
 ## [Pytest Coverage Comment 1.1.56](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.56)
 
 **Release Date:** 2025-08-09

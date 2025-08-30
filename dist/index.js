@@ -18884,7 +18884,9 @@ const main = async () => {
 
   if (html) {
     const newOptions = { ...options, commit: defaultBranch };
-    const output = getCoverageReport(newOptions);
+    const output = newOptions.covXmlFile
+      ? getCoverageXmlReport(newOptions)
+      : getCoverageReport(newOptions);
     core.setOutput('coverageHtml', output.html);
   }
 
