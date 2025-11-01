@@ -6,7 +6,7 @@ Need help with pytest-coverage-comment? Here's how to get assistance:
 
 - **README**: [Quick start, configuration, and examples](README.md)
 - **Troubleshooting**: See the [Troubleshooting section](README.md#troubleshooting) in the README
-- **Examples**: Check the [examples directory](examples/) for sample workflows
+- **Examples**: See [Usage Examples](README.md#-usage-examples) in the README for sample workflows
 
 ## Getting Help
 
@@ -14,7 +14,6 @@ Need help with pytest-coverage-comment? Here's how to get assistance:
 
 - **Search existing issues**: Check if your question has been answered
 - **Open a new issue**: Use the [bug report](https://github.com/MishaKav/pytest-coverage-comment/issues/new?template=bug_report.yml) or [feature request](https://github.com/MishaKav/pytest-coverage-comment/issues/new?template=feature_request.yml) templates
-- **Discussions**: Start a discussion for general questions
 
 ### For Bugs
 
