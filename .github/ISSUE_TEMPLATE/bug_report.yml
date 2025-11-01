@@ -1,0 +1,43 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+title: '[Bug]: '
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Please describe the issue briefly.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What's the bug?
+      description: What happened vs what you expected?
+      placeholder: 'The action did X but I expected Y...'
+    validations:
+      required: true
+
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Your workflow
+      description: Paste your workflow configuration (optional but helpful)
+      placeholder: |
+        ```yaml
+        - uses: MishaKav/pytest-coverage-comment@main
+          with:
+            ...
+        ```
+      render: yaml
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error logs
+      description: Any error messages from the workflow (optional)
+      placeholder: Paste error logs here...
+      render: shell
+    validations:
+      required: false

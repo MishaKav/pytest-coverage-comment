@@ -1,0 +1,42 @@
+name: Feature Request
+description: Suggest a new feature or enhancement
+title: '[Feature]: '
+labels: ['enhancement']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your suggestion!
+
+  - type: textarea
+    id: feature
+    attributes:
+      label: What feature would you like?
+      description: Describe what you'd like to see
+      placeholder: "I'd like the action to..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why do you need this?
+      description: What problem does this solve?
+      placeholder: 'This would help me...'
+    validations:
+      required: true
+
+  - type: textarea
+    id: example
+    attributes:
+      label: Example (optional)
+      description: Show how you'd use it
+      placeholder: |
+        ```yaml
+        - uses: MishaKav/pytest-coverage-comment@main
+          with:
+            new-option: value
+        ```
+      render: yaml
+    validations:
+      required: false
