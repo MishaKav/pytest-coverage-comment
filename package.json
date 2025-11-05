@@ -25,7 +25,8 @@
     "lint": "eslint src/**/*.js",
     "build": "ncc build src/index.js --license licenses.txt",
     "bump-version": "npm version patch",
-    "all": "npm run lint && npm run format && npm run build"
+    "all": "npm run lint && npm run format && npm run build",
+    "test": "node test/multiple-files.test.js"
   },
   "dependencies": {
     "@actions/core": "^1.11.1",

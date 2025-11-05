@@ -1,4 +1,5 @@
 const { getCoverageReport } = require('./parse');
+const { getCoverageXmlReport } = require('./parseXml');
 const { getParsedXml } = require('./junitXml');
 const core = require('@actions/core');
 
@@ -18,14 +19,19 @@ const parseLine = (line) => {
 };
 
 // make internal options
-const getOptions = (options = {}, line = {}) => ({
-  ...options,
-  title: line.title,
-  covFile: line.covFile,
-  hideReport: true,
-  xmlFile: line.xmlFile,
-  xmlTitle: '',
-});
+const getOptions = (options = {}, line = {}) => {
+  const isXmlCoverage =
+    line.covFile && line.covFile.toLowerCase().endsWith('.xml');
+  return {
+    ...options,
+    title: line.title,
+    covFile: isXmlCoverage ? '' : line.covFile,
+    covXmlFile: isXmlCoverage ? line.covFile : '',
+    hideReport: true,
+    xmlFile: line.xmlFile,
+    xmlTitle: '',
+  };
+};
 
 // return multiple report in markdown format
 const getMultipleReport = (options) => {
@@ -44,25 +50,38 @@ const getMultipleReport = (options) => {
 
     lineReports.forEach((l, i) => {
       const internalOptions = getOptions(options, l);
-      const coverage = getCoverageReport(internalOptions);
+      const report = internalOptions.covXmlFile
+        ? getCoverageXmlReport(internalOptions)
+        : getCoverageReport(internalOptions);
       const summary = getParsedXml(internalOptions);
 
-      if (coverage.html) {
-        table += `| ${l.title} | ${coverage.html}`;
+      if (report.html) {
+        table += `| ${l.title} | ${report.html}`;
 
         if (i === 0) {
-          core.startGroup(internalOptions.covFile);
-          core.info(`coverage: ${coverage.coverage}`);
-          core.info(`color: ${coverage.color}`);
-          core.info(`warnings: ${coverage.warnings}`);
+          core.startGroup(
+            internalOptions.covXmlFile || internalOptions.covFile,
+          );
+          const coverageValue = internalOptions.covXmlFile
+            ? report.coverage.cover
+            : report.coverage;
+          core.info(`coverage: ${coverageValue}`);
+          core.info(`color: ${report.color}`);
+          if (!internalOptions.covXmlFile) {
+            core.info(`warnings: ${report.warnings}`);
+          }
           core.endGroup();
 
-          core.setOutput('coverage', coverage.coverage);
-          core.setOutput('color', coverage.color);
-          core.setOutput('warnings', coverage.warnings);
+          core.setOutput('coverage', coverageValue);
+          core.setOutput('color', report.color);
+          if (!internalOptions.covXmlFile) {
+            core.setOutput('warnings', report.warnings);
+          }
 
           const newOptions = { ...internalOptions, commit: defaultBranch };
-          const output = getCoverageReport(newOptions);
+          const output = newOptions.covXmlFile
+            ? getCoverageXmlReport(newOptions)
+            : getCoverageReport(newOptions);
           core.setOutput('coverageHtml', output.html);
 
           if (summary) {
