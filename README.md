@@ -25,6 +25,7 @@ A GitHub Action that adds pytest coverage reports as comments to your pull reque
 - [Pytest Coverage Comment](#pytest-coverage-comment)
   - [🎯 Features](#-features)
   - [📋 Table of Contents](#-table-of-contents)
+  - [📦 Prerequisites](#-prerequisites)
   - [🚀 Quick Start](#-quick-start)
   - [⚙️ Configuration](#️-configuration)
     - [Inputs](#inputs)
@@ -44,6 +45,7 @@ A GitHub Action that adds pytest coverage reports as comments to your pull reque
     - [Multiple Files (Monorepo)](#multiple-files-monorepo)
   - [🔧 Troubleshooting](#-troubleshooting)
     - [Comment Not Appearing](#comment-not-appearing)
+    - [Unrecognized Arguments Error](#unrecognized-arguments-error)
     - [Coverage Report Too Large](#coverage-report-too-large)
     - [GitHub Step Summary Too Large](#github-step-summary-too-large)
     - [Files Not Found](#files-not-found)
@@ -53,6 +55,32 @@ A GitHub Action that adds pytest coverage reports as comments to your pull reque
   - [👥 Contributors](#-contributors)
   - [📄 License](#-license)
   - [🔗 Similar Actions](#-similar-actions)
+
+</details>
+
+## 📦 Prerequisites
+
+Before using this action, ensure you have the following installed in your Python environment:
+
+- **Python** - Version 3.6+ (Python 3.9+ recommended for latest pytest/pytest-cov versions)
+- **pytest** - Python testing framework
+- **pytest-cov** - Coverage plugin for pytest (provides `--cov` and `--cov-report` flags)
+
+```bash
+pip install pytest pytest-cov
+```
+
+> **Note**: The `--cov` and `--cov-report` flags used in the examples below are provided by `pytest-cov`, not pytest itself. If you see an error like `pytest: error: unrecognized arguments: --cov`, you need to install `pytest-cov`.
+
+<details>
+<summary>Python version compatibility</summary>
+
+- **Python 3.9+**: Supported by latest pytest (8.4+) and pytest-cov (6.0+) versions
+- **Python 3.8**: Use pytest-cov < 6.0.0 (e.g., pytest-cov 5.x)
+- **Python 3.7**: Use pytest-cov < 5.0.0 (e.g., pytest-cov 4.x)
+- **Python 3.6 and older**: Use older versions of pytest and pytest-cov
+
+For most users, we recommend using **Python 3.9+** with the latest versions of pytest and pytest-cov to get the latest features and security updates.
 
 </details>
 
@@ -522,6 +550,49 @@ If you want auto-update the coverage badge on your README, you can see the [work
   ```
 - For `workflow_dispatch`, provide the `issue-number` input
 - Check if `hide-comment` is set to `false`
+
+### Unrecognized Arguments Error
+
+**Issue**: `pytest: error: unrecognized arguments: --cov --cov-report`
+
+**Root Cause**: The `pytest-cov` plugin is not installed. The `--cov` and `--cov-report` flags are provided by `pytest-cov`, not pytest itself.
+
+**Solution**:
+
+Install the `pytest-cov` package in your Python environment:
+
+```bash
+pip install pytest-cov
+```
+
+Or add it to your `requirements.txt` or `pyproject.toml`:
+
+```txt
+# requirements.txt
+pytest>=8.0.0
+pytest-cov>=5.0.0
+```
+
+```toml
+# pyproject.toml
+[project]
+dependencies = [
+    "pytest>=8.0.0",
+    "pytest-cov>=5.0.0",
+]
+```
+
+Make sure the installation step runs before executing pytest commands in your workflow:
+
+```yaml
+- name: Install dependencies
+  run: |
+    pip install pytest pytest-cov
+
+- name: Run tests with coverage
+  run: |
+    pytest --cov=src --cov-report=term-missing tests/
+```
 
 ### Coverage Report Too Large
 
