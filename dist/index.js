@@ -18786,7 +18786,7 @@ const createOrEditComment = async (
   WATERMARK,
 ) => {
   // Now decide if we should issue a new comment or edit an old one
-  const { data: comments } = await octokit.issues.listComments({
+  const { data: comments } = await octokit.rest.issues.listComments({
     repo,
     owner,
     issue_number,
@@ -18796,7 +18796,7 @@ const createOrEditComment = async (
 
   if (comment) {
     core.info('Found previous comment, updating');
-    await octokit.issues.updateComment({
+    await octokit.rest.issues.updateComment({
       repo,
       owner,
       comment_id: comment.id,
@@ -18804,7 +18804,7 @@ const createOrEditComment = async (
     });
   } else {
     core.info('No previous comment found, creating a new one');
-    await octokit.issues.createComment({
+    await octokit.rest.issues.createComment({
       repo,
       owner,
       issue_number,
@@ -19039,7 +19039,7 @@ const main = async () => {
 
   if (eventName === 'push') {
     core.info('Create commit comment');
-    await octokit.repos.createCommitComment({
+    await octokit.rest.repos.createCommitComment({
       repo,
       owner,
       commit_sha: options.commit,
@@ -19052,7 +19052,7 @@ const main = async () => {
     if (createNewComment) {
       core.info('Creating a new comment');
 
-      await octokit.issues.createComment({
+      await octokit.rest.issues.createComment({
         repo,
         owner,
         issue_number,
@@ -19084,7 +19084,7 @@ const main = async () => {
     } else {
       if (createNewComment) {
         core.info('Creating a new comment');
-        await octokit.issues.createComment({
+        await octokit.rest.issues.createComment({
           repo,
           owner,
           issue_number,
@@ -19134,7 +19134,7 @@ const getChangedFiles = async (options, pr_number) => {
         break;
       case 'workflow_run':
       case 'workflow_dispatch': {
-        const { data } = await octokit.pulls.get({
+        const { data } = await octokit.rest.pulls.get({
           owner,
           repo,
           pull_number: pr_number,
