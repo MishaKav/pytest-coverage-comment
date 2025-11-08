@@ -64,3 +64,7 @@ The codebase is a Node.js GitHub Action with the following key components:
 - Supports filtering to show only changed files in the current commit
 - Can skip files with 100% coverage from XML reports
 - Handles both absolute and relative file paths for coverage inputs
+
+## Testing Notes
+
+<!-- Test branch for v1.1.58 release verification -->
