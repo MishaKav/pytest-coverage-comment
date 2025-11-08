@@ -107,8 +107,7 @@ on:
       - '*'
 
 permissions:
-  contents: write
-  checks: write
+  contents: read
   pull-requests: write
 
 jobs:
@@ -540,16 +539,40 @@ If you want auto-update the coverage badge on your README, you can see the [work
 
 **Issue**: The action runs successfully but no comment appears on the PR.
 
+**Root Cause**: This is usually caused by insufficient GitHub token permissions. The `GITHUB_TOKEN` needs write access to create/update PR comments.
+
+**Common Error Messages**:
+- `Error: Resource not accessible by integration`
+- `HttpError: Resource not accessible by integration`
+- `403 Forbidden` errors in the action logs
+
 **Solutions**:
 
-- Ensure proper permissions are set:
-  ```yaml
-  permissions:
-    contents: write
-    pull-requests: write
-  ```
-- For `workflow_dispatch`, provide the `issue-number` input
-- Check if `hide-comment` is set to `false`
+1. **Add permissions block to your workflow** (Recommended):
+   ```yaml
+   permissions:
+     contents: read        # Required for checkout and comparing commits
+     pull-requests: write  # Required for creating/updating PR comments
+   ```
+
+2. **For `push` events with commit comments**, use:
+   ```yaml
+   permissions:
+     contents: write       # Required for creating commit comments
+     pull-requests: write  # If you also want PR comments
+   ```
+
+3. **Repository/Organization Settings** (Admin access required):
+   - Go to Settings > Actions > General
+   - Under "Workflow permissions", select "Read and write permissions"
+   - Note: This affects all workflows, so adding permissions to individual workflows is more secure
+
+4. **Other checks**:
+   - For `workflow_dispatch` events, provide the `issue-number` input
+   - Verify `hide-comment` is not set to `true`
+   - Check branch protection rules aren't blocking automated comments
+
+**Why it works on forks but not main repos**: Forks often have different default permission settings than the main repository. Organizations frequently set restrictive defaults for security.
 
 ### Unrecognized Arguments Error
 

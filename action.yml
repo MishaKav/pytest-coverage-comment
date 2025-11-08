@@ -1,5 +1,5 @@
 name: 'Pytest Coverage Comment'
-description: 'GitHub Action that adds pytest coverage reports as comments to pull requests with badges, test statistics, and direct file links'
+description: 'GitHub Action that adds pytest coverage reports as comments to pull requests with badges, test statistics, and direct file links. Requires pull-requests: write permission.'
 author: 'Misha Kav'
 branding:
   icon: 'message-circle'
@@ -7,7 +7,7 @@ branding:
 
 inputs:
   github-token:
-    description: 'GitHub token for API access to create/update comments'
+    description: 'GitHub token for API access to create/update comments. Ensure your workflow has pull-requests: write permission.'
     default: ${{ github.token }}
     required: true
 
