@@ -18710,6 +18710,50 @@ const FILE_STATUSES = Object.freeze({
   RENAMED: 'renamed',
 });
 
+/**
+ * Resolves a potential tag object SHA to the underlying commit SHA.
+ * For annotated tags, GitHub's push event payload.after contains the tag object SHA,
+ * not the commit SHA. This function detects tag pushes and resolves them to commits.
+ *
+ * @param {object} octokit - GitHub API client
+ * @param {string} owner - Repository owner
+ * @param {string} repo - Repository name
+ * @param {string} sha - SHA to resolve (might be tag object or commit)
+ * @param {string} ref - Git ref (e.g., refs/tags/v1.0.0 or refs/heads/main)
+ * @returns {Promise<string>} - The commit SHA
+ */
+const resolveCommitSha = async (octokit, owner, repo, sha, ref) => {
+  // Check if this is a tag push
+  if (ref && ref.startsWith('refs/tags/')) {
+    try {
+      core.info(`Detected tag push: ${ref}`);
+      core.info(`Attempting to resolve SHA: ${sha}`);
+
+      // Try to get the tag object
+      const { data: tag } = await octokit.rest.git.getTag({
+        owner,
+        repo,
+        tag_sha: sha,
+      });
+
+      // If it's an annotated tag, it will have an object field pointing to the commit
+      if (tag && tag.object && tag.object.sha) {
+        core.info(`Resolved annotated tag to commit: ${tag.object.sha}`);
+        return tag.object.sha;
+      }
+    } catch (error) {
+      // If getTag fails, it might be a lightweight tag or direct commit
+      // In this case, the SHA is already a commit SHA
+      // prettier-ignore
+      core.info(`SHA is not an annotated tag object, using as commit SHA: ${sha}`);
+      core.debug(`Error details: ${error.message}`);
+    }
+  }
+
+  // Return original SHA if not a tag or if it's a lightweight tag
+  return sha;
+};
+
 const truncateSummary = (content, maxLength) => {
   if (content.length <= maxLength) {
     return content;
@@ -18847,12 +18891,23 @@ const main = async () => {
   options.repoUrl =
     payload.repository?.html_url || `https://github.com/${options.repository}`;
 
+  // Initialize octokit early so we can use it for tag resolution
+  const octokit = github.getOctokit(token);
+
   if (eventName === 'pull_request' || eventName === 'pull_request_target') {
     options.commit = payload.pull_request.head.sha;
     options.head = payload.pull_request.head.ref;
     options.base = payload.pull_request.base.ref;
   } else if (eventName === 'push') {
-    options.commit = payload.after;
+    // For annotated tags, payload.after contains the tag object SHA, not the commit SHA
+    // Resolve it to the actual commit SHA
+    options.commit = await resolveCommitSha(
+      octokit,
+      owner,
+      repo,
+      payload.after,
+      context.ref,
+    );
     options.head = context.ref;
   } else if (eventName === 'workflow_dispatch') {
     options.commit = context.sha;
@@ -18976,7 +19031,6 @@ const main = async () => {
     return;
   }
   const body = WATERMARK + finalHtml;
-  const octokit = github.getOctokit(token);
 
   const issue_number = payload.pull_request
     ? payload.pull_request.number
@@ -19075,7 +19129,9 @@ const getChangedFiles = async (options, pr_number) => {
         break;
       case 'push':
         base = payload.before;
-        head = payload.after;
+        // Use the resolved commit SHA from options instead of payload.after
+        // This handles annotated tags correctly
+        head = options.commit || payload.after;
         break;
       case 'workflow_run':
       case 'workflow_dispatch': {
