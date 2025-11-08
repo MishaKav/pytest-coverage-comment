@@ -88,7 +88,7 @@ const truncateSummary = (content, maxLength) => {
 
 const handlePermissionError = (error, context) => {
   const eventName = context?.eventName || 'this event';
-  if (error.status === 403) {
+  if (error?.status === 403) {
     const helpfulMessage = [
       'Permission denied when trying to create/update comment.',
       '',
@@ -102,11 +102,13 @@ const handlePermissionError = (error, context) => {
       '  pull-requests: write  # For creating/updating PR comments',
       '```',
       '',
-      `For ${eventName === 'push' ? 'push events creating commit comments' : 'more information'}, see:`,
+      `For ${eventName === 'push' ? 'push events creating commit comments' : 'pull request events and more information'}, see:`,
       'https://github.com/MishaKav/pytest-coverage-comment#comment-not-appearing',
     ].join('\n');
 
     core.setFailed(helpfulMessage);
+  } else {
+    core.setFailed(`Failed to create/update comment: ${error.message}`);
   }
   throw error;
 };
