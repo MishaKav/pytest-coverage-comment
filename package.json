@@ -25,6 +25,7 @@
     "lint": "eslint src/**/*.js",
     "build": "ncc build src/index.js --license licenses.txt",
     "bump-version": "npm version patch",
+    "update-v1-tag": "git tag v1 -f && git push origin v1 -f",
     "all": "npm run lint && npm run format && npm run build"
   },
   "dependencies": {
