@@ -18744,6 +18744,7 @@ const resolveCommitSha = async (octokit, owner, repo, sha, ref) => {
     } catch (error) {
       // If getTag fails, it might be a lightweight tag or direct commit
       // In this case, the SHA is already a commit SHA
+      // prettier-ignore
       core.info(`SHA is not an annotated tag object, using as commit SHA: ${sha}`);
       core.debug(`Error details: ${error.message}`);
     }

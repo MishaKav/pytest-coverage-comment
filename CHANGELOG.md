@@ -1,5 +1,15 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.1.58](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.58)
+
+**Release Date:** 2025-11-08
+
+#### Changes
+
+- fix handling of annotated git tags in push events (#195)
+- update `@actions/github` from v4.0.0 to v6.0.1 (#229)
+- fix 3 security vulnerabilities in Octokit dependencies
+
 ## [Pytest Coverage Comment 1.1.57](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.57)
 
 **Release Date:** 2025-08-30
