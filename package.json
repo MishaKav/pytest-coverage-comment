@@ -1,6 +1,6 @@
 {
   "name": "pytest-coverage-comment",
-  "version": "1.1.58",
+  "version": "1.1.59",
   "description": "Comments a pull request with the pytest code coverage badge, full report and tests summary",
   "author": "Misha Kav",
   "license": "MIT",
@@ -34,24 +34,14 @@
     "xml2js": "^0.6.2"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
     "@vercel/ncc": "^0.38.4",
-    "eslint": "^8.57.1",
+    "eslint": "^9.39.1",
+    "globals": "^15.0.0",
     "prettier": "^3.6.2"
   },
   "prettier": {
     "semi": true,
     "singleQuote": true
-  },
-  "eslintConfig": {
-    "parserOptions": {
-      "ecmaVersion": 2020
-    },
-    "extends": [
-      "eslint:recommended"
-    ],
-    "env": {
-      "es6": true,
-      "node": true
-    }
   }
 }

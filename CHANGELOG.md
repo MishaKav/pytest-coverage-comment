@@ -1,5 +1,15 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.1.59](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.59)
+
+**Release Date:** 2025-11-08
+
+#### Changes
+
+- fix "Resource not accessible by integration" error with better error handling and documentation (#68)
+- update permission examples to show minimal required permissions (contents: read, pull-requests: write)
+- upgrade package-lock.json from lockfileVersion 2 to 3 (causes extensive but cosmetic changes in dist/index.js)
+
 ## [Pytest Coverage Comment 1.1.58](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.58)
 
 **Release Date:** 2025-11-08

@@ -86,6 +86,33 @@ const truncateSummary = (content, maxLength) => {
   return truncatedContent + truncationMessage;
 };
 
+const handlePermissionError = (error, context) => {
+  const eventName = context?.eventName || 'this event';
+  if (error?.status === 403) {
+    const helpfulMessage = [
+      'Permission denied when trying to create/update comment.',
+      '',
+      'This error usually occurs because the GITHUB_TOKEN lacks necessary permissions.',
+      '',
+      'To fix this, add a permissions block to your workflow:',
+      '',
+      '```yaml',
+      'permissions:',
+      '  contents: read        # For checkout and comparing commits',
+      '  pull-requests: write  # For creating/updating PR comments',
+      '```',
+      '',
+      `For ${eventName === 'push' ? 'push events creating commit comments' : 'pull request events and more information'}, see:`,
+      'https://github.com/MishaKav/pytest-coverage-comment#comment-not-appearing',
+    ].join('\n');
+
+    core.setFailed(helpfulMessage);
+  } else {
+    core.setFailed(`Failed to create/update comment: ${error.message}`);
+  }
+  throw error;
+};
+
 const createOrEditComment = async (
   octokit,
   repo,
@@ -93,32 +120,37 @@ const createOrEditComment = async (
   issue_number,
   body,
   WATERMARK,
+  context,
 ) => {
-  // Now decide if we should issue a new comment or edit an old one
-  const { data: comments } = await octokit.rest.issues.listComments({
-    repo,
-    owner,
-    issue_number,
-  });
-
-  const comment = comments.find((c) => c.body.startsWith(WATERMARK));
-
-  if (comment) {
-    core.info('Found previous comment, updating');
-    await octokit.rest.issues.updateComment({
-      repo,
-      owner,
-      comment_id: comment.id,
-      body,
-    });
-  } else {
-    core.info('No previous comment found, creating a new one');
-    await octokit.rest.issues.createComment({
+  try {
+    // Now decide if we should issue a new comment or edit an old one
+    const { data: comments } = await octokit.rest.issues.listComments({
       repo,
       owner,
       issue_number,
-      body,
     });
+
+    const comment = comments.find((c) => c.body.startsWith(WATERMARK));
+
+    if (comment) {
+      core.info('Found previous comment, updating');
+      await octokit.rest.issues.updateComment({
+        repo,
+        owner,
+        comment_id: comment.id,
+        body,
+      });
+    } else {
+      core.info('No previous comment found, creating a new one');
+      await octokit.rest.issues.createComment({
+        repo,
+        owner,
+        issue_number,
+        body,
+      });
+    }
+  } catch (error) {
+    handlePermissionError(error, context);
   }
 };
 
@@ -348,12 +380,16 @@ const main = async () => {
 
   if (eventName === 'push') {
     core.info('Create commit comment');
-    await octokit.rest.repos.createCommitComment({
-      repo,
-      owner,
-      commit_sha: options.commit,
-      body,
-    });
+    try {
+      await octokit.rest.repos.createCommitComment({
+        repo,
+        owner,
+        commit_sha: options.commit,
+        body,
+      });
+    } catch (error) {
+      handlePermissionError(error, context);
+    }
   } else if (
     eventName === 'pull_request' ||
     eventName === 'pull_request_target'
@@ -361,12 +397,16 @@ const main = async () => {
     if (createNewComment) {
       core.info('Creating a new comment');
 
-      await octokit.rest.issues.createComment({
-        repo,
-        owner,
-        issue_number,
-        body,
-      });
+      try {
+        await octokit.rest.issues.createComment({
+          repo,
+          owner,
+          issue_number,
+          body,
+        });
+      } catch (error) {
+        handlePermissionError(error, context);
+      }
     } else {
       await createOrEditComment(
         octokit,
@@ -375,6 +415,7 @@ const main = async () => {
         issue_number,
         body,
         WATERMARK,
+        context,
       );
     }
   } else if (
@@ -393,12 +434,16 @@ const main = async () => {
     } else {
       if (createNewComment) {
         core.info('Creating a new comment');
-        await octokit.rest.issues.createComment({
-          repo,
-          owner,
-          issue_number,
-          body,
-        });
+        try {
+          await octokit.rest.issues.createComment({
+            repo,
+            owner,
+            issue_number,
+            body,
+          });
+        } catch (error) {
+          handlePermissionError(error, context);
+        }
       } else {
         await createOrEditComment(
           octokit,
@@ -407,6 +452,7 @@ const main = async () => {
           issue_number,
           body,
           WATERMARK,
+          context,
         );
       }
     }
