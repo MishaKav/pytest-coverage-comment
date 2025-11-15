@@ -39505,6 +39505,9 @@ const main = async () => {
   const { context, repository } = github;
   const { repo, owner } = context.repo;
   const { eventName, payload } = context;
+  const serverUrl = context.serverUrl || 'https://github.com';
+
+  core.info(`Uses Github URL: ${serverUrl}`);
   const watermarkUniqueId = uniqueIdForComment
     ? `| ${uniqueIdForComment} `
     : '';
@@ -39536,7 +39539,7 @@ const main = async () => {
   };
 
   options.repoUrl =
-    payload.repository?.html_url || `https://github.com/${options.repository}`;
+    payload.repository?.html_url || `${serverUrl}/${options.repository}`;
 
   // Initialize octokit early so we can use it for tag resolution
   const octokit = github.getOctokit(token);
