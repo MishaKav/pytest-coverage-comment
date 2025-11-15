@@ -114,6 +114,11 @@ inputs:
     default: 'false'
     required: false
 
+  text-instead-badge:
+    description: 'Use simple text instead of badge images for coverage display'
+    default: 'false'
+    required: false
+
 outputs:
   coverage:
     description: 'Coverage percentage from pytest report (e.g., 85%)'

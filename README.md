@@ -171,6 +171,7 @@ jobs:
 | `remove-link-from-badge`    | `false`           | Remove hyperlink from coverage badge (badge becomes plain image)    |
 | `remove-links-to-files`     | `false`           | Remove file links from coverage table to reduce comment size        |
 | `remove-links-to-lines`     | `false`           | Remove line number links from coverage table to reduce comment size |
+| `text-instead-badge`        | `false`           | Use simple text instead of badge images for coverage display        |
 
 </details>
 
@@ -393,6 +394,22 @@ Here's what the generated coverage comment looks like:
 ## 🔬 Advanced Features
 
 <details>
+<summary>📝 Text-Based Coverage Display</summary>
+
+```yaml
+- name: Coverage comment
+  uses: MishaKav/pytest-coverage-comment@main
+  with:
+    pytest-coverage-path: ./pytest-coverage.txt
+    junitxml-path: ./pytest.xml
+    text-instead-badge: true
+```
+
+Displays coverage as `85% (42/50)` instead of a badge image.
+
+</details>
+
+<details>
 <summary>📊 Using Output Variables</summary>
 
 ```yaml
@@ -527,6 +544,18 @@ If you want auto-update the coverage badge on your README, you can see the [work
 ### Multiple Files (Monorepo)
 
 ![Multiple Files](https://user-images.githubusercontent.com/289035/122121939-ddd0c500-ce34-11eb-8546-89a8a769e065.png)
+
+### Text Mode (text-instead-badge: true)
+
+With `text-instead-badge: true`, coverage displays as simple text:
+
+```
+85% (42/50)
+```
+
+Instead of a badge image:
+
+![Coverage Badge](https://img.shields.io/badge/Coverage-85%25-green.svg)
 
 </details>
 

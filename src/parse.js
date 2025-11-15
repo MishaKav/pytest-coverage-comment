@@ -194,6 +194,7 @@ const toHtml = (data, options, dataFromXml = null) => {
     hideReport,
     reportOnlyChangedFiles,
     removeLinkFromBadge,
+    textInsteadBadge,
   } = options;
   const table = hideReport ? '' : toTable(data, options, dataFromXml);
   const total = dataFromXml ? dataFromXml.total : getTotal(data);
@@ -204,7 +205,10 @@ const toHtml = (data, options, dataFromXml = null) => {
   const badgeWithLink = removeLinkFromBadge
     ? badge
     : `<a href="${readmeHref}">${badge}</a>`;
-  const badgeHtml = hideBadge ? '' : badgeWithLink;
+  const covered = total.stmts - total.miss;
+  const textBadge = `${total.cover} (${covered}/${total.stmts})`;
+  const badgeContent = textInsteadBadge ? textBadge : badgeWithLink;
+  const badgeHtml = hideBadge ? '' : badgeContent;
   const reportHtml = hideReport
     ? ''
     : `<details><summary>${title} ${onlyChnaged}</summary>${table}</details>`;
