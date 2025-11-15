@@ -381,53 +381,6 @@ jobs:
 
 </details>
 
-### Complete Configuration
-
-<details>
-<summary>Complete example showing all available parameters</summary>
-
-```yaml
-- name: Pytest Coverage Comment
-  uses: MishaKav/pytest-coverage-comment@main
-  with:
-    # Core settings
-    github-token: ${{ secrets.GITHUB_TOKEN }}
-    pytest-coverage-path: ./pytest-coverage.txt
-    pytest-xml-coverage-path: ./coverage.xml
-    junitxml-path: ./pytest.xml
-
-    # Display options
-    title: Coverage Report
-    badge-title: Coverage
-    junitxml-title: Test Results
-    text-instead-badge: false
-    hide-badge: false
-    hide-report: false
-    hide-comment: false
-
-    # Filtering options
-    report-only-changed-files: false
-    xml-skip-covered: false
-
-    # Link options
-    remove-link-from-badge: false
-    remove-links-to-files: false
-    remove-links-to-lines: false
-
-    # Advanced options
-    create-new-comment: false
-    unique-id-for-comment: ''
-    default-branch: main
-    coverage-path-prefix: ''
-
-    # Monorepo support
-    multiple-files: |
-      Backend, ./backend/coverage.txt, ./backend/pytest.xml
-      Frontend, ./frontend/coverage.txt, ./frontend/pytest.xml
-```
-
-</details>
-
 ## 📋 Output Example
 
 Here's what the generated coverage comment looks like:
