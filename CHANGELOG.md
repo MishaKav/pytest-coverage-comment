@@ -6,10 +6,13 @@
 
 #### Changes
 
-- feat: add `text-instead-badge` option to display coverage as simple text instead of badge images
+- feat: add `text-instead-badge` option to display coverage as simple text instead of badge images (#235)
 - text format displays as `XX% (covered/total)` (e.g., `85% (42/50)`)
 - applies to all coverage reports: main summary and multiple-files tables
 - fully backward compatible - badge mode remains the default
+- feat: add automatic server URL detection for self-hosted GitHub instances (#234)
+
+**Note:** Starting from this version, version bumps follow conventional semantic versioning (MAJOR.MINOR.PATCH) instead of only bumping PATCH versions.
 
 ## [Pytest Coverage Comment 1.1.59](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.59)
 
