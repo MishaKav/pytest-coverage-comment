@@ -205,7 +205,8 @@ const toHtml = (data, options, dataFromXml = null) => {
   const badgeWithLink = removeLinkFromBadge
     ? badge
     : `<a href="${readmeHref}">${badge}</a>`;
-  const textBadge = `${total.cover}% (${total.covered}/${total.statements})`;
+  const covered = total.stmts - total.miss;
+  const textBadge = `${total.cover} (${covered}/${total.stmts})`;
   const badgeContent = textInsteadBadge ? textBadge : badgeWithLink;
   const badgeHtml = hideBadge ? '' : badgeContent;
   const reportHtml = hideReport
