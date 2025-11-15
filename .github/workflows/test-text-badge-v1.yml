@@ -1,0 +1,31 @@
+name: Test Text Badge v1
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+
+jobs:
+  test-text-instead-badge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Pytest coverage with text badge
+        id: coverageComment
+        uses: MishaKav/pytest-coverage-comment@v1
+        with:
+          pytest-coverage-path: ./data/pytest-coverage_4.txt
+          junitxml-path: ./data/pytest_1.xml
+          text-instead-badge: true
+
+      - name: Check the output
+        run: |
+          echo "Coverage - ${{ steps.coverageComment.outputs.coverage }}"
+          echo "Color - ${{ steps.coverageComment.outputs.color }}"
+          echo "Tests - ${{ steps.coverageComment.outputs.tests }}"
+          echo "Failures - ${{ steps.coverageComment.outputs.failures }}"
