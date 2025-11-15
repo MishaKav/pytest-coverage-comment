@@ -36953,6 +36953,7 @@ const toHtml = (data, options, dataFromXml = null) => {
     hideReport,
     reportOnlyChangedFiles,
     removeLinkFromBadge,
+    textInsteadBadge,
   } = options;
   const table = hideReport ? '' : toTable(data, options, dataFromXml);
   const total = dataFromXml ? dataFromXml.total : getTotal(data);
@@ -36963,7 +36964,9 @@ const toHtml = (data, options, dataFromXml = null) => {
   const badgeWithLink = removeLinkFromBadge
     ? badge
     : `<a href="${readmeHref}">${badge}</a>`;
-  const badgeHtml = hideBadge ? '' : badgeWithLink;
+  const textBadge = `${total.cover}% (${total.covered}/${total.statements})`;
+  const badgeContent = textInsteadBadge ? textBadge : badgeWithLink;
+  const badgeHtml = hideBadge ? '' : badgeContent;
   const reportHtml = hideReport
     ? ''
     : `<details><summary>${title} ${onlyChnaged}</summary>${table}</details>`;
@@ -39487,6 +39490,9 @@ const main = async () => {
   const removeLinksToLines = core.getBooleanInput('remove-links-to-lines', {
     required: false,
   });
+  const textInsteadBadge = core.getBooleanInput('text-instead-badge', {
+    required: false,
+  });
   const uniqueIdForComment = core.getInput('unique-id-for-comment', {
     required: false,
   });
@@ -39530,6 +39536,7 @@ const main = async () => {
     removeLinkFromBadge,
     removeLinksToFiles,
     removeLinksToLines,
+    textInsteadBadge,
     defaultBranch,
     xmlTitle,
     multipleFiles,

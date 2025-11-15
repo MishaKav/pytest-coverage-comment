@@ -180,6 +180,9 @@ const main = async () => {
   const removeLinksToLines = core.getBooleanInput('remove-links-to-lines', {
     required: false,
   });
+  const textInsteadBadge = core.getBooleanInput('text-instead-badge', {
+    required: false,
+  });
   const uniqueIdForComment = core.getInput('unique-id-for-comment', {
     required: false,
   });
@@ -223,6 +226,7 @@ const main = async () => {
     removeLinkFromBadge,
     removeLinksToFiles,
     removeLinksToLines,
+    textInsteadBadge,
     defaultBranch,
     xmlTitle,
     multipleFiles,
