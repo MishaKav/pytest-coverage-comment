@@ -171,6 +171,7 @@ jobs:
 | `remove-link-from-badge`    | `false`           | Remove hyperlink from coverage badge (badge becomes plain image)    |
 | `remove-links-to-files`     | `false`           | Remove file links from coverage table to reduce comment size        |
 | `remove-links-to-lines`     | `false`           | Remove line number links from coverage table to reduce comment size |
+| `text-instead-badge`        | `false`           | Use simple text instead of badge images for coverage display        |
 
 </details>
 
@@ -391,6 +392,27 @@ Here's what the generated coverage comment looks like:
 | 109   | 2 :zzz: | 1 :x:    | 0 :fire: | 0.583s :stopwatch: |
 
 ## 🔬 Advanced Features
+
+<details>
+<summary>📝 Text-Based Coverage Display</summary>
+
+If you prefer simple text over badge images for coverage display:
+
+```yaml
+- name: Coverage comment
+  uses: MishaKav/pytest-coverage-comment@main
+  with:
+    pytest-coverage-path: ./pytest-coverage.txt
+    junitxml-path: ./pytest.xml
+    text-instead-badge: true
+```
+
+This will display coverage as `85% (42/50)` instead of a badge image, which can be useful for:
+- Reducing external dependencies (no shields.io image loading)
+- Faster rendering in comments
+- Simpler, more minimal appearance
+
+</details>
 
 <details>
 <summary>📊 Using Output Variables</summary>
