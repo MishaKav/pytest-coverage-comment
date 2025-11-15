@@ -1,5 +1,16 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.2.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.2.0)
+
+**Release Date:** 2025-11-15
+
+#### Changes
+
+- feat: add `text-instead-badge` option to display coverage as simple text instead of badge images
+- text format displays as `XX% (covered/total)` (e.g., `85% (42/50)`)
+- applies to all coverage reports: main summary and multiple-files tables
+- fully backward compatible - badge mode remains the default
+
 ## [Pytest Coverage Comment 1.1.59](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.1.59)
 
 **Release Date:** 2025-11-08
