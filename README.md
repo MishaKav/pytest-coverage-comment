@@ -443,8 +443,6 @@ Here's what the generated coverage comment looks like:
 <details>
 <summary>📝 Text-Based Coverage Display</summary>
 
-If you prefer simple text over badge images for coverage display:
-
 ```yaml
 - name: Coverage comment
   uses: MishaKav/pytest-coverage-comment@main
@@ -454,10 +452,7 @@ If you prefer simple text over badge images for coverage display:
     text-instead-badge: true
 ```
 
-This will display coverage as `85% (42/50)` instead of a badge image, which can be useful for:
-- Reducing external dependencies (no shields.io image loading)
-- Faster rendering in comments
-- Simpler, more minimal appearance
+Displays coverage as `85% (42/50)` instead of a badge image.
 
 </details>
 
@@ -599,22 +594,15 @@ If you want auto-update the coverage badge on your README, you can see the [work
 
 ### Text Mode (text-instead-badge: true)
 
-When using `text-instead-badge: true`, the coverage is displayed as simple text instead of a badge image:
+With `text-instead-badge: true`, coverage displays as simple text:
 
-**Example output:**
 ```
 85% (42/50)
 ```
 
-Instead of the default badge:
+Instead of a badge image:
 
 ![Coverage Badge](https://img.shields.io/badge/Coverage-85%25-green.svg)
-
-**Benefits:**
-- No external image dependencies (shields.io)
-- Faster rendering
-- More compact display
-- Better for minimalist styling
 
 </details>
 
