@@ -12,7 +12,7 @@ jobs:
     name: Live Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Pytest coverage comment
         id: coverageComment
