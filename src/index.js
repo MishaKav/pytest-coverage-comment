@@ -86,25 +86,89 @@ const truncateSummary = (content, maxLength) => {
   return truncatedContent + truncationMessage;
 };
 
-const handlePermissionError = (error, context) => {
+/**
+ * Checks if the pull request is from a fork
+ * @param {object} context - GitHub context
+ * @returns {boolean} - True if PR is from a fork
+ */
+const isPullRequestFromFork = (context) => {
+  const { eventName, payload } = context;
+
+  if (eventName !== 'pull_request' && eventName !== 'pull_request_target') {
+    return false;
+  }
+
+  // Check if head repository is different from base repository
+  const headRepoFullName = payload.pull_request?.head?.repo?.full_name;
+  const baseRepoFullName = payload.pull_request?.base?.repo?.full_name;
+
+  // If head repo is null, it means the fork was deleted
+  if (!headRepoFullName) {
+    return true;
+  }
+
+  return headRepoFullName !== baseRepoFullName;
+};
+
+const handlePermissionError = (error, context, isFromFork = false) => {
   const eventName = context?.eventName || 'this event';
   if (error?.status === 403) {
-    const helpfulMessage = [
-      'Permission denied when trying to create/update comment.',
-      '',
-      'This error usually occurs because the GITHUB_TOKEN lacks necessary permissions.',
-      '',
-      'To fix this, add a permissions block to your workflow:',
-      '',
-      '```yaml',
-      'permissions:',
-      '  contents: read        # For checkout and comparing commits',
-      '  pull-requests: write  # For creating/updating PR comments',
-      '```',
-      '',
-      `For ${eventName === 'push' ? 'push events creating commit comments' : 'pull request events and more information'}, see:`,
-      'https://github.com/MishaKav/pytest-coverage-comment#comment-not-appearing',
-    ].join('\n');
+    let helpfulMessage;
+
+    if (isFromFork) {
+      // Special message for fork PRs
+      helpfulMessage = [
+        '⚠️  Cannot comment on pull request from fork due to GitHub security restrictions.',
+        '',
+        'When a pull request comes from a fork, the GITHUB_TOKEN has read-only permissions',
+        'for security reasons. This cannot be changed by adding permissions to your workflow.',
+        '',
+        '📋 Solutions:',
+        '',
+        '1. **Use pull_request_target event** (Recommended for trusted contributors):',
+        '   ```yaml',
+        '   on:',
+        '     pull_request_target:  # Runs with write permissions',
+        '       types: [opened, synchronize]',
+        '   ',
+        '   permissions:',
+        '     contents: read',
+        '     pull-requests: write',
+        '   ```',
+        '   ⚠️  WARNING: pull_request_target runs in the base repository context.',
+        "   Only use if you trust the PR author or don't check out PR code.",
+        '',
+        '2. **Use workflow_run pattern** (Safest for public repos):',
+        '   - First workflow runs on pull_request and uploads coverage as artifact',
+        '   - Second workflow runs on workflow_run completion and posts comment',
+        '   See: https://securitylab.github.com/research/github-actions-preventing-pwn-requests/',
+        '',
+        '3. **Manual review**: Ask maintainers to run workflows from their branch',
+        '',
+        '📊 Coverage report is still available in the action logs above.',
+        '',
+        'For more information, see:',
+        'https://github.com/MishaKav/pytest-coverage-comment#comment-not-appearing',
+      ].join('\n');
+    } else {
+      // Original message for non-fork permission errors
+      helpfulMessage = [
+        'Permission denied when trying to create/update comment.',
+        '',
+        'This error usually occurs because the GITHUB_TOKEN lacks necessary permissions.',
+        '',
+        'To fix this, add a permissions block to your workflow:',
+        '',
+        '```yaml',
+        'permissions:',
+        '  contents: read        # For checkout and comparing commits',
+        '  pull-requests: write  # For creating/updating PR comments',
+        '```',
+        '',
+        `For ${eventName === 'push' ? 'push events creating commit comments' : 'pull request events and more information'}, see:`,
+        'https://github.com/MishaKav/pytest-coverage-comment#comment-not-appearing',
+      ].join('\n');
+    }
 
     core.setFailed(helpfulMessage);
   } else {
@@ -121,6 +185,7 @@ const createOrEditComment = async (
   body,
   WATERMARK,
   context,
+  isFromFork = false,
 ) => {
   try {
     // Now decide if we should issue a new comment or edit an old one
@@ -150,7 +215,7 @@ const createOrEditComment = async (
       });
     }
   } catch (error) {
-    handlePermissionError(error, context);
+    handlePermissionError(error, context, isFromFork);
   }
 };
 
@@ -240,6 +305,14 @@ const main = async () => {
 
   // Initialize octokit early so we can use it for tag resolution
   const octokit = github.getOctokit(token);
+
+  // Detect if PR is from a fork for better error messaging
+  const isFromFork = isPullRequestFromFork(context);
+  if (isFromFork) {
+    core.warning(
+      '⚠️  Pull request is from a fork. Comment permissions may be restricted.',
+    );
+  }
 
   if (eventName === 'pull_request' || eventName === 'pull_request_target') {
     options.commit = payload.pull_request.head.sha;
@@ -395,7 +468,7 @@ const main = async () => {
         body,
       });
     } catch (error) {
-      handlePermissionError(error, context);
+      handlePermissionError(error, context, isFromFork);
     }
   } else if (
     eventName === 'pull_request' ||
@@ -412,7 +485,7 @@ const main = async () => {
           body,
         });
       } catch (error) {
-        handlePermissionError(error, context);
+        handlePermissionError(error, context, isFromFork);
       }
     } else {
       await createOrEditComment(
@@ -423,6 +496,7 @@ const main = async () => {
         body,
         WATERMARK,
         context,
+        isFromFork,
       );
     }
   } else if (
@@ -449,7 +523,7 @@ const main = async () => {
             body,
           });
         } catch (error) {
-          handlePermissionError(error, context);
+          handlePermissionError(error, context, isFromFork);
         }
       } else {
         await createOrEditComment(
@@ -460,6 +534,7 @@ const main = async () => {
           body,
           WATERMARK,
           context,
+          isFromFork,
         );
       }
     }
