@@ -45,6 +45,7 @@ A GitHub Action that adds pytest coverage reports as comments to your pull reque
     - [Multiple Files (Monorepo)](#multiple-files-monorepo)
   - [🔧 Troubleshooting](#-troubleshooting)
     - [Comment Not Appearing](#comment-not-appearing)
+    - [Pull Requests from Forks](#pull-requests-from-forks)
     - [Unrecognized Arguments Error](#unrecognized-arguments-error)
     - [Coverage Report Too Large](#coverage-report-too-large)
     - [GitHub Step Summary Too Large](#github-step-summary-too-large)
@@ -602,6 +603,106 @@ Instead of a badge image:
    - Check branch protection rules aren't blocking automated comments
 
 **Why it works on forks but not main repos**: Forks often have different default permission settings than the main repository. Organizations frequently set restrictive defaults for security.
+
+### Pull Requests from Forks
+
+**Issue**: Action fails with "Permission denied" when a pull request comes from a forked repository.
+
+**Root Cause**: GitHub restricts `GITHUB_TOKEN` permissions to read-only for workflows triggered by pull requests from forks. This is a security feature to prevent malicious actors from exploiting workflows in your repository. **This restriction cannot be overridden** by adding permissions to your workflow file.
+
+**Common Error Messages**:
+- `⚠️ Cannot comment on pull request from fork due to GitHub security restrictions`
+- `Error: Resource not accessible by integration`
+- `Permission denied when trying to create/update comment`
+
+**Solutions**:
+
+1. **Use `pull_request_target` event** (For trusted contributors):
+   ```yaml
+   on:
+     pull_request_target:  # Runs with write permissions
+       types: [opened, synchronize, reopened]
+   
+   permissions:
+     contents: read
+     pull-requests: write
+   
+   jobs:
+     coverage:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v4
+         # ... run tests and generate coverage ...
+         - uses: MishaKav/pytest-coverage-comment@main
+           with:
+             pytest-coverage-path: ./pytest-coverage.txt
+   ```
+   
+   ⚠️ **Security Warning**: `pull_request_target` runs in the context of the base repository with full access to secrets. Only use this if:
+   - You trust the PR authors
+   - You don't check out or run code from the PR
+   - See [GitHub's security guide](https://securitylab.github.com/research/github-actions-preventing-pwn-requests/)
+
+2. **Use workflow_run pattern** (Safest for public repositories):
+   
+   Create two workflows - one to run tests, another to post comments:
+   
+   **`.github/workflows/test.yml`** (runs on pull_request):
+   ```yaml
+   name: Tests
+   on:
+     pull_request:
+   
+   jobs:
+     test:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v4
+         # ... run tests and generate coverage ...
+         - name: Upload coverage reports
+           uses: actions/upload-artifact@v4
+           with:
+             name: coverage-reports
+             path: |
+               pytest-coverage.txt
+               pytest.xml
+   ```
+   
+   **`.github/workflows/coverage-comment.yml`** (runs after tests complete):
+   ```yaml
+   name: Coverage Comment
+   on:
+     workflow_run:
+       workflows: ["Tests"]
+       types: [completed]
+   
+   permissions:
+     pull-requests: write
+     contents: read
+   
+   jobs:
+     comment:
+       runs-on: ubuntu-latest
+       if: github.event.workflow_run.conclusion == 'success'
+       steps:
+         - name: Download coverage reports
+           uses: actions/download-artifact@v4
+           with:
+             name: coverage-reports
+             github-token: ${{ secrets.GITHUB_TOKEN }}
+             run-id: ${{ github.event.workflow_run.id }}
+         
+         - name: Comment on PR
+           uses: MishaKav/pytest-coverage-comment@main
+           with:
+             pytest-coverage-path: ./pytest-coverage.txt
+             junitxml-path: ./pytest.xml
+             issue-number: ${{ github.event.workflow_run.pull_requests[0].number }}
+   ```
+
+3. **Manual review**: For sensitive repositories, require maintainers to manually trigger workflows or push to a branch in the main repository.
+
+**Note**: The coverage report is always available in the action logs even when commenting fails.
 
 ### Unrecognized Arguments Error
 
