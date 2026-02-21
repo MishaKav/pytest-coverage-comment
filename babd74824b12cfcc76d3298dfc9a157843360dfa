@@ -1,0 +1,27 @@
+action.yml
+  c203b7d403a57020 93
+src/multiFiles.js
+  c203b7d403a57020 22,59,67
+test/multiple-files.test.js
+  c203b7d403a57020 1-62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "babd74824b12cfcc76d3298dfc9a157843360dfa",
+  "prompts": {
+    "c203b7d403a57020": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "46fa5f16-58a5-4c9c-903f-b0cb81097811",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Misha Kav <misha.kav@gmail.com>",
+      "messages": [],
+      "total_additions": 177,
+      "total_deletions": 19,
+      "accepted_lines": 142,
+      "overriden_lines": 4
+    }
+  }
+}
