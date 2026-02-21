@@ -24,12 +24,22 @@ const getTotalCoverage = (parsedXml) => {
   const linesValid = parseInt(coverage['lines-valid']);
   const linesCovered = parseInt(coverage['lines-covered']);
 
-  return {
+  const result = {
     name: 'TOTAL',
     stmts: linesValid,
     miss: linesValid - linesCovered,
     cover: cover !== '0' ? `${cover}%` : '0',
   };
+
+  // Add branch coverage if present
+  const branchesValid = parseInt(coverage['branches-valid']);
+  if (branchesValid > 0) {
+    const branchesCovered = parseInt(coverage['branches-covered']);
+    result.branch = branchesValid.toString();
+    result.brpart = (branchesValid - branchesCovered).toString();
+  }
+
+  return result;
 };
 
 // return true if "coverage file" include right structure
@@ -62,7 +72,13 @@ const getCoverageXmlReport = (options) => {
 
     if (parsedXml && isValid) {
       const coverageObj = coverageXmlToFiles(parsedXml, options.xmlSkipCovered);
-      const dataFromXml = { coverage: coverageObj, total: coverage };
+
+      // Check if branch coverage is present
+      const rootCoverage = parsedXml['$'];
+      const branchesValid = parseInt(rootCoverage['branches-valid'] || '0');
+      const hasBranch = branchesValid > 0;
+
+      const dataFromXml = { coverage: coverageObj, total: coverage, hasBranch };
       const html = toHtml(null, options, dataFromXml);
       const color = getCoverageColor(coverage ? coverage.cover : '0');
 
@@ -126,7 +142,13 @@ const parseClass = (classObj, xmlSkipCovered) => {
     return null;
   }
 
-  const { stmts, missing, totalMissing: miss } = parseLines(classObj.lines);
+  const {
+    stmts,
+    missing,
+    totalMissing: miss,
+    branch,
+    brpart,
+  } = parseLines(classObj.lines);
   const { filename: name, 'line-rate': lineRate } = classObj['$'];
   const isFullCoverage = lineRate === '1';
 
@@ -138,23 +160,54 @@ const parseClass = (classObj, xmlSkipCovered) => {
     ? '100%'
     : `${parseInt(parseFloat(lineRate) * 100)}%`;
 
-  return { name, stmts, miss, cover, missing };
+  const result = { name, stmts, miss, cover, missing };
+
+  // Only include branch info if there are branches
+  if (parseInt(branch) > 0) {
+    result.branch = branch;
+    result.brpart = brpart;
+  }
+
+  return result;
 };
 
 const parseLines = (lines) => {
   if (!lines || !lines.length || !lines[0].line) {
-    return { stmts: '0', missing: '', totalMissing: '0' };
+    return {
+      stmts: '0',
+      missing: '',
+      totalMissing: '0',
+      branch: '0',
+      brpart: '0',
+    };
   }
 
   let stmts = 0;
+  let totalBranches = 0;
+  let partialBranches = 0;
   const missingLines = [];
 
   lines[0].line.forEach((line) => {
     stmts++;
-    const { hits, number } = line['$'];
+    const { hits, number, branch } = line['$'];
 
     if (hits === '0') {
       missingLines.push(parseInt(number));
+    }
+
+    // Count branches
+    if (branch === 'true') {
+      const condCoverage = line['$']['condition-coverage'];
+      if (condCoverage) {
+        // Parse "100% (2/2)" or "50% (1/2)" format
+        const match = condCoverage.match(/\((\d+)\/(\d+)\)/);
+        if (match) {
+          const covered = parseInt(match[1]);
+          const total = parseInt(match[2]);
+          totalBranches += total;
+          partialBranches += total - covered;
+        }
+      }
     }
   });
 
@@ -177,6 +230,8 @@ const parseLines = (lines) => {
     stmts: stmts.toString(),
     missing: missingText,
     totalMissing: missingLines.length.toString(),
+    branch: totalBranches.toString(),
+    brpart: partialBranches.toString(),
   };
 };
 

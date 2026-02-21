@@ -50,6 +50,20 @@ const getCoverageReport = (options) => {
   return { html: '', coverage: '0', color: 'red', warnings: 0 };
 };
 
+// check if coverage report has branch coverage
+const hasBranchCoverage = (data) => {
+  if (!data || !data.length) {
+    return false;
+  }
+
+  const lines = data.split('\n');
+  const headerLine = lines.find(
+    (l) => l.includes('Stmts') && l.includes('Miss'),
+  );
+
+  return headerLine && headerLine.includes('Branch');
+};
+
 // get actual lines from coverage-file
 const getActualLines = (data) => {
   if (!data || !data.length) {
@@ -79,8 +93,9 @@ const getTotal = (data) => {
 
   const lines = data.split('\n');
   const line = lines.find((l) => l.includes('TOTAL    '));
+  const hasBranch = hasBranchCoverage(data);
 
-  return parseTotalLine(line);
+  return parseTotalLine(line, hasBranch);
 };
 
 // get number of warnings from coverage-file
@@ -102,7 +117,7 @@ const getWarnings = (data) => {
 };
 
 // parse one line from coverage-file
-const parseOneLine = (line) => {
+const parseOneLine = (line, hasBranch = false) => {
   if (!line) {
     return null;
   }
@@ -115,25 +130,40 @@ const parseOneLine = (line) => {
 
   const lastItem = parsedLine[parsedLine.length - 1];
   const isFullCoverage = lastItem === '100%';
-  const cover = isFullCoverage
-    ? '100%'
-    : parsedLine[parsedLine.length - 2].trim();
-  const missing = isFullCoverage
-    ? null
-    : parsedLine[parsedLine.length - 1] &&
-      parsedLine[parsedLine.length - 1].split(', ');
 
-  return {
+  let result = {
     name: parsedLine[0],
     stmts: parsedLine[1].trim(),
     miss: parsedLine[2].trim(),
-    cover,
-    missing,
   };
+
+  if (hasBranch) {
+    // Format: Name Stmts Miss Branch BrPart Cover Missing
+    result.branch = parsedLine[3].trim();
+    result.brpart = parsedLine[4].trim();
+    result.cover = isFullCoverage
+      ? '100%'
+      : parsedLine[parsedLine.length - 2].trim();
+    result.missing = isFullCoverage
+      ? null
+      : parsedLine[parsedLine.length - 1] &&
+        parsedLine[parsedLine.length - 1].split(', ');
+  } else {
+    // Format: Name Stmts Miss Cover Missing
+    result.cover = isFullCoverage
+      ? '100%'
+      : parsedLine[parsedLine.length - 2].trim();
+    result.missing = isFullCoverage
+      ? null
+      : parsedLine[parsedLine.length - 1] &&
+        parsedLine[parsedLine.length - 1].split(', ');
+  }
+
+  return result;
 };
 
 // parse total line from coverage-file
-const parseTotalLine = (line) => {
+const parseTotalLine = (line, hasBranch = false) => {
   if (!line) {
     return null;
   }
@@ -144,12 +174,23 @@ const parseTotalLine = (line) => {
     return null;
   }
 
-  return {
+  let result = {
     name: parsedLine[0],
     stmts: parsedLine[1].trim(),
     miss: parsedLine[2].trim(),
-    cover: parsedLine[parsedLine.length - 1].trim(),
   };
+
+  if (hasBranch) {
+    // Format: TOTAL  stmts  miss  branch  brpart  cover
+    result.branch = parsedLine[3].trim();
+    result.brpart = parsedLine[4].trim();
+    result.cover = parsedLine[parsedLine.length - 1].trim();
+  } else {
+    // Format: TOTAL  stmts  miss  cover
+    result.cover = parsedLine[parsedLine.length - 1].trim();
+  }
+
+  return result;
 };
 
 // parse coverage-file
@@ -160,7 +201,8 @@ const parse = (data) => {
     return null;
   }
 
-  return actualLines.map(parseOneLine);
+  const hasBranch = hasBranchCoverage(data);
+  return actualLines.map((line) => parseOneLine(line, hasBranch));
 };
 
 // collapse all lines to folders structure
@@ -227,6 +269,9 @@ const toTable = (data, options, dataFromXml = null) => {
   }
   const totalLine = dataFromXml ? dataFromXml.total : getTotal(data);
   options.hasMissing = coverage.some((c) => c.missing);
+  options.hasBranch = dataFromXml
+    ? dataFromXml.hasBranch || false
+    : hasBranchCoverage(data);
 
   core.info(`Generating coverage report`);
   const headTr = toHeadRow(options);
@@ -274,27 +319,34 @@ const toTable = (data, options, dataFromXml = null) => {
 // make html head row - th
 const toHeadRow = (options) => {
   const lastTd = options.hasMissing ? '<th>Missing</th>' : '';
+  const branchTds = options.hasBranch ? '<th>Branch</th><th>BrPart</th>' : '';
 
-  return `<tr><th>File</th><th>Stmts</th><th>Miss</th><th>Cover</th>${lastTd}</tr>`;
+  return `<tr><th>File</th><th>Stmts</th><th>Miss</th>${branchTds}<th>Cover</th>${lastTd}</tr>`;
 };
 
 // make html row - tr
 const toRow = (item, indent = false, options) => {
-  const { stmts, miss, cover } = item;
+  const { stmts, miss, cover, branch, brpart } = item;
 
   const name = toFileNameTd(item, indent, options);
   const missing = toMissingTd(item, options);
   const lastTd = options.hasMissing ? `<td>${missing}</td>` : '';
+  const branchTds = options.hasBranch
+    ? `<td>${branch || ''}</td><td>${brpart || ''}</td>`
+    : '';
 
-  return `<tr><td>${name}</td><td>${stmts}</td><td>${miss}</td><td>${cover}</td>${lastTd}</tr>`;
+  return `<tr><td>${name}</td><td>${stmts}</td><td>${miss}</td>${branchTds}<td>${cover}</td>${lastTd}</tr>`;
 };
 
 // make summary row - tr
 const toTotalRow = (item, options) => {
-  const { name, stmts, miss, cover } = item;
+  const { name, stmts, miss, cover, branch, brpart } = item;
   const emptyCell = options.hasMissing ? '<td>&nbsp;</td>' : '';
+  const branchTds = options.hasBranch
+    ? `<td><b>${branch || ''}</b></td><td><b>${brpart || ''}</b></td>`
+    : '';
 
-  return `<tr><td><b>${name}</b></td><td><b>${stmts}</b></td><td><b>${miss}</b></td><td><b>${cover}</b></td>${emptyCell}</tr>`;
+  return `<tr><td><b>${name}</b></td><td><b>${stmts}</b></td><td><b>${miss}</b></td>${branchTds}<td><b>${cover}</b></td>${emptyCell}</tr>`;
 };
 
 // make fileName cell - td
@@ -317,7 +369,10 @@ const toFolderTd = (path, options) => {
     return '';
   }
 
-  const colspan = options.hasMissing ? 5 : 4;
+  let colspan = 4;
+  if (options.hasBranch) colspan += 2;
+  if (options.hasMissing) colspan += 1;
+
   return `<tr><td colspan="${colspan}"><b>${path}</b></td></tr>`;
 };
 
