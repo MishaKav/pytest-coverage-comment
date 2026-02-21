@@ -305,7 +305,7 @@ const main = async () => {
   let report = options.covXmlFile
     ? getCoverageXmlReport(options)
     : getCoverageReport(options);
-  const { coverage, color, html, warnings } = report;
+  let { coverage, color, html, warnings } = report;
   const summaryReport = getSummaryReport(options);
 
   if (summaryReport && summaryReport.html) {
@@ -369,6 +369,7 @@ const main = async () => {
     }
     core.warning(warningsArr.join('\n'));
     report = getSummaryReport({ ...options, hideReport: true });
+    html = report.html;
   }
 
   finalHtml += html;

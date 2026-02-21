@@ -1,5 +1,17 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.2.1](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.2.1)
+
+**Release Date:** 2026-02-21
+
+#### Changes
+
+- fix fork PR permission error with specific guidance for `pull_request_target` (#243)
+- bump production deps: `@actions/core` to 2.0.3, `@actions/github` to 8.0.1
+- bump dev deps: `eslint` to 10.0.1, `globals` to 17.3.0, `prettier` to 3.8.1
+- upgrade action runtime from `node20` to `node24`
+- fix comment-too-long code path not replacing HTML with shorter report
+
 ## [Pytest Coverage Comment 1.2.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.2.0)
 
 **Release Date:** 2025-11-15
