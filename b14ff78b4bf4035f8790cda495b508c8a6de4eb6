@@ -1,0 +1,23 @@
+CHANGELOG.md
+  3774d21f296a1f39 3-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "b14ff78b4bf4035f8790cda495b508c8a6de4eb6",
+  "prompts": {
+    "3774d21f296a1f39": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "712b933f-337a-4986-a726-5d83382a97ab",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Misha Kav <misha.kav@gmail.com>",
+      "messages": [],
+      "total_additions": 20,
+      "total_deletions": 8,
+      "accepted_lines": 12,
+      "overriden_lines": 0
+    }
+  }
+}
