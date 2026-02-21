@@ -6,7 +6,10 @@
 
 #### Changes
 
-- feat: add XML coverage support in `multiple-files` mode, auto-detected by `.xml` extension (#200), thanks to [@hayes0724](https://github.com/hayes0724) for contribution
+- feat: add XML coverage support in `multiple-files` mode (#200), thanks to [@hayes0724](https://github.com/hayes0724) for contribution
+- `multiple-files` input now auto-detects XML coverage files by `.xml` extension
+- allows mixing TXT and XML coverage formats in the same multi-file report (useful for monorepos)
+- add safety check for XML coverage structure to prevent runtime errors
 
 ## [Pytest Coverage Comment 1.2.1](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.2.1)
 
