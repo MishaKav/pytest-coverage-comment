@@ -39439,11 +39439,41 @@ const truncateSummary = (content, maxLength) => {
 };
 
 const handlePermissionError = (error, context) => {
-  const eventName = context?.eventName || 'this event';
-  if (error?.status === 403) {
-    const helpfulMessage = [
-      'Permission denied when trying to create/update comment.',
+  if (error?.status !== 403) {
+    core.setFailed(`Failed to create/update comment: ${error.message}`);
+    throw error;
+  }
+
+  const isForkPR = context?.payload?.pull_request?.head?.repo?.fork === true;
+  const lines = ['Permission denied when trying to create/update comment.', ''];
+
+  if (isForkPR) {
+    lines.push(
+      'This PR is from a fork. GitHub restricts the GITHUB_TOKEN to read-only',
+      'for fork PRs triggered by the `pull_request` event.',
       '',
+      'To fix this, use the `pull_request_target` event instead:',
+      '',
+      '```yaml',
+      'on:',
+      '  pull_request_target:',
+      '    types: [opened, synchronize, reopened]',
+      '',
+      'permissions:',
+      '  contents: read',
+      '  pull-requests: write',
+      '```',
+      '',
+      'Note: `pull_request_target` runs in the context of the base branch.',
+      'Be cautious when checking out fork code — never run untrusted code',
+      'from the fork with elevated permissions.',
+      '',
+      'For more information, see:',
+      'https://github.com/MishaKav/pytest-coverage-comment#fork-prs',
+    );
+  } else {
+    const eventName = context?.eventName || 'this event';
+    lines.push(
       'This error usually occurs because the GITHUB_TOKEN lacks necessary permissions.',
       '',
       'To fix this, add a permissions block to your workflow:',
@@ -39456,12 +39486,10 @@ const handlePermissionError = (error, context) => {
       '',
       `For ${eventName === 'push' ? 'push events creating commit comments' : 'pull request events and more information'}, see:`,
       'https://github.com/MishaKav/pytest-coverage-comment#comment-not-appearing',
-    ].join('\n');
-
-    core.setFailed(helpfulMessage);
-  } else {
-    core.setFailed(`Failed to create/update comment: ${error.message}`);
+    );
   }
+
+  core.setFailed(lines.join('\n'));
   throw error;
 };
 
