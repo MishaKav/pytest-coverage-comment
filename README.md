@@ -254,6 +254,8 @@ jobs:
 <details>
 <summary>Multiple coverage reports in a single comment</summary>
 
+#### Using Text Coverage Reports
+
 ```yaml
 - name: Coverage comment
   uses: MishaKav/pytest-coverage-comment@main
@@ -263,6 +265,35 @@ jobs:
       Frontend SDK, ./frontend/pytest-coverage.txt, ./frontend/pytest.xml
       Data Pipeline, ./pipeline/pytest-coverage.txt, ./pipeline/pytest.xml
 ```
+
+#### Using XML Coverage Reports
+
+```yaml
+- name: Coverage comment
+  uses: MishaKav/pytest-coverage-comment@main
+  with:
+    multiple-files: |
+      Backend API, , ./backend/pytest.xml, ./backend/coverage.xml
+      Frontend SDK, , ./frontend/pytest.xml, ./frontend/coverage.xml
+      Data Pipeline, , ./pipeline/pytest.xml, ./pipeline/coverage.xml
+```
+
+#### Mixed Coverage Reports
+
+```yaml
+- name: Coverage comment
+  uses: MishaKav/pytest-coverage-comment@main
+  with:
+    multiple-files: |
+      Backend API, ./backend/pytest-coverage.txt, ./backend/pytest.xml
+      Frontend SDK, , ./frontend/pytest.xml, ./frontend/coverage.xml
+```
+
+**Format**: Each line follows the pattern: `Title, text-coverage-path, junit-xml-path, xml-coverage-path`
+- **Title**: Display name for the report
+- **text-coverage-path**: Path to text coverage file (from `--cov-report=term-missing`) - optional if xml-coverage-path is provided
+- **junit-xml-path**: Path to JUnit XML file (from `--junitxml`) - optional
+- **xml-coverage-path**: Path to XML coverage file (from `--cov-report=xml`) - optional if text-coverage-path is provided
 
 This creates a consolidated table showing all coverage reports:
 

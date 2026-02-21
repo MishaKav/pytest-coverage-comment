@@ -89,8 +89,10 @@ inputs:
   multiple-files:
     description: >
       Generate single comment with multiple coverage reports (useful for monorepos).
-      Format: One report per line as "Title, coverage-path, junit-path".
-      Example: "Backend API, ./backend/coverage.txt, ./backend/junit.xml"
+      Format: One report per line as "Title, coverage-path, junit-path, xml-coverage-path".
+      Example with text coverage: "Backend API, ./backend/coverage.txt, ./backend/junit.xml"
+      Example with XML coverage: "Backend API, , ./backend/junit.xml, ./backend/coverage.xml"
+      Note: Either coverage-path (2nd field) or xml-coverage-path (4th field) must be provided, but not both.
     default: ''
     required: false
 

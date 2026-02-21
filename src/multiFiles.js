@@ -1,4 +1,5 @@
 const { getCoverageReport } = require('./parse');
+const { getCoverageXmlReport } = require('./parseXml');
 const { getParsedXml } = require('./junitXml');
 const core = require('@actions/core');
 
@@ -14,6 +15,7 @@ const parseLine = (line) => {
     title: lineArr[0].trim(),
     covFile: lineArr[1].trim(),
     xmlFile: lineArr.length > 2 ? lineArr[2].trim() : '',
+    covXmlFile: lineArr.length > 3 ? lineArr[3].trim() : '',
   };
 };
 
@@ -22,6 +24,7 @@ const getOptions = (options = {}, line = {}) => ({
   ...options,
   title: line.title,
   covFile: line.covFile,
+  covXmlFile: line.covXmlFile,
   hideReport: true,
   xmlFile: line.xmlFile,
   xmlTitle: '',
@@ -44,25 +47,40 @@ const getMultipleReport = (options) => {
 
     lineReports.forEach((l, i) => {
       const internalOptions = getOptions(options, l);
-      const coverage = getCoverageReport(internalOptions);
+      const coverage = internalOptions.covXmlFile
+        ? getCoverageXmlReport(internalOptions)
+        : getCoverageReport(internalOptions);
       const summary = getParsedXml(internalOptions);
 
-      if (coverage.html) {
+      if (coverage && coverage.html) {
         table += `| ${l.title} | ${coverage.html}`;
 
         if (i === 0) {
-          core.startGroup(internalOptions.covFile);
-          core.info(`coverage: ${coverage.coverage}`);
-          core.info(`color: ${coverage.color}`);
-          core.info(`warnings: ${coverage.warnings}`);
+          const coverageFile =
+            internalOptions.covXmlFile || internalOptions.covFile;
+          core.startGroup(coverageFile);
+
+          if (internalOptions.covXmlFile) {
+            // XML coverage output
+            core.info(`coverage: ${coverage.coverage.cover}`);
+            core.info(`color: ${coverage.color}`);
+            core.setOutput('coverage', coverage.coverage.cover);
+            core.setOutput('color', coverage.color);
+          } else {
+            // Text coverage output
+            core.info(`coverage: ${coverage.coverage}`);
+            core.info(`color: ${coverage.color}`);
+            core.info(`warnings: ${coverage.warnings}`);
+            core.setOutput('coverage', coverage.coverage);
+            core.setOutput('color', coverage.color);
+            core.setOutput('warnings', coverage.warnings);
+          }
           core.endGroup();
 
-          core.setOutput('coverage', coverage.coverage);
-          core.setOutput('color', coverage.color);
-          core.setOutput('warnings', coverage.warnings);
-
           const newOptions = { ...internalOptions, commit: defaultBranch };
-          const output = getCoverageReport(newOptions);
+          const output = internalOptions.covXmlFile
+            ? getCoverageXmlReport(newOptions)
+            : getCoverageReport(newOptions);
           core.setOutput('coverageHtml', output.html);
 
           if (summary) {
