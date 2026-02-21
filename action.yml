@@ -90,7 +90,9 @@ inputs:
     description: >
       Generate single comment with multiple coverage reports (useful for monorepos).
       Format: One report per line as "Title, coverage-path, junit-path".
-      Example: "Backend API, ./backend/coverage.txt, ./backend/junit.xml"
+      Coverage path can be TXT (from --cov-report=term-missing) or XML (from --cov-report=xml).
+      Examples: "Backend API, ./backend/coverage.txt, ./backend/junit.xml"
+      "Frontend Tests, ./frontend/coverage.xml, ./frontend/junit.xml"
     default: ''
     required: false
 
