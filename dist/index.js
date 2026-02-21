@@ -38711,9 +38711,9 @@ const getTotalCoverage = (parsedXml) => {
   };
 
   // Add branch coverage if present
-  const branchesValid = parseInt(coverage['branches-valid']);
+  const branchesValid = parseInt(coverage['branches-valid'] || '0');
   if (branchesValid > 0) {
-    const branchesCovered = parseInt(coverage['branches-covered']);
+    const branchesCovered = parseInt(coverage['branches-covered'] || '0');
     result.branch = branchesValid.toString();
     result.brpart = (branchesValid - branchesCovered).toString();
   }
@@ -38842,7 +38842,7 @@ const parseClass = (classObj, xmlSkipCovered) => {
   const result = { name, stmts, miss, cover, missing };
 
   // Only include branch info if there are branches
-  if (parseInt(branch) > 0) {
+  if (branch !== '0') {
     result.branch = branch;
     result.brpart = brpart;
   }
