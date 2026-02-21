@@ -1,5 +1,13 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.3.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.3.0)
+
+**Release Date:** 2026-02-21
+
+#### Changes
+
+- feat: add XML coverage support in `multiple-files` mode, auto-detected by `.xml` extension (#200), thanks to [@hayes0724](https://github.com/hayes0724) for contribution
+
 ## [Pytest Coverage Comment 1.2.1](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.2.1)
 
 **Release Date:** 2026-02-21
