@@ -1,0 +1,25 @@
+src/index.js
+  3774d21f296a1f39 371-373
+eslint.config.mjs
+  3774d21f296a1f39 8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "54c45c4b2202ae00e2b7da83b9571b92865574fd",
+  "prompts": {
+    "3774d21f296a1f39": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "712b933f-337a-4986-a726-5d83382a97ab",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Misha Kav <misha.kav@gmail.com>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 2,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    }
+  }
+}
