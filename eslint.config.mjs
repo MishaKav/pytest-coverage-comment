@@ -5,7 +5,7 @@ export default [
   js.configs.recommended,
   {
     languageOptions: {
-      ecmaVersion: 2020,
+      ecmaVersion: 2021,
       sourceType: 'commonjs',
       globals: {
         ...globals.node,
