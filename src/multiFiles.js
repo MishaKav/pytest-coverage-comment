@@ -45,15 +45,16 @@ const getMultipleReport = (options) => {
 `;
     let table = hasXmlReports ? fullTable : miniTable;
 
-    lineReports.forEach((l, i) => {
+    for (let i = 0; i < lineReports.length; i++) {
+      const l = lineReports[i];
       const internalOptions = getOptions(options, l);
 
       // Validate that at least one coverage file is provided
       if (!internalOptions.covFile && !internalOptions.covXmlFile) {
         core.error(
-          `No coverage file provided for "${l.title}". Either covFile or covXmlFile must be specified.`,
+          `No coverage file provided for "${l.title}". Either text coverage file (2nd parameter) or XML coverage file (4th parameter) must be specified.`,
         );
-        return;
+        continue;
       }
 
       // Get coverage based on which file type is provided
@@ -78,7 +79,9 @@ const getMultipleReport = (options) => {
               core.setOutput('coverage', coverage.coverage.cover);
               core.setOutput('color', coverage.color);
             } else {
-              core.error('XML coverage data has unexpected structure');
+              core.error(
+                `XML coverage data has unexpected structure. Expected coverage.coverage.cover property. Please verify the XML coverage file format at "${internalOptions.covXmlFile}".`,
+              );
             }
           } else {
             // Text coverage output
@@ -123,7 +126,7 @@ const getMultipleReport = (options) => {
         table += `
 `;
       }
-    });
+    }
 
     return table;
   } catch (error) {
