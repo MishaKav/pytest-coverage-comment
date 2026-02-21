@@ -1,0 +1,44 @@
+name: Multiline XML Coverage
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  unit-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint/Format/Build
+        run: npm run all
+
+      - name: Run multiline tests
+        run: npm test
+
+  exercise-action-multiline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use local Action with multiple-files (TXT + XML coverage)
+        uses: ./
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          multiple-files: |
+            TXT Sample, ./data/pytest-coverage_4.txt, ./data/pytest_1.xml
+            XML Sample, ./data/coverage_1.xml, ./data/pytest_1.xml
+          hide-comment: true
+          remove-link-from-badge: true
+          default-branch: main
