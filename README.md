@@ -291,9 +291,11 @@ jobs:
 
 **Format**: Each line follows the pattern: `Title, text-coverage-path, junit-xml-path, xml-coverage-path`
 - **Title**: Display name for the report
-- **text-coverage-path**: Path to text coverage file (from `--cov-report=term-missing`) - optional if xml-coverage-path is provided
+- **text-coverage-path**: Path to text coverage file (from `--cov-report=term-missing`) - leave empty if using xml-coverage-path
 - **junit-xml-path**: Path to JUnit XML file (from `--junitxml`) - optional
-- **xml-coverage-path**: Path to XML coverage file (from `--cov-report=xml`) - optional if text-coverage-path is provided
+- **xml-coverage-path**: Path to XML coverage file (from `--cov-report=xml`) - leave empty if using text-coverage-path
+
+**Note**: At least one of text-coverage-path or xml-coverage-path must be provided. If both are provided, xml-coverage-path takes precedence.
 
 This creates a consolidated table showing all coverage reports:
 

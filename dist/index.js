@@ -36695,6 +36695,16 @@ const getMultipleReport = (options) => {
 
     lineReports.forEach((l, i) => {
       const internalOptions = getOptions(options, l);
+
+      // Validate that at least one coverage file is provided
+      if (!internalOptions.covFile && !internalOptions.covXmlFile) {
+        core.error(
+          `No coverage file provided for "${l.title}". Either covFile or covXmlFile must be specified.`,
+        );
+        return;
+      }
+
+      // Get coverage based on which file type is provided
       const coverage = internalOptions.covXmlFile
         ? getCoverageXmlReport(internalOptions)
         : getCoverageReport(internalOptions);
@@ -36710,10 +36720,14 @@ const getMultipleReport = (options) => {
 
           if (internalOptions.covXmlFile) {
             // XML coverage output
-            core.info(`coverage: ${coverage.coverage.cover}`);
-            core.info(`color: ${coverage.color}`);
-            core.setOutput('coverage', coverage.coverage.cover);
-            core.setOutput('color', coverage.color);
+            if (coverage.coverage && coverage.coverage.cover) {
+              core.info(`coverage: ${coverage.coverage.cover}`);
+              core.info(`color: ${coverage.color}`);
+              core.setOutput('coverage', coverage.coverage.cover);
+              core.setOutput('color', coverage.color);
+            } else {
+              core.error('XML coverage data has unexpected structure');
+            }
           } else {
             // Text coverage output
             core.info(`coverage: ${coverage.coverage}`);

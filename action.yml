@@ -92,7 +92,8 @@ inputs:
       Format: One report per line as "Title, coverage-path, junit-path, xml-coverage-path".
       Example with text coverage: "Backend API, ./backend/coverage.txt, ./backend/junit.xml"
       Example with XML coverage: "Backend API, , ./backend/junit.xml, ./backend/coverage.xml"
-      Note: Either coverage-path (2nd field) or xml-coverage-path (4th field) must be provided, but not both.
+      Note: At least one of coverage-path (2nd field) or xml-coverage-path (4th field) must be provided.
+      If both are provided, xml-coverage-path takes precedence.
     default: ''
     required: false
 
