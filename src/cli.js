@@ -4,7 +4,6 @@ const { getCoverageReport } = require('./parse');
 const {
   getSummaryReport,
   getParsedXml,
-  getNotSuccessTest,
 } = require('./junitXml');
 const { getMultipleReport } = require('./multiFiles');
 const { getCoverageXmlReport } = require('./parseXml');
@@ -90,7 +89,7 @@ const main = async () => {
     const parsedXml = getParsedXml(options);
     const { errors, failures, skipped, tests, time } = parsedXml;
     const valuesToExport = { errors, failures, skipped, tests, time };
-    const notSuccessTestInfo = getNotSuccessTest(options);
+    const notSuccessTestInfo = parsedXml.notSuccessTestInfo;
 
     console.log('notSuccessTestInfo', JSON.stringify(notSuccessTestInfo));
 
