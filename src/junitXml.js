@@ -108,7 +108,9 @@ const getNotSuccessTest = (options) => {
 const toMarkdown = (summary, options) => {
   const { errors, failures, skipped, tests, time } = summary;
   const displayTime =
-    time > 60 ? `${(time / 60) | 0}m ${time % 60 | 0}s` : `${time.toFixed(3)}s`;
+    time > 60
+      ? `${(time / 60) | 0}m ${(time % 60) | 0}s`
+      : `${time.toFixed(3)}s`;
   const table = `| Tests | Skipped | Failures | Errors | Time |
 | ----- | ------- | -------- | -------- | ------------------ |
 | ${tests} | ${skipped} :zzz: | ${failures} :x: | ${errors} :fire: | ${displayTime} :stopwatch: |

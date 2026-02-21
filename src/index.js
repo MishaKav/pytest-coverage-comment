@@ -305,7 +305,7 @@ const main = async () => {
   let report = options.covXmlFile
     ? getCoverageXmlReport(options)
     : getCoverageReport(options);
-  const { coverage, color, html, warnings } = report;
+  let { coverage, color, html, warnings } = report;
   const summaryReport = getSummaryReport(options);
 
   if (summaryReport && summaryReport.html) {
@@ -368,7 +368,10 @@ const main = async () => {
       warningsArr.push('- Add "remove-links-to-lines: true" to remove line number links');
     }
     core.warning(warningsArr.join('\n'));
-    report = getSummaryReport({ ...options, hideReport: true });
+    report = options.covXmlFile
+      ? getCoverageXmlReport({ ...options, hideReport: true })
+      : getCoverageReport({ ...options, hideReport: true });
+    html = report.html;
   }
 
   finalHtml += html;
