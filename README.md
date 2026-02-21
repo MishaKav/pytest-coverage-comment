@@ -45,6 +45,7 @@ A GitHub Action that adds pytest coverage reports as comments to your pull reque
     - [Multiple Files (Monorepo)](#multiple-files-monorepo)
   - [🔧 Troubleshooting](#-troubleshooting)
     - [Comment Not Appearing](#comment-not-appearing)
+    - [Fork PRs](#fork-prs)
     - [Unrecognized Arguments Error](#unrecognized-arguments-error)
     - [Coverage Report Too Large](#coverage-report-too-large)
     - [GitHub Step Summary Too Large](#github-step-summary-too-large)
@@ -602,6 +603,26 @@ Instead of a badge image:
    - Check branch protection rules aren't blocking automated comments
 
 **Why it works on forks but not main repos**: Forks often have different default permission settings than the main repository. Organizations frequently set restrictive defaults for security.
+
+### Fork PRs
+
+**Issue**: Permission denied when a pull request is opened from a fork.
+
+**Root Cause**: GitHub restricts the `GITHUB_TOKEN` to **read-only** for `pull_request` events triggered from forks. This is a security measure — even if your workflow has `pull-requests: write`, the token is downgraded for fork PRs.
+
+**Solution**: Use the `pull_request_target` event, which runs in the context of the base branch and gets a token with write permissions:
+
+```yaml
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+```
+
+> **Security Warning**: `pull_request_target` runs with access to the base repo's secrets and a write token. Never checkout and run untrusted code from the fork with these elevated permissions. Only check out the base branch code, or carefully limit what fork code is executed.
 
 ### Unrecognized Arguments Error
 
