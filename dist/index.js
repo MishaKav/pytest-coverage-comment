@@ -36711,57 +36711,63 @@ const getMultipleReport = (options) => {
         : getCoverageReport(internalOptions);
       const summary = getParsedXml(internalOptions);
 
-      if (coverage && coverage.html) {
-        table += `| ${l.title} | ${coverage.html}`;
-
-        if (i === 0) {
-          const coverageFile =
-            internalOptions.covXmlFile || internalOptions.covFile;
-          core.startGroup(coverageFile);
-
-          if (internalOptions.covXmlFile) {
-            // XML coverage output
-            if (coverage.coverage && coverage.coverage.cover) {
-              core.info(`coverage: ${coverage.coverage.cover}`);
-              core.info(`color: ${coverage.color}`);
-              core.setOutput('coverage', coverage.coverage.cover);
-              core.setOutput('color', coverage.color);
-            } else {
-              core.error(
-                `XML coverage data has unexpected structure. Expected coverage.coverage.cover property. Please verify the XML coverage file format at "${internalOptions.covXmlFile}".`,
-              );
-            }
-          } else {
-            // Text coverage output
-            core.info(`coverage: ${coverage.coverage}`);
-            core.info(`color: ${coverage.color}`);
-            core.info(`warnings: ${coverage.warnings}`);
-            core.setOutput('coverage', coverage.coverage);
-            core.setOutput('color', coverage.color);
-            core.setOutput('warnings', coverage.warnings);
-          }
-          core.endGroup();
-
-          const newOptions = { ...internalOptions, commit: defaultBranch };
-          const output = internalOptions.covXmlFile
-            ? getCoverageXmlReport(newOptions)
-            : getCoverageReport(newOptions);
-          core.setOutput('coverageHtml', output.html);
-
-          if (summary) {
-            const { errors, failures, skipped, tests, time } = summary;
-            const valuesToExport = { errors, failures, skipped, tests, time };
-
-            core.startGroup(internalOptions.xmlFile);
-            Object.entries(valuesToExport).forEach(([key, value]) => {
-              core.setOutput(key, value);
-              core.info(`${key}: ${value}`);
-            });
-            core.endGroup();
-          }
+      // Skip if coverage data could not be parsed
+      if (!coverage || !coverage.html) {
+        if (summary) {
+          table += `| ${l.title} |  `;
         }
-      } else if (summary) {
-        table += `| ${l.title} |  `;
+        continue;
+      }
+
+      table += `| ${l.title} | ${coverage.html}`;
+
+      if (i === 0) {
+        const coverageFile =
+          internalOptions.covXmlFile || internalOptions.covFile;
+        core.startGroup(coverageFile);
+
+        if (internalOptions.covXmlFile) {
+          // XML coverage output structure: { coverage: { cover: "31%" }, color: "red", html: "..." }
+          // Note: coverage.coverage is the data object from getCoverageXmlReport
+          const coverageData = coverage.coverage;
+          if (coverageData && coverageData.cover) {
+            core.info(`coverage: ${coverageData.cover}`);
+            core.info(`color: ${coverage.color}`);
+            core.setOutput('coverage', coverageData.cover);
+            core.setOutput('color', coverage.color);
+          } else {
+            core.error(
+              `XML coverage data has unexpected structure. Expected coverage.coverage.cover property. Please verify the XML coverage file format at "${internalOptions.covXmlFile}".`,
+            );
+          }
+        } else {
+          // Text coverage output structure: { coverage: "30%", color: "red", html: "..." }
+          core.info(`coverage: ${coverage.coverage}`);
+          core.info(`color: ${coverage.color}`);
+          core.info(`warnings: ${coverage.warnings}`);
+          core.setOutput('coverage', coverage.coverage);
+          core.setOutput('color', coverage.color);
+          core.setOutput('warnings', coverage.warnings);
+        }
+        core.endGroup();
+
+        const newOptions = { ...internalOptions, commit: defaultBranch };
+        const output = internalOptions.covXmlFile
+          ? getCoverageXmlReport(newOptions)
+          : getCoverageReport(newOptions);
+        core.setOutput('coverageHtml', output.html);
+
+        if (summary) {
+          const { errors, failures, skipped, tests, time } = summary;
+          const valuesToExport = { errors, failures, skipped, tests, time };
+
+          core.startGroup(internalOptions.xmlFile);
+          Object.entries(valuesToExport).forEach(([key, value]) => {
+            core.setOutput(key, value);
+            core.info(`${key}: ${value}`);
+          });
+          core.endGroup();
+        }
       }
 
       if (hasXmlReports && summary) {
