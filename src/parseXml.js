@@ -34,8 +34,8 @@ const getTotalCoverage = (parsedXml) => {
   };
 
   if (branchesValid > 0) {
-    result.branch = branchesValid;
-    result.brpart = branchesValid - branchesCovered;
+    result.branch = branchesValid.toString();
+    result.brpart = (branchesValid - branchesCovered).toString();
   }
 
   return result;

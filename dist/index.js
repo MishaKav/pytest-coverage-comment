@@ -38429,8 +38429,9 @@ const parseTotalLine = (line, hasBranch = false) => {
   }
 
   const parsedLine = line.split('  ').filter((l) => l);
+  const minCols = hasBranch ? 6 : 4;
 
-  if (parsedLine.length < 4) {
+  if (parsedLine.length < minCols) {
     return null;
   }
 
@@ -38698,8 +38699,8 @@ const getTotalCoverage = (parsedXml) => {
   };
 
   if (branchesValid > 0) {
-    result.branch = branchesValid;
-    result.brpart = branchesValid - branchesCovered;
+    result.branch = branchesValid.toString();
+    result.brpart = (branchesValid - branchesCovered).toString();
   }
 
   return result;

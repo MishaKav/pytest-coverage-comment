@@ -157,8 +157,9 @@ const parseTotalLine = (line, hasBranch = false) => {
   }
 
   const parsedLine = line.split('  ').filter((l) => l);
+  const minCols = hasBranch ? 6 : 4;
 
-  if (parsedLine.length < 4) {
+  if (parsedLine.length < minCols) {
     return null;
   }
 
