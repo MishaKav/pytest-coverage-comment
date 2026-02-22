@@ -1,0 +1,31 @@
+package.json
+  e4d11f7ea86e91b5 3
+src/parse.js
+  e4d11f7ea86e91b5 21-29,91,93,115,121,123,137,144-150,154,165,171-177,188-190,257,304-305,307-308,317-320,322-323,329-333,335-336,360
+src/cli.js
+  e4d11f7ea86e91b5 39
+CHANGELOG.md
+  e4d11f7ea86e91b5 3-13
+src/parseXml.js
+  e4d11f7ea86e91b5 26-27,29,35-41,141-143,156-160,162-163,167-174,176,181-182,188-190,196-205,228-229
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "42df2aaa5293c8ef05f1e2946cccddf16c9adcb9",
+  "prompts": {
+    "e4d11f7ea86e91b5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5b3d2a8f-737a-4385-aab8-0915eeaed774",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Misha Kav <misha.kav@gmail.com>",
+      "messages": [],
+      "total_additions": 143,
+      "total_deletions": 39,
+      "accepted_lines": 114,
+      "overriden_lines": 0
+    }
+  }
+}
