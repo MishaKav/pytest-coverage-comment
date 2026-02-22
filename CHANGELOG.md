@@ -1,5 +1,16 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.4.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.4.0)
+
+**Release Date:** 2026-02-22
+
+#### Changes
+
+- feat: auto-detect and display branch coverage columns (`Branch`, `BrPart`) in coverage table (#110)
+- supported for both text format (`pytest --cov --cov-branch`) and XML format (`coverage.xml`)
+- no new action inputs required — columns appear automatically when branch data is present
+- fully backward compatible — existing users see no change
+
 ## [Pytest Coverage Comment 1.3.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.3.0)
 
 **Release Date:** 2026-02-21
