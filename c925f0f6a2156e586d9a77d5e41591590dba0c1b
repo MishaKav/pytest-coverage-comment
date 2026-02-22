@@ -1,0 +1,25 @@
+src/parse.js
+  e4d11f7ea86e91b5 160,162
+src/parseXml.js
+  e4d11f7ea86e91b5 37-38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "c925f0f6a2156e586d9a77d5e41591590dba0c1b",
+  "prompts": {
+    "e4d11f7ea86e91b5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5b3d2a8f-737a-4385-aab8-0915eeaed774",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Misha Kav <misha.kav@gmail.com>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 3,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    }
+  }
+}
