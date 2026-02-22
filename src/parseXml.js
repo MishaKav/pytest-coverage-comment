@@ -23,13 +23,22 @@ const getTotalCoverage = (parsedXml) => {
   const cover = parseInt(parseFloat(coverage['line-rate']) * 100);
   const linesValid = parseInt(coverage['lines-valid']);
   const linesCovered = parseInt(coverage['lines-covered']);
+  const branchesValid = parseInt(coverage['branches-valid']) || 0;
+  const branchesCovered = parseInt(coverage['branches-covered']) || 0;
 
-  return {
+  const result = {
     name: 'TOTAL',
     stmts: linesValid,
     miss: linesValid - linesCovered,
     cover: cover !== '0' ? `${cover}%` : '0',
   };
+
+  if (branchesValid > 0) {
+    result.branch = branchesValid;
+    result.brpart = branchesValid - branchesCovered;
+  }
+
+  return result;
 };
 
 // return true if "coverage file" include right structure
@@ -126,7 +135,13 @@ const parseClass = (classObj, xmlSkipCovered) => {
     return null;
   }
 
-  const { stmts, missing, totalMissing: miss } = parseLines(classObj.lines);
+  const {
+    stmts,
+    missing,
+    totalMissing: miss,
+    branchTotal,
+    branchMissing,
+  } = parseLines(classObj.lines);
   const { filename: name, 'line-rate': lineRate } = classObj['$'];
   const isFullCoverage = lineRate === '1';
 
@@ -138,23 +153,56 @@ const parseClass = (classObj, xmlSkipCovered) => {
     ? '100%'
     : `${parseInt(parseFloat(lineRate) * 100)}%`;
 
-  return { name, stmts, miss, cover, missing };
+  const result = { name, stmts, miss, cover, missing };
+
+  if (branchTotal > 0) {
+    result.branch = branchTotal.toString();
+    result.brpart = branchMissing.toString();
+  }
+
+  return result;
 };
 
 const parseLines = (lines) => {
+  const emptyResult = {
+    stmts: '0',
+    missing: '',
+    totalMissing: '0',
+    branchTotal: 0,
+    branchMissing: 0,
+  };
+
   if (!lines || !lines.length || !lines[0].line) {
-    return { stmts: '0', missing: '', totalMissing: '0' };
+    return emptyResult;
   }
 
   let stmts = 0;
   const missingLines = [];
+  let branchTotal = 0;
+  let branchMissing = 0;
 
   lines[0].line.forEach((line) => {
     stmts++;
-    const { hits, number } = line['$'];
+    const {
+      hits,
+      number,
+      branch,
+      'condition-coverage': condCoverage,
+    } = line['$'];
 
     if (hits === '0') {
       missingLines.push(parseInt(number));
+    }
+
+    if (branch === 'true' && condCoverage) {
+      const match = condCoverage.match(/\((\d+)\/(\d+)\)/);
+
+      if (match) {
+        const covered = parseInt(match[1]);
+        const total = parseInt(match[2]);
+        branchTotal += total;
+        branchMissing += total - covered;
+      }
     }
   });
 
@@ -177,6 +225,8 @@ const parseLines = (lines) => {
     stmts: stmts.toString(),
     missing: missingText,
     totalMissing: missingLines.length.toString(),
+    branchTotal,
+    branchMissing,
   };
 };
 
