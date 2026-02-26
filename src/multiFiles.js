@@ -105,11 +105,11 @@ const getMultipleReport = (options) => {
         const { errors, failures, skipped, tests, time } = summary;
         const displayTime =
           time > 60 ? `${(time / 60) | 0}m ${(time % 60) | 0}s` : `${time}s`;
-        const zzz = options.hideEmoji ? '' : ' :zzz:';
-        const x = options.hideEmoji ? '' : ' :x:';
-        const fire = options.hideEmoji ? '' : ' :fire:';
-        const stopwatch = options.hideEmoji ? '' : ' :stopwatch:';
-        table += `| ${tests} | ${skipped}${zzz} | ${failures}${x} | ${errors}${fire} | ${displayTime}${stopwatch} |
+        const skippedEmoji = options.hideEmoji ? '' : ' :zzz:';
+        const failuresEmoji = options.hideEmoji ? '' : ' :x:';
+        const errorsEmoji = options.hideEmoji ? '' : ' :fire:';
+        const timeEmoji = options.hideEmoji ? '' : ' :stopwatch:';
+        table += `| ${tests} | ${skipped}${skippedEmoji} | ${failures}${failuresEmoji} | ${errors}${errorsEmoji} | ${displayTime}${timeEmoji} |
 `;
       } else {
         table += `
