@@ -211,6 +211,9 @@ const main = async () => {
   const textInsteadBadge = core.getBooleanInput('text-instead-badge', {
     required: false,
   });
+  const hideEmoji = core.getBooleanInput('hide-emoji', {
+    required: false,
+  });
   const uniqueIdForComment = core.getInput('unique-id-for-comment', {
     required: false,
   });
@@ -258,6 +261,7 @@ const main = async () => {
     removeLinksToFiles,
     removeLinksToLines,
     textInsteadBadge,
+    hideEmoji,
     defaultBranch,
     xmlTitle,
     multipleFiles,

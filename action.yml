@@ -121,6 +121,11 @@ inputs:
     default: 'false'
     required: false
 
+  hide-emoji:
+    description: 'Hide emojis from the test summary table'
+    default: 'false'
+    required: false
+
 outputs:
   coverage:
     description: 'Coverage percentage from pytest report (e.g., 85%)'

@@ -38118,9 +38118,15 @@ const toMarkdown = (summary, options) => {
     time > 60
       ? `${(time / 60) | 0}m ${(time % 60) | 0}s`
       : `${time.toFixed(3)}s`;
+  
+  const zzz = options.hideEmoji ? '' : ' :zzz:';
+  const x = options.hideEmoji ? '' : ' :x:';
+  const fire = options.hideEmoji ? '' : ' :fire:';
+  const stopwatch = options.hideEmoji ? '' : ' :stopwatch:';
+  
   const table = `| Tests | Skipped | Failures | Errors | Time |
 | ----- | ------- | -------- | -------- | ------------------ |
-| ${tests} | ${skipped} :zzz: | ${failures} :x: | ${errors} :fire: | ${displayTime} :stopwatch: |
+| ${tests} | ${skipped}${zzz} | ${failures}${x} | ${errors}${fire} | ${displayTime}${stopwatch} |
 `;
 
   if (options.xmlTitle) {
@@ -38246,7 +38252,11 @@ const getMultipleReport = (options) => {
         const { errors, failures, skipped, tests, time } = summary;
         const displayTime =
           time > 60 ? `${(time / 60) | 0}m ${(time % 60) | 0}s` : `${time}s`;
-        table += `| ${tests} | ${skipped} :zzz: | ${failures} :x: | ${errors} :fire: | ${displayTime} :stopwatch: |
+        const zzz = options.hideEmoji ? '' : ' :zzz:';
+        const x = options.hideEmoji ? '' : ' :x:';
+        const fire = options.hideEmoji ? '' : ' :fire:';
+        const stopwatch = options.hideEmoji ? '' : ' :stopwatch:';
+        table += `| ${tests} | ${skipped}${zzz} | ${failures}${x} | ${errors}${fire} | ${displayTime}${stopwatch} |
 `;
       } else {
         table += `
@@ -43861,6 +43871,9 @@ const main = async () => {
   const textInsteadBadge = core.getBooleanInput('text-instead-badge', {
     required: false,
   });
+  const hideEmoji = core.getBooleanInput('hide-emoji', {
+    required: false,
+  });
   const uniqueIdForComment = core.getInput('unique-id-for-comment', {
     required: false,
   });
@@ -43908,6 +43921,7 @@ const main = async () => {
     removeLinksToFiles,
     removeLinksToLines,
     textInsteadBadge,
+    hideEmoji,
     defaultBranch,
     xmlTitle,
     multipleFiles,
