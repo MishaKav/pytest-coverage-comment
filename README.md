@@ -173,6 +173,7 @@ jobs:
 | `remove-links-to-files`     | `false`           | Remove file links from coverage table to reduce comment size        |
 | `remove-links-to-lines`     | `false`           | Remove line number links from coverage table to reduce comment size |
 | `text-instead-badge`        | `false`           | Use simple text instead of badge images for coverage display        |
+| `hide-emoji`                | `false`           | Hide emojis from the test summary table                             |
 
 </details>
 
@@ -276,6 +277,32 @@ This creates a consolidated table showing all coverage reports:
 **Output**: Combined table showing coverage and test results for all packages.
 
 <img alt="Multiple Files Mode Example" src="https://user-images.githubusercontent.com/289035/122121939-ddd0c500-ce34-11eb-8546-89a8a769e065.png">
+
+</details>
+
+### Clean Summary Without Emojis
+
+<details>
+<summary>Hide emojis for a cleaner appearance</summary>
+
+```yaml
+- name: Coverage comment
+  uses: MishaKav/pytest-coverage-comment@main
+  with:
+    pytest-coverage-path: ./pytest-coverage.txt
+    junitxml-path: ./pytest.xml
+    hide-emoji: true
+```
+
+**Default behavior** (with emojis):
+| Tests | Skipped | Failures | Errors | Time |
+| ----- | ------- | -------- | ------ | ---- |
+| 109   | 2 :zzz: | 1 :x:    | 0 :fire: | 0.583s :stopwatch: |
+
+**With `hide-emoji: true`**:
+| Tests | Skipped | Failures | Errors | Time |
+| ----- | ------- | -------- | ------ | ---- |
+| 109   | 2       | 1        | 0      | 0.583s |
 
 </details>
 
