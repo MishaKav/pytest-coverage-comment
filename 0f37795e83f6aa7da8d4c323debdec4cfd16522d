@@ -1,0 +1,35 @@
+CHANGELOG.md
+  923e4d2160a36557 3-11
+src/multiFiles.js
+  923e4d2160a36557 108-109
+README.md
+  923e4d2160a36557 94,118,121,134,170,227,246,261,283-308,324,345,382,393,429,446,475,503,519
+action.yml
+  923e4d2160a36557 59-63
+src/cli.js
+  923e4d2160a36557 70
+src/index.js
+  923e4d2160a36557 195,256
+src/junitXml.js
+  923e4d2160a36557 114,117
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.6",
+  "base_commit_sha": "0f37795e83f6aa7da8d4c323debdec4cfd16522d",
+  "prompts": {
+    "923e4d2160a36557": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3a0ef54b-3589-4cfb-b8b6-2c709a39e952",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Misha Kav <misha.kav@gmail.com>",
+      "messages": [],
+      "total_additions": 77,
+      "total_deletions": 31,
+      "accepted_lines": 64,
+      "overriden_lines": 0
+    }
+  }
+}
