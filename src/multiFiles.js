@@ -105,7 +105,8 @@ const getMultipleReport = (options) => {
         const { errors, failures, skipped, tests, time } = summary;
         const displayTime =
           time > 60 ? `${(time / 60) | 0}m ${(time % 60) | 0}s` : `${time}s`;
-        table += `| ${tests} | ${skipped} :zzz: | ${failures} :x: | ${errors} :fire: | ${displayTime} :stopwatch: |
+        const e = (emoji) => (options.hideEmoji ? '' : ` ${emoji}`);
+        table += `| ${tests} | ${skipped}${e(':zzz:')} | ${failures}${e(':x:')} | ${errors}${e(':fire:')} | ${displayTime}${e(':stopwatch:')} |
 `;
       } else {
         table += `

@@ -56,6 +56,11 @@ inputs:
     default: 'false'
     required: false
 
+  hide-emoji:
+    description: 'Hide emojis in the test summary table (skipped/failures/errors/time columns)'
+    default: 'false'
+    required: false
+
   xml-skip-covered:
     description: 'Hide files with 100% coverage from XML coverage reports'
     default: 'false'
