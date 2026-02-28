@@ -30,7 +30,7 @@
     "test": "node test/multiple-files.test.js"
   },
   "dependencies": {
-    "@actions/core": "^2.0.3",
+    "@actions/core": "^3.0.0",
     "@actions/github": "^8.0.1",
     "xml2js": "^0.6.2"
   },
