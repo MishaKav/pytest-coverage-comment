@@ -38118,9 +38118,10 @@ const toMarkdown = (summary, options) => {
     time > 60
       ? `${(time / 60) | 0}m ${(time % 60) | 0}s`
       : `${time.toFixed(3)}s`;
+  const e = (emoji) => (options.hideEmoji ? '' : ` ${emoji}`);
   const table = `| Tests | Skipped | Failures | Errors | Time |
 | ----- | ------- | -------- | -------- | ------------------ |
-| ${tests} | ${skipped} :zzz: | ${failures} :x: | ${errors} :fire: | ${displayTime} :stopwatch: |
+| ${tests} | ${skipped}${e(':zzz:')} | ${failures}${e(':x:')} | ${errors}${e(':fire:')} | ${displayTime}${e(':stopwatch:')} |
 `;
 
   if (options.xmlTitle) {
@@ -38246,7 +38247,8 @@ const getMultipleReport = (options) => {
         const { errors, failures, skipped, tests, time } = summary;
         const displayTime =
           time > 60 ? `${(time / 60) | 0}m ${(time % 60) | 0}s` : `${time}s`;
-        table += `| ${tests} | ${skipped} :zzz: | ${failures} :x: | ${errors} :fire: | ${displayTime} :stopwatch: |
+        const e = (emoji) => (options.hideEmoji ? '' : ` ${emoji}`);
+        table += `| ${tests} | ${skipped}${e(':zzz:')} | ${failures}${e(':x:')} | ${errors}${e(':fire:')} | ${displayTime}${e(':stopwatch:')} |
 `;
       } else {
         table += `
@@ -43842,6 +43844,7 @@ const main = async () => {
     required: false,
   });
   const hideComment = core.getBooleanInput('hide-comment', { required: false });
+  const hideEmoji = core.getBooleanInput('hide-emoji', { required: false });
   const xmlSkipCovered = core.getBooleanInput('xml-skip-covered', {
     required: false,
   });
@@ -43902,6 +43905,7 @@ const main = async () => {
     hideReport,
     createNewComment,
     hideComment,
+    hideEmoji,
     xmlSkipCovered,
     reportOnlyChangedFiles,
     removeLinkFromBadge,

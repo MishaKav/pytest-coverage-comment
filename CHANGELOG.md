@@ -1,5 +1,14 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.5.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.5.0)
+
+**Release Date:** 2026-02-28
+
+#### Changes
+
+- feat: add `hide-emoji` option to hide emoji shortcodes from the test summary table (#251)
+- docs: update README examples to use `@v1` tag and latest action versions (`checkout@v6`, `setup-python@v6`)
+
 ## [Pytest Coverage Comment 1.4.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.4.0)
 
 **Release Date:** 2026-02-22

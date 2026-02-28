@@ -91,7 +91,7 @@ Add this action to your workflow:
 
 ```yaml
 - name: Pytest coverage comment
-  uses: MishaKav/pytest-coverage-comment@main
+  uses: MishaKav/pytest-coverage-comment@v1
   with:
     pytest-coverage-path: ./pytest-coverage.txt
     junitxml-path: ./pytest.xml
@@ -115,10 +115,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.11
 
@@ -131,7 +131,7 @@ jobs:
           pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=src tests/ | tee pytest-coverage.txt
 
       - name: Pytest coverage comment
-        uses: MishaKav/pytest-coverage-comment@main
+        uses: MishaKav/pytest-coverage-comment@v1
         with:
           pytest-coverage-path: ./pytest-coverage.txt
           junitxml-path: ./pytest.xml
@@ -167,6 +167,7 @@ jobs:
 | `hide-badge`                | `false`           | Hide the coverage percentage badge from the comment                 |
 | `hide-report`               | `false`           | Hide the detailed coverage table (show only summary and badge)      |
 | `hide-comment`              | `false`           | Skip creating PR comment entirely (useful for using outputs only)   |
+| `hide-emoji`                | `false`           | Hide emojis from the test summary table                             |
 | `report-only-changed-files` | `false`           | Show only files changed in the current pull request                 |
 | `xml-skip-covered`          | `false`           | Hide files with 100% coverage from XML coverage reports             |
 | `remove-link-from-badge`    | `false`           | Remove hyperlink from coverage badge (badge becomes plain image)    |
@@ -223,7 +224,7 @@ jobs:
     pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=src tests/ | tee pytest-coverage.txt
 
 - name: Coverage comment
-  uses: MishaKav/pytest-coverage-comment@main
+  uses: MishaKav/pytest-coverage-comment@v1
   with:
     pytest-coverage-path: ./pytest-coverage.txt
     junitxml-path: ./pytest.xml
@@ -242,7 +243,7 @@ jobs:
     pytest --cov-report=xml:coverage.xml --cov=src tests/
 
 - name: Coverage comment
-  uses: MishaKav/pytest-coverage-comment@main
+  uses: MishaKav/pytest-coverage-comment@v1
   with:
     pytest-xml-coverage-path: ./coverage.xml
     junitxml-path: ./pytest.xml
@@ -257,7 +258,7 @@ jobs:
 
 ```yaml
 - name: Coverage comment
-  uses: MishaKav/pytest-coverage-comment@main
+  uses: MishaKav/pytest-coverage-comment@v1
   with:
     multiple-files: |
       Backend API, ./backend/pytest-coverage.txt, ./backend/pytest.xml
@@ -279,6 +280,32 @@ This creates a consolidated table showing all coverage reports:
 
 </details>
 
+### Clean Summary Without Emojis
+
+<details>
+<summary>Hide emojis for a cleaner appearance</summary>
+
+```yaml
+- name: Coverage comment
+  uses: MishaKav/pytest-coverage-comment@v1
+  with:
+    pytest-coverage-path: ./pytest-coverage.txt
+    junitxml-path: ./pytest.xml
+    hide-emoji: true
+```
+
+**Default behavior** (with emojis):
+| Tests | Skipped | Failures | Errors | Time |
+| ----- | ------- | -------- | ------ | ---- |
+| 109   | 2 :zzz: | 1 :x:    | 0 :fire: | 0.583s :stopwatch: |
+
+**With `hide-emoji: true`**:
+| Tests | Skipped | Failures | Errors | Time |
+| ----- | ------- | -------- | ------ | ---- |
+| 109   | 2       | 1        | 0      | 0.583s |
+
+</details>
+
 ### Docker Workflows
 
 <details>
@@ -294,7 +321,7 @@ This creates a consolidated table showing all coverage reports:
         --cov=src tests/ | tee /tmp/pytest-coverage.txt
 
 - name: Coverage comment
-  uses: MishaKav/pytest-coverage-comment@main
+  uses: MishaKav/pytest-coverage-comment@v1
   with:
     pytest-coverage-path: /tmp/pytest-coverage.txt
     junitxml-path: /tmp/pytest.xml
@@ -315,7 +342,7 @@ strategy:
 
 steps:
   - name: Coverage comment
-    uses: MishaKav/pytest-coverage-comment@main
+    uses: MishaKav/pytest-coverage-comment@v1
     with:
       pytest-coverage-path: ./pytest-coverage.txt
       junitxml-path: ./pytest.xml
@@ -352,7 +379,7 @@ jobs:
   update-badge:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -363,7 +390,7 @@ jobs:
 
       - name: Coverage comment
         id: coverage
-        uses: MishaKav/pytest-coverage-comment@main
+        uses: MishaKav/pytest-coverage-comment@v1
         with:
           pytest-coverage-path: ./pytest-coverage.txt
           junitxml-path: ./pytest.xml
@@ -399,7 +426,7 @@ Here's what the generated coverage comment looks like:
 
 ```yaml
 - name: Coverage comment
-  uses: MishaKav/pytest-coverage-comment@main
+  uses: MishaKav/pytest-coverage-comment@v1
   with:
     pytest-coverage-path: ./pytest-coverage.txt
     junitxml-path: ./pytest.xml
@@ -416,7 +443,7 @@ Displays coverage as `85% (42/50)` instead of a badge image.
 ```yaml
 - name: Coverage comment
   id: coverage
-  uses: MishaKav/pytest-coverage-comment@main
+  uses: MishaKav/pytest-coverage-comment@v1
   with:
     pytest-coverage-path: ./pytest-coverage.txt
     junitxml-path: ./pytest.xml
@@ -445,7 +472,7 @@ Displays coverage as `85% (42/50)` instead of a badge image.
 
 ```yaml
 - name: Coverage comment (changed files only)
-  uses: MishaKav/pytest-coverage-comment@main
+  uses: MishaKav/pytest-coverage-comment@v1
   with:
     pytest-coverage-path: ./pytest-coverage.txt
     junitxml-path: ./pytest.xml
@@ -473,7 +500,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Coverage comment
-        uses: MishaKav/pytest-coverage-comment@main
+        uses: MishaKav/pytest-coverage-comment@v1
         with:
           pytest-coverage-path: ./pytest-coverage.txt
           junitxml-path: ./pytest.xml
@@ -489,7 +516,7 @@ For large coverage reports that might exceed GitHub's comment size limits:
 
 ```yaml
 - name: Coverage comment
-  uses: MishaKav/pytest-coverage-comment@main
+  uses: MishaKav/pytest-coverage-comment@v1
   with:
     pytest-coverage-path: ./pytest-coverage.txt
     junitxml-path: ./pytest.xml

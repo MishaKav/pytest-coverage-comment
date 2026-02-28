@@ -192,6 +192,7 @@ const main = async () => {
     required: false,
   });
   const hideComment = core.getBooleanInput('hide-comment', { required: false });
+  const hideEmoji = core.getBooleanInput('hide-emoji', { required: false });
   const xmlSkipCovered = core.getBooleanInput('xml-skip-covered', {
     required: false,
   });
@@ -252,6 +253,7 @@ const main = async () => {
     hideReport,
     createNewComment,
     hideComment,
+    hideEmoji,
     xmlSkipCovered,
     reportOnlyChangedFiles,
     removeLinkFromBadge,

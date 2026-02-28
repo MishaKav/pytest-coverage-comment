@@ -111,9 +111,10 @@ const toMarkdown = (summary, options) => {
     time > 60
       ? `${(time / 60) | 0}m ${(time % 60) | 0}s`
       : `${time.toFixed(3)}s`;
+  const e = (emoji) => (options.hideEmoji ? '' : ` ${emoji}`);
   const table = `| Tests | Skipped | Failures | Errors | Time |
 | ----- | ------- | -------- | -------- | ------------------ |
-| ${tests} | ${skipped} :zzz: | ${failures} :x: | ${errors} :fire: | ${displayTime} :stopwatch: |
+| ${tests} | ${skipped}${e(':zzz:')} | ${failures}${e(':x:')} | ${errors}${e(':fire:')} | ${displayTime}${e(':stopwatch:')} |
 `;
 
   if (options.xmlTitle) {
