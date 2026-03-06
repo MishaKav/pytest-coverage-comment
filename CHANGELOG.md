@@ -1,5 +1,16 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.6.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.6.0)
+
+**Release Date:** 2026-03-06
+
+#### Changes
+
+- migrate codebase from JavaScript to TypeScript
+- add unit tests (91 tests) using Vitest with V8 coverage
+
+**Note:** This is an internal rewrite — no changes to action inputs, outputs, or behavior. Fully backward compatible.
+
 ## [Pytest Coverage Comment 1.5.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.5.0)
 
 **Release Date:** 2026-02-28

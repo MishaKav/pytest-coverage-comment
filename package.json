@@ -1,6 +1,6 @@
 {
   "name": "pytest-coverage-comment",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Comments a pull request with the pytest code coverage badge, full report and tests summary",
   "author": "Misha Kav",
   "license": "MIT",
@@ -18,16 +18,19 @@
     "url": "https://github.com/MishaKav/pytest-coverage-comment/issues"
   },
   "homepage": "https://github.com/MishaKav/pytest-coverage-comment/#readme",
-  "main": "src/index.js",
+  "main": "src/index.ts",
   "scripts": {
-    "format": "prettier --write src/**/*.js",
-    "format-check": "prettier --check src/**/*.js",
-    "lint": "eslint src/**/*.js",
-    "build": "ncc build src/index.js --license licenses.txt",
+    "build": "ncc build src/index.ts --license licenses.txt",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write 'src/**/*.ts'",
+    "format-check": "prettier --check 'src/**/*.ts'",
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "bump-version": "npm version patch",
     "update-v1-tag": "git tag v1 -f && git push origin v1 -f",
-    "all": "npm run lint && npm run format && npm run build",
-    "test": "node test/multiple-files.test.js"
+    "all": "npm run typecheck && npm run lint && npm run format && npm run test && npm run build"
   },
   "dependencies": {
     "@actions/core": "^2.0.3",
@@ -35,11 +38,15 @@
     "xml2js": "^0.6.2"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
+    "@types/node": "^25.3.3",
+    "@types/xml2js": "^0.4.14",
     "@vercel/ncc": "^0.38.4",
-    "eslint": "^10.0.1",
-    "globals": "^17.3.0",
-    "prettier": "^3.8.1"
+    "@vitest/coverage-v8": "^4.0.18",
+    "eslint": "^10.0.2",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.1",
+    "vitest": "^4.0.18"
   },
   "prettier": {
     "semi": true,

@@ -1,12 +1,13 @@
-const { getCoverageReport } = require('./parse');
-const { getCoverageXmlReport } = require('./parseXml');
-const { getParsedXml } = require('./junitXml');
-const core = require('@actions/core');
+import { getCoverageReport } from './parse';
+import { getCoverageXmlReport } from './parseXml';
+import { getParsedXml } from './junitXml';
+import * as core from '@actions/core';
+import type { Options, MultipleFileLine } from './types';
 
 // parse oneline from multiple files to object
-const parseLine = (line) => {
+const parseLine = (line: string): MultipleFileLine | null => {
   if (!line || !line.includes(',')) {
-    return '';
+    return null;
   }
 
   const lineArr = line.split(',');
@@ -20,7 +21,7 @@ const parseLine = (line) => {
 
 // make internal options
 // covFile and covXmlFile are mutually exclusive — detected by .xml extension
-const getOptions = (options = {}, line = {}) => {
+const getOptions = (options: Options, line: MultipleFileLine): Options => {
   const isXmlCoverage =
     line.covFile && line.covFile.toLowerCase().endsWith('.xml');
   return {
@@ -35,11 +36,13 @@ const getOptions = (options = {}, line = {}) => {
 };
 
 // return multiple report in markdown format
-const getMultipleReport = (options) => {
+export const getMultipleReport = (options: Options): string => {
   const { multipleFiles, defaultBranch } = options;
 
   try {
-    const lineReports = multipleFiles.map(parseLine).filter((l) => l);
+    const lineReports = multipleFiles
+      .map(parseLine)
+      .filter((l): l is MultipleFileLine => l !== null);
     const hasXmlReports = lineReports.some((l) => l.xmlFile);
     const miniTable = `| Title | Coverage |
 | ----- | ----- |
@@ -64,26 +67,33 @@ const getMultipleReport = (options) => {
             internalOptions.covXmlFile || internalOptions.covFile,
           );
           const coverageValue = internalOptions.covXmlFile
-            ? (report.coverage && report.coverage.cover) || ''
-            : report.coverage;
+            ? (report.coverage as { cover?: string } | null)?.cover || ''
+            : (report as { coverage: string }).coverage;
           core.info(`coverage: ${coverageValue}`);
           core.info(`color: ${report.color}`);
           if (!internalOptions.covXmlFile) {
-            core.info(`warnings: ${report.warnings}`);
+            core.info(
+              `warnings: ${(report as { warnings?: number }).warnings}`,
+            );
           }
           core.endGroup();
 
           core.setOutput('coverage', coverageValue);
           core.setOutput('color', report.color);
           if (!internalOptions.covXmlFile) {
-            core.setOutput('warnings', report.warnings);
+            core.setOutput(
+              'warnings',
+              (report as { warnings?: number }).warnings,
+            );
           }
 
           const newOptions = { ...internalOptions, commit: defaultBranch };
           const output = newOptions.covXmlFile
             ? getCoverageXmlReport(newOptions)
             : getCoverageReport(newOptions);
-          core.setOutput('coverageHtml', output.html);
+          if (output) {
+            core.setOutput('coverageHtml', output.html);
+          }
 
           if (summary) {
             const { errors, failures, skipped, tests, time } = summary;
@@ -104,22 +114,26 @@ const getMultipleReport = (options) => {
       if (hasXmlReports && summary) {
         const { errors, failures, skipped, tests, time } = summary;
         const displayTime =
-          time > 60 ? `${(time / 60) | 0}m ${(time % 60) | 0}s` : `${time}s`;
-        const e = (emoji) => (options.hideEmoji ? '' : ` ${emoji}`);
-        table += `| ${tests} | ${skipped}${e(':zzz:')} | ${failures}${e(':x:')} | ${errors}${e(':fire:')} | ${displayTime}${e(':stopwatch:')} |
-`;
+          time > 60
+            ? `${(time / 60) | 0}m ${(time % 60) | 0}s`
+            : `${time.toFixed(3)}s`;
+        const e = (emoji: string): string =>
+          options.hideEmoji ? '' : ` ${emoji}`;
+        table += `| ${tests} | ${skipped}${e(':zzz:')} | ${failures}${e(':x:')} | ${errors}${e(':fire:')} | ${displayTime}${e(':stopwatch:')} |\n`;
       } else {
-        table += `
-`;
+        table += '\n';
       }
     });
 
     return table;
   } catch (error) {
-    core.error(`Error generating summary report. ${error.message}`);
+    core.error(`Error generating summary report. ${(error as Error).message}`);
   }
 
   return '';
 };
 
-module.exports = { getMultipleReport };
+export const exportedForTesting = {
+  parseLine,
+  getOptions,
+};
