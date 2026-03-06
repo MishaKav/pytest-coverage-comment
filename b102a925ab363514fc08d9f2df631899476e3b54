@@ -1,0 +1,65 @@
+src/parse.ts
+  4cb14993f2256187 1-441
+vitest.config.ts
+  4cb14993f2256187 1-20
+src/parseXml.ts
+  4cb14993f2256187 1-264
+src/cli.ts
+  4cb14993f2256187 1-133
+src/types.d.ts
+  4cb14993f2256187 1-120
+src/multiFiles.ts
+  4cb14993f2256187 1-23,25-69,71-129,131-139
+src/index.ts
+  4cb14993f2256187 1-87,89-163,165-325,327-675
+__tests__/junitXml.test.ts
+  4cb14993f2256187 1-184
+__tests__/index.test.ts
+  4cb14993f2256187 1-44
+package.json
+  4cb14993f2256187 3
+__tests__/setup.ts
+  4cb14993f2256187 1-15
+eslint.config.mjs
+  4cb14993f2256187 1,5-9,11-14,17-24
+CLAUDE.md
+  4cb14993f2256187 14-15,18,21-22,27,29-34,43,47,51-54,56,60-62,66-69,71-76,78-80,102-104
+__tests__/parseXml.test.ts
+  4cb14993f2256187 1-108
+__tests__/utils.test.ts
+  4cb14993f2256187 1-127
+.github/workflows/update-coverage-in-readme.yml
+  4cb14993f2256187 1-77,79-84
+tsconfig.json
+  4cb14993f2256187 1-14
+src/junitXml.ts
+  4cb14993f2256187 1-31,33-163
+__tests__/parse.test.ts
+  4cb14993f2256187 1-349
+__tests__/multiFiles.test.ts
+  4cb14993f2256187 1-152
+src/utils.ts
+  4cb14993f2256187 1-92
+CHANGELOG.md
+  4cb14993f2256187 3-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "b102a925ab363514fc08d9f2df631899476e3b54",
+  "prompts": {
+    "4cb14993f2256187": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b225e9d2-3056-4547-a89c-d879960f3f81",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Misha Kav <misha.kav@gmail.com>",
+      "messages": [],
+      "total_additions": 3335,
+      "total_deletions": 163,
+      "accepted_lines": 3185,
+      "overriden_lines": 10
+    }
+  }
+}
