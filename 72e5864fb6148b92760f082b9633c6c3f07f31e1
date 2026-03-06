@@ -1,0 +1,37 @@
+src/parseXml.ts
+  4cb14993f2256187 111-112,114,121
+src/junitXml.ts
+  4cb14993f2256187 47-48,50,57,61,63,93-94,96,103,107,109
+.github/workflows/update-coverage-in-readme.yml
+  4cb14993f2256187 11-13
+__tests__/utils.test.ts
+  4cb14993f2256187 22,27-30,32-33
+src/parse.ts
+  4cb14993f2256187 261,275
+__tests__/parseXml.test.ts
+  4cb14993f2256187 84-85
+__tests__/parse.test.ts
+  4cb14993f2256187 83-84
+package.json
+  4cb14993f2256187 21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "72e5864fb6148b92760f082b9633c6c3f07f31e1",
+  "prompts": {
+    "4cb14993f2256187": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b225e9d2-3056-4547-a89c-d879960f3f81",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Misha Kav <misha.kav@gmail.com>",
+      "messages": [],
+      "total_additions": 54,
+      "total_deletions": 32,
+      "accepted_lines": 39,
+      "overriden_lines": 4
+    }
+  }
+}
