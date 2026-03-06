@@ -1,36 +1,44 @@
-const xml2js = require('xml2js');
-const core = require('@actions/core');
-const { getContent, getCoverageColor } = require('./utils');
-const { toHtml } = require('./parse');
+import * as xml2js from 'xml2js';
+import * as core from '@actions/core';
+import { getContent, getCoverageColor } from './utils';
+import { toHtml } from './parse';
+import type {
+  Options,
+  CoverageLine,
+  TotalLine,
+  XmlCoverageReport,
+  DataFromXml,
+  ParsedXml,
+} from './types';
 
 // return parsed xml
-const getParsedXml = (options) => {
+const getParsedXml = (options: Options): ParsedXml => {
   const content = getContent(options.covXmlFile);
 
   if (content) {
     return getXmlContent(content);
   }
 
-  return '';
+  return null;
 };
 
-const getTotalCoverage = (parsedXml) => {
+const getTotalCoverage = (parsedXml: ParsedXml): TotalLine | null => {
   if (!parsedXml) {
     return null;
   }
 
   const coverage = parsedXml['$'];
-  const cover = parseInt(parseFloat(coverage['line-rate']) * 100);
+  const cover = parseInt(String(parseFloat(coverage['line-rate']) * 100));
   const linesValid = parseInt(coverage['lines-valid']);
   const linesCovered = parseInt(coverage['lines-covered']);
   const branchesValid = parseInt(coverage['branches-valid']) || 0;
   const branchesCovered = parseInt(coverage['branches-covered']) || 0;
 
-  const result = {
+  const result: TotalLine = {
     name: 'TOTAL',
     stmts: linesValid,
     miss: linesValid - linesCovered,
-    cover: cover !== '0' ? `${cover}%` : '0',
+    cover: cover !== 0 ? `${cover}%` : '0',
   };
 
   if (branchesValid > 0) {
@@ -42,7 +50,7 @@ const getTotalCoverage = (parsedXml) => {
 };
 
 // return true if "coverage file" include right structure
-const isValidCoverageContent = (parsedXml) => {
+const isValidCoverageContent = (parsedXml: ParsedXml): boolean => {
   if (!parsedXml || !parsedXml.packages || !parsedXml.packages.length) {
     return false;
   }
@@ -56,12 +64,13 @@ const isValidCoverageContent = (parsedXml) => {
 };
 
 // return summary report in markdown format
-const getCoverageXmlReport = (options) => {
+export const getCoverageXmlReport = (
+  options: Options,
+): XmlCoverageReport | null => {
   try {
     const parsedXml = getParsedXml(options);
 
     const coverage = getTotalCoverage(parsedXml);
-    // const coverage = getCoverageReportXml(getContent(options.covXmlFile));
     const isValid = isValidCoverageContent(parsedXml);
 
     if (parsedXml && !isValid) {
@@ -71,7 +80,10 @@ const getCoverageXmlReport = (options) => {
 
     if (parsedXml && isValid) {
       const coverageObj = coverageXmlToFiles(parsedXml, options.xmlSkipCovered);
-      const dataFromXml = { coverage: coverageObj, total: coverage };
+      const dataFromXml: DataFromXml = {
+        coverage: coverageObj,
+        total: coverage!,
+      };
       const html = toHtml(null, options, dataFromXml);
       const color = getCoverageColor(coverage ? coverage.cover : '0');
 
@@ -80,14 +92,14 @@ const getCoverageXmlReport = (options) => {
     return null;
   } catch (error) {
     // prettier-ignore
-    core.error(`Error generating coverage report from "${options.covXmlFile}". ${error.message}`);
+    core.error(`Error generating coverage report from "${options.covXmlFile}". ${(error as Error).message}`);
   }
 
-  return '';
+  return null;
 };
 
 // get content from coverage xml
-const getXmlContent = (data) => {
+const getXmlContent = (data: string): ParsedXml => {
   try {
     if (!data || !data.length) {
       return null;
@@ -95,30 +107,42 @@ const getXmlContent = (data) => {
 
     const parser = new xml2js.Parser();
 
-    const parsed = parser.parseString(data);
-    if (!parsed || !parser.resultObject) {
-      core.warning(`Coverage xml file is not XML or not well-formed`);
+    let parseResult: ParsedXml = null;
+    let errorMessage = '';
+    parser.parseString(data, (err: Error | null, result: ParsedXml) => {
+      if (err) {
+        errorMessage = err.message;
+      }
+      parseResult = result;
+    });
+
+    if (!parseResult) {
+      // prettier-ignore
+      core.warning(`Coverage xml file is not XML or not well-formed${errorMessage ? `: ${errorMessage}` : ''}`);
       return '';
     }
 
-    return parser.resultObject.coverage;
+    return parseResult.coverage;
   } catch (error) {
-    core.error(`Error parsing coverage xml. ${error.message}`);
+    core.error(`Error parsing coverage xml. ${(error as Error).message}`);
   }
 
   return '';
 };
 
 // parse coverage xml to Files structure
-const coverageXmlToFiles = (coverageXml, xmlSkipCovered) => {
-  let files = [];
+const coverageXmlToFiles = (
+  coverageXml: ParsedXml,
+  xmlSkipCovered: boolean,
+): CoverageLine[] => {
+  const files: CoverageLine[] = [];
 
   coverageXml.packages[0].package
-    .filter((package) => package.classes && package.classes.length)
-    .forEach((package) => {
-      package.classes[0].class
-        .filter((c) => c.lines)
-        .forEach((c) => {
+    .filter((pkg: ParsedXml) => pkg.classes && pkg.classes.length)
+    .forEach((pkg: ParsedXml) => {
+      pkg.classes[0].class
+        .filter((c: ParsedXml) => c.lines)
+        .forEach((c: ParsedXml) => {
           const fileObj = parseClass(c, xmlSkipCovered);
 
           if (fileObj) {
@@ -130,7 +154,10 @@ const coverageXmlToFiles = (coverageXml, xmlSkipCovered) => {
   return files;
 };
 
-const parseClass = (classObj, xmlSkipCovered) => {
+const parseClass = (
+  classObj: ParsedXml,
+  xmlSkipCovered: boolean,
+): CoverageLine | null => {
   if (!classObj || !classObj.lines) {
     return null;
   }
@@ -151,9 +178,9 @@ const parseClass = (classObj, xmlSkipCovered) => {
 
   const cover = isFullCoverage
     ? '100%'
-    : `${parseInt(parseFloat(lineRate) * 100)}%`;
+    : `${parseInt(String(parseFloat(lineRate) * 100))}%`;
 
-  const result = { name, stmts, miss, cover, missing };
+  const result: CoverageLine = { name, stmts, miss, cover, missing };
 
   if (branchTotal > 0) {
     result.branch = branchTotal.toString();
@@ -163,10 +190,18 @@ const parseClass = (classObj, xmlSkipCovered) => {
   return result;
 };
 
-const parseLines = (lines) => {
-  const emptyResult = {
+interface ParsedLines {
+  stmts: string;
+  missing: string[];
+  totalMissing: string;
+  branchTotal: number;
+  branchMissing: number;
+}
+
+const parseLines = (lines: ParsedXml): ParsedLines => {
+  const emptyResult: ParsedLines = {
     stmts: '0',
-    missing: '',
+    missing: [],
     totalMissing: '0',
     branchTotal: 0,
     branchMissing: 0,
@@ -177,21 +212,21 @@ const parseLines = (lines) => {
   }
 
   let stmts = 0;
-  const missingLines = [];
+  const missingLines: number[] = [];
   let branchTotal = 0;
   let branchMissing = 0;
 
-  lines[0].line.forEach((line) => {
+  lines[0].line.forEach((line: ParsedXml) => {
     stmts++;
     const {
       hits,
-      number,
+      number: lineNumber,
       branch,
       'condition-coverage': condCoverage,
     } = line['$'];
 
     if (hits === '0') {
-      missingLines.push(parseInt(number));
+      missingLines.push(parseInt(lineNumber));
     }
 
     if (branch === 'true' && condCoverage) {
@@ -206,13 +241,16 @@ const parseLines = (lines) => {
     }
   });
 
-  const missing = missingLines.reduce((arr, val, i, a) => {
-    if (!i || val !== a[i - 1] + 1) arr.push([]);
-    arr[arr.length - 1].push(val);
-    return arr;
-  }, []);
+  const missing = missingLines.reduce(
+    (arr: number[][], val: number, i: number, a: number[]) => {
+      if (!i || val !== a[i - 1] + 1) arr.push([]);
+      arr[arr.length - 1].push(val);
+      return arr;
+    },
+    [],
+  );
 
-  const missingText = [];
+  const missingText: string[] = [];
   missing.forEach((m) => {
     if (m.length === 1) {
       missingText.push(`${m[0]}`);
@@ -229,5 +267,3 @@ const parseLines = (lines) => {
     branchMissing,
   };
 };
-
-module.exports = { getCoverageXmlReport };

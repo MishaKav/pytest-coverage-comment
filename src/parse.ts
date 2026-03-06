@@ -1,8 +1,15 @@
-const core = require('@actions/core');
-const { getPathToFile, getContentFile, getCoverageColor } = require('./utils');
+import * as core from '@actions/core';
+import { getPathToFile, getContentFile, getCoverageColor } from './utils';
+import type {
+  Options,
+  CoverageLine,
+  TotalLine,
+  CoverageReport,
+  DataFromXml,
+} from './types';
 
 // return true if "coverage file" include all special words
-const isValidCoverageContent = (data) => {
+const isValidCoverageContent = (data: string): boolean => {
   if (!data || !data.length) {
     return false;
   }
@@ -19,7 +26,7 @@ const isValidCoverageContent = (data) => {
 };
 
 // return true if coverage data includes branch coverage columns
-const hasBranchCoverage = (data) => {
+const hasBranchCoverage = (data: string): boolean => {
   if (!data || !data.length) {
     return false;
   }
@@ -28,7 +35,7 @@ const hasBranchCoverage = (data) => {
 };
 
 // return full html coverage report and coverage percentage
-const getCoverageReport = (options) => {
+export const getCoverageReport = (options: Options): CoverageReport => {
   const { covFile, covXmlFile } = options;
 
   if (!covXmlFile) {
@@ -36,7 +43,7 @@ const getCoverageReport = (options) => {
       const covFilePath = getPathToFile(covFile);
       const content = getContentFile(covFilePath);
       const coverage = getTotalCoverage(content);
-      const isValid = isValidCoverageContent(content);
+      const isValid = isValidCoverageContent(content!);
 
       if (content && !isValid) {
         // prettier-ignore
@@ -49,10 +56,10 @@ const getCoverageReport = (options) => {
         const warnings = getWarnings(content);
         const color = getCoverageColor(total ? total.cover : '0');
 
-        return { html, coverage, color, warnings };
+        return { html, coverage, color, warnings: warnings ?? 0 };
       }
     } catch (error) {
-      core.error(`Generating coverage report. ${error.message}`);
+      core.error(`Generating coverage report. ${(error as Error).message}`);
     }
   }
 
@@ -60,7 +67,7 @@ const getCoverageReport = (options) => {
 };
 
 // get actual lines from coverage-file
-const getActualLines = (data) => {
+const getActualLines = (data: string): string[] | null => {
   if (!data || !data.length) {
     return null;
   }
@@ -81,7 +88,7 @@ const getActualLines = (data) => {
 };
 
 // get total line from coverage-file
-const getTotal = (data) => {
+const getTotal = (data: string | null): TotalLine | null => {
   if (!data || !data.length) {
     return null;
   }
@@ -90,13 +97,13 @@ const getTotal = (data) => {
   const line = lines.find((l) => l.includes('TOTAL    '));
   const hasBranch = hasBranchCoverage(data);
 
-  return parseTotalLine(line, hasBranch);
+  return parseTotalLine(line ?? null, hasBranch);
 };
 
 // get number of warnings from coverage-file
-const getWarnings = (data) => {
+const getWarnings = (data: string | null): number => {
   if (!data || !data.length) {
-    return null;
+    return 0;
   }
 
   const WARNINGS_KEY = ' warnings in ';
@@ -105,6 +112,9 @@ const getWarnings = (data) => {
   }
 
   const line = data.split('\n').find((l) => l.includes(WARNINGS_KEY));
+  if (!line) {
+    return 0;
+  }
   const lineArr = line.split(' ');
   const indexOfWarnings = lineArr.findIndex((i) => i === 'warnings');
 
@@ -112,7 +122,10 @@ const getWarnings = (data) => {
 };
 
 // parse one line from coverage-file
-const parseOneLine = (line, hasBranch = false) => {
+const parseOneLine = (
+  line: string | null,
+  hasBranch = false,
+): CoverageLine | null => {
   if (!line) {
     return null;
   }
@@ -129,12 +142,13 @@ const parseOneLine = (line, hasBranch = false) => {
   const cover = isFullCoverage
     ? '100%'
     : parsedLine[parsedLine.length - 2].trim();
-  const missing = isFullCoverage
+  const missing: string[] | null = isFullCoverage
     ? null
-    : parsedLine[parsedLine.length - 1] &&
-      parsedLine[parsedLine.length - 1].split(', ');
+    : parsedLine[parsedLine.length - 1]
+      ? parsedLine[parsedLine.length - 1].split(', ')
+      : null;
 
-  const result = {
+  const result: CoverageLine = {
     name: parsedLine[0],
     stmts: parsedLine[1].trim(),
     miss: parsedLine[2].trim(),
@@ -151,7 +165,10 @@ const parseOneLine = (line, hasBranch = false) => {
 };
 
 // parse total line from coverage-file
-const parseTotalLine = (line, hasBranch = false) => {
+const parseTotalLine = (
+  line: string | null,
+  hasBranch = false,
+): TotalLine | null => {
   if (!line) {
     return null;
   }
@@ -163,7 +180,7 @@ const parseTotalLine = (line, hasBranch = false) => {
     return null;
   }
 
-  const result = {
+  const result: TotalLine = {
     name: parsedLine[0],
     stmts: parsedLine[1].trim(),
     miss: parsedLine[2].trim(),
@@ -179,7 +196,7 @@ const parseTotalLine = (line, hasBranch = false) => {
 };
 
 // parse coverage-file
-const parse = (data) => {
+const parse = (data: string): CoverageLine[] | null => {
   const actualLines = getActualLines(data);
 
   if (!actualLines) {
@@ -188,12 +205,17 @@ const parse = (data) => {
 
   const hasBranch = hasBranchCoverage(data);
 
-  return actualLines.map((line) => parseOneLine(line, hasBranch));
+  return actualLines
+    .map((line) => parseOneLine(line, hasBranch))
+    .filter((line): line is CoverageLine => line !== null);
 };
 
 // collapse all lines to folders structure
-const makeFolders = (coverage, options) => {
-  const folders = {};
+const makeFolders = (
+  coverage: CoverageLine[],
+  options: Options,
+): Record<string, CoverageLine[]> => {
+  const folders: Record<string, CoverageLine[]> = {};
 
   for (const line of coverage) {
     const parts = line.name.replace(options.prefix, '').split('/');
@@ -207,14 +229,18 @@ const makeFolders = (coverage, options) => {
 };
 
 // gets total coverage in percentage
-const getTotalCoverage = (data) => {
+const getTotalCoverage = (data: string | null): string => {
   const total = getTotal(data);
 
   return total ? total.cover : '0';
 };
 
 // convert all data to html output
-const toHtml = (data, options, dataFromXml = null) => {
+export const toHtml = (
+  data: string | null,
+  options: Options,
+  dataFromXml: DataFromXml | null = null,
+): string => {
   const {
     badgeTitle,
     title,
@@ -226,40 +252,51 @@ const toHtml = (data, options, dataFromXml = null) => {
   } = options;
   const table = hideReport ? '' : toTable(data, options, dataFromXml);
   const total = dataFromXml ? dataFromXml.total : getTotal(data);
+
+  if (!total) {
+    return '';
+  }
+
   const color = getCoverageColor(total.cover);
-  const onlyChnaged = reportOnlyChangedFiles ? '• ' : '';
+  const onlyChanged = reportOnlyChangedFiles ? '\u2022 ' : '';
   const readmeHref = `${options.repoUrl}/blob/${options.commit}/README.md`;
   const badge = `<img alt="${badgeTitle}" src="https://img.shields.io/badge/${badgeTitle}-${total.cover}25-${color}.svg" />`;
   const badgeWithLink = removeLinkFromBadge
     ? badge
     : `<a href="${readmeHref}">${badge}</a>`;
-  const covered = total.stmts - total.miss;
+  const covered =
+    (typeof total.stmts === 'number' ? total.stmts : parseInt(total.stmts)) -
+    (typeof total.miss === 'number' ? total.miss : parseInt(total.miss));
   const textBadge = `${total.cover} (${covered}/${total.stmts})`;
   const badgeContent = textInsteadBadge ? textBadge : badgeWithLink;
   const badgeHtml = hideBadge ? '' : badgeContent;
   const reportHtml = hideReport
     ? ''
-    : `<details><summary>${title} ${onlyChnaged}</summary>${table}</details>`;
+    : `<details><summary>${title} ${onlyChanged}</summary>${table}</details>`;
 
   return `${badgeHtml}${reportHtml}`;
 };
 
 // make html table from coverage-file
-const toTable = (data, options, dataFromXml = null) => {
-  const coverage = dataFromXml ? dataFromXml.coverage : parse(data);
+const toTable = (
+  data: string | null,
+  options: Options,
+  dataFromXml: DataFromXml | null = null,
+): string | null => {
+  const coverage = dataFromXml ? dataFromXml.coverage : parse(data!);
   const { reportOnlyChangedFiles, changedFiles } = options;
 
   if (!coverage) {
     core.warning(`Coverage file not well-formed`);
     return null;
   }
-  const totalLine = dataFromXml ? dataFromXml.total : getTotal(data);
+  const totalLine = dataFromXml ? dataFromXml.total : getTotal(data!);
   options.hasMissing = coverage.some((c) => c.missing);
   options.hasBranch = coverage.some((c) => c.branch !== undefined);
 
   core.info(`Generating coverage report`);
   const headTr = toHeadRow(options);
-  const totalTr = toTotalRow(totalLine, options);
+  const totalTr = toTotalRow(totalLine!, options);
   const folders = makeFolders(coverage, options);
 
   const rows = Object.keys(folders)
@@ -274,15 +311,15 @@ const toTable = (data, options, dataFromXml = null) => {
       );
 
       folders[folderPath] = folders[folderPath].filter((f) =>
-        changedFiles.all.some((c) => c.includes(f.name)),
+        changedFiles!.all.some((c) => c.includes(f.name)),
       );
       const fileExistsInFolder = allFilesInFolder.some((f) =>
-        changedFiles.all.some((c) => c.includes(f)),
+        changedFiles!.all.some((c) => c.includes(f)),
       );
       return fileExistsInFolder;
     })
     .reduce(
-      (acc, key) => [
+      (acc: string[], key) => [
         ...acc,
         toFolderTd(key, options),
         ...folders[key].map((file) => toRow(file, key !== '', options)),
@@ -301,7 +338,7 @@ const toTable = (data, options, dataFromXml = null) => {
 };
 
 // make html head row - th
-const toHeadRow = (options) => {
+const toHeadRow = (options: Options): string => {
   const branchTh = options.hasBranch ? '<th>Branch</th><th>BrPart</th>' : '';
   const missingTh = options.hasMissing ? '<th>Missing</th>' : '';
 
@@ -310,7 +347,11 @@ const toHeadRow = (options) => {
 };
 
 // make html row - tr
-const toRow = (item, indent = false, options) => {
+const toRow = (
+  item: CoverageLine,
+  indent: boolean = false,
+  options: Options,
+): string => {
   const { stmts, miss, cover } = item;
 
   const name = toFileNameTd(item, indent, options);
@@ -325,7 +366,7 @@ const toRow = (item, indent = false, options) => {
 };
 
 // make summary row - tr
-const toTotalRow = (item, options) => {
+const toTotalRow = (item: TotalLine, options: Options): string => {
   const { name, stmts, miss, cover } = item;
   const branchTd = options.hasBranch
     ? `<td><b>${item.branch || 0}</b></td>` +
@@ -338,7 +379,11 @@ const toTotalRow = (item, options) => {
 };
 
 // make fileName cell - td
-const toFileNameTd = (item, indent = false, options) => {
+const toFileNameTd = (
+  item: CoverageLine,
+  indent: boolean = false,
+  options: Options,
+): string => {
   const relative = item.name.replace(options.prefix, '');
   const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}`;
   const parts = relative.split('/');
@@ -352,7 +397,7 @@ const toFileNameTd = (item, indent = false, options) => {
 };
 
 // make folder row - tr
-const toFolderTd = (path, options) => {
+const toFolderTd = (path: string, options: Options): string => {
   if (path === '') {
     return '';
   }
@@ -363,7 +408,7 @@ const toFolderTd = (path, options) => {
 };
 
 // make missing cell - td
-const toMissingTd = (item, options) => {
+const toMissingTd = (item: CoverageLine, options: Options): string => {
   if (!item.missing || !item.missing.length) {
     return '&nbsp;';
   }
@@ -383,4 +428,14 @@ const toMissingTd = (item, options) => {
     .join(', ');
 };
 
-module.exports = { getCoverageReport, getCoverageColor, toTable, toHtml };
+export const exportedForTesting = {
+  parseOneLine,
+  parseTotalLine,
+  getActualLines,
+  getTotal,
+  getWarnings,
+  isValidCoverageContent,
+  hasBranchCoverage,
+  parse,
+  toTable,
+};

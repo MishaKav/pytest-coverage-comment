@@ -1,7 +1,8 @@
-const fs = require('fs');
-const core = require('@actions/core');
+import * as fs from 'fs';
+import * as core from '@actions/core';
+import type { CoverageColor, ColorRange } from './types';
 
-const getPathToFile = (pathToFile) => {
+export const getPathToFile = (pathToFile: string): string | null => {
   if (!pathToFile) {
     return null;
   }
@@ -12,7 +13,7 @@ const getPathToFile = (pathToFile) => {
     : `${process.env.GITHUB_WORKSPACE}/${pathToFile}`;
 };
 
-const getContentFile = (pathToFile) => {
+export const getContentFile = (pathToFile: string | null): string | null => {
   if (!pathToFile) {
     return null;
   }
@@ -35,7 +36,7 @@ const getContentFile = (pathToFile) => {
   return content;
 };
 
-const getContent = (filePath) => {
+export const getContent = (filePath: string): string | null => {
   try {
     const fullFilePath = getPathToFile(filePath);
 
@@ -45,16 +46,20 @@ const getContent = (filePath) => {
       return content;
     }
   } catch (error) {
-    core.error(`Could not get content of "${filePath}". ${error.message}`);
+    core.error(
+      `Could not get content of "${filePath}". ${(error as Error).message}`,
+    );
   }
 
   return null;
 };
 
 // get coverage color from coverage percentage
-const getCoverageColor = (percentage) => {
+export const getCoverageColor = (
+  percentage: string | number,
+): CoverageColor => {
   // https://shields.io/category/coverage
-  const rangeColors = [
+  const rangeColors: ColorRange[] = [
     {
       color: 'red',
       range: [0, 40],
@@ -77,18 +82,11 @@ const getCoverageColor = (percentage) => {
     },
   ];
 
-  const num = parseFloat(percentage);
+  const num = parseFloat(String(percentage));
 
-  const { color } =
-    rangeColors.find(({ range: [min, max] }) => num >= min && num < max) ||
-    rangeColors[0];
+  const found = rangeColors.find(
+    ({ range: [min, max] }) => num >= min && num < max,
+  );
 
-  return color;
-};
-
-module.exports = {
-  getPathToFile,
-  getContentFile,
-  getContent,
-  getCoverageColor,
+  return (found || rangeColors[0]).color;
 };

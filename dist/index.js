@@ -38002,1003 +38002,1645 @@ module.exports = {
 
 /***/ }),
 
-/***/ 2744:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+/***/ 9407:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-const xml2js = __nccwpck_require__(758);
-const core = __nccwpck_require__(7484);
-const { getContent } = __nccwpck_require__(5804);
+"use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.truncateSummary = exports.resolveCommitSha = void 0;
+const core = __importStar(__nccwpck_require__(7484));
+const github = __importStar(__nccwpck_require__(3228));
+const parse_1 = __nccwpck_require__(2828);
+const parseXml_1 = __nccwpck_require__(1775);
+const junitXml_1 = __nccwpck_require__(5394);
+const multiFiles_1 = __nccwpck_require__(6211);
+const MAX_COMMENT_LENGTH = 65536;
+const MAX_SUMMARY_LENGTH = 1024 * 1024; // 1MB limit for GitHub step summary
+const FILE_STATUSES = Object.freeze({
+    ADDED: 'added',
+    MODIFIED: 'modified',
+    REMOVED: 'removed',
+    RENAMED: 'renamed',
+});
+/**
+ * Resolves a potential tag object SHA to the underlying commit SHA.
+ * For annotated tags, GitHub's push event payload.after contains the tag object SHA,
+ * not the commit SHA. This function detects tag pushes and resolves them to commits.
+ */
+const resolveCommitSha = async (octokit, owner, repo, sha, ref) => {
+    // Check if this is a tag push
+    if (ref && ref.startsWith('refs/tags/')) {
+        try {
+            core.info(`Detected tag push: ${ref}`);
+            core.info(`Attempting to resolve SHA: ${sha}`);
+            // Try to get the tag object
+            const { data: tag } = await octokit.rest.git.getTag({
+                owner,
+                repo,
+                tag_sha: sha,
+            });
+            // If it's an annotated tag, it will have an object field pointing to the commit
+            if (tag && tag.object && tag.object.sha) {
+                core.info(`Resolved annotated tag to commit: ${tag.object.sha}`);
+                return tag.object.sha;
+            }
+        }
+        catch (error) {
+            // If getTag fails, it might be a lightweight tag or direct commit
+            // In this case, the SHA is already a commit SHA
+            // prettier-ignore
+            core.info(`SHA is not an annotated tag object, using as commit SHA: ${sha}`);
+            core.debug(`Error details: ${error.message}`);
+        }
+    }
+    // Return original SHA if not a tag or if it's a lightweight tag
+    return sha;
+};
+exports.resolveCommitSha = resolveCommitSha;
+const truncateSummary = (content, maxLength) => {
+    if (content.length <= maxLength) {
+        return content;
+    }
+    // prettier-ignore
+    const truncationMessage = '\n\n**Warning: Summary truncated due to GitHub\'s 1MB limit**';
+    const messageLength = truncationMessage.length;
+    // prettier-ignore
+    const truncatedContent = content.substring(0, maxLength - messageLength - 100); // Leave some buffer
+    // Try to find a good break point (end of line or closing tag)
+    const lastNewline = truncatedContent.lastIndexOf('\n');
+    const lastClosingTag = truncatedContent.lastIndexOf('</');
+    const breakPoint = Math.max(lastNewline, lastClosingTag);
+    // If we found a good break point
+    if (breakPoint > maxLength * 0.8) {
+        return truncatedContent.substring(0, breakPoint) + truncationMessage;
+    }
+    return truncatedContent + truncationMessage;
+};
+exports.truncateSummary = truncateSummary;
+const handlePermissionError = (
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+error, context) => {
+    if (error?.status !== 403) {
+        core.setFailed(`Failed to create/update comment: ${error.message}`);
+        throw error;
+    }
+    const isForkPR = 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    context?.payload?.pull_request?.head?.repo?.fork === true;
+    const lines = ['Permission denied when trying to create/update comment.', ''];
+    if (isForkPR) {
+        lines.push('This PR is from a fork. GitHub restricts the GITHUB_TOKEN to read-only', 'for fork PRs triggered by the `pull_request` event.', '', 'To fix this, use the `pull_request_target` event instead:', '', '```yaml', 'on:', '  pull_request_target:', '    types: [opened, synchronize, reopened]', '', 'permissions:', '  contents: read', '  pull-requests: write', '```', '', 'Note: `pull_request_target` runs in the context of the base branch.', 'Be cautious when checking out fork code — never run untrusted code', 'from the fork with elevated permissions.', '', 'For more information, see:', 'https://github.com/MishaKav/pytest-coverage-comment#fork-prs');
+    }
+    else {
+        const eventName = context?.eventName || 'this event';
+        lines.push('This error usually occurs because the GITHUB_TOKEN lacks necessary permissions.', '', 'To fix this, add a permissions block to your workflow:', '', '```yaml', 'permissions:', '  contents: read        # For checkout and comparing commits', '  pull-requests: write  # For creating/updating PR comments', '```', '', `For ${eventName === 'push' ? 'push events creating commit comments' : 'pull request events and more information'}, see:`, 'https://github.com/MishaKav/pytest-coverage-comment#comment-not-appearing');
+    }
+    core.setFailed(lines.join('\n'));
+    throw error;
+};
+const createOrEditComment = async (octokit, repo, owner, issue_number, body, WATERMARK, context) => {
+    try {
+        // Now decide if we should issue a new comment or edit an old one
+        const { data: comments } = await octokit.rest.issues.listComments({
+            repo,
+            owner,
+            issue_number,
+        });
+        const comment = comments.find((c) => c.body?.startsWith(WATERMARK));
+        if (comment) {
+            core.info('Found previous comment, updating');
+            await octokit.rest.issues.updateComment({
+                repo,
+                owner,
+                comment_id: comment.id,
+                body,
+            });
+        }
+        else {
+            core.info('No previous comment found, creating a new one');
+            await octokit.rest.issues.createComment({
+                repo,
+                owner,
+                issue_number,
+                body,
+            });
+        }
+    }
+    catch (error) {
+        handlePermissionError(error, context);
+    }
+};
+const main = async () => {
+    const token = core.getInput('github-token', { required: true });
+    const title = core.getInput('title', { required: false });
+    const badgeTitle = core.getInput('badge-title', { required: false });
+    const hideBadge = core.getBooleanInput('hide-badge', { required: false });
+    const hideReport = core.getBooleanInput('hide-report', { required: false });
+    const createNewComment = core.getBooleanInput('create-new-comment', {
+        required: false,
+    });
+    const hideComment = core.getBooleanInput('hide-comment', { required: false });
+    const hideEmoji = core.getBooleanInput('hide-emoji', { required: false });
+    const xmlSkipCovered = core.getBooleanInput('xml-skip-covered', {
+        required: false,
+    });
+    const reportOnlyChangedFiles = core.getBooleanInput('report-only-changed-files', { required: false });
+    const removeLinkFromBadge = core.getBooleanInput('remove-link-from-badge', {
+        required: false,
+    });
+    const removeLinksToFiles = core.getBooleanInput('remove-links-to-files', {
+        required: false,
+    });
+    const removeLinksToLines = core.getBooleanInput('remove-links-to-lines', {
+        required: false,
+    });
+    const textInsteadBadge = core.getBooleanInput('text-instead-badge', {
+        required: false,
+    });
+    const uniqueIdForComment = core.getInput('unique-id-for-comment', {
+        required: false,
+    });
+    const defaultBranch = core.getInput('default-branch', { required: false });
+    const covFile = core.getInput('pytest-coverage-path', { required: false });
+    const issueNumberInput = core.getInput('issue-number', { required: false });
+    const covXmlFile = core.getInput('pytest-xml-coverage-path', {
+        required: false,
+    });
+    const pathPrefix = core.getInput('coverage-path-prefix', { required: false });
+    const xmlFile = core.getInput('junitxml-path', { required: false });
+    const xmlTitle = core.getInput('junitxml-title', { required: false });
+    const multipleFiles = core.getMultilineInput('multiple-files', {
+        required: false,
+    });
+    const { context } = github;
+    const { repo, owner } = context.repo;
+    const { eventName, payload } = context;
+    const serverUrl = context.serverUrl || 'https://github.com';
+    core.info(`Uses Github URL: ${serverUrl}`);
+    const watermarkUniqueId = uniqueIdForComment
+        ? `| ${uniqueIdForComment} `
+        : '';
+    const WATERMARK = `<!-- Pytest Coverage Comment: ${context.job} ${watermarkUniqueId}-->\n`;
+    let finalHtml = '';
+    const options = {
+        token,
+        repository: github.context.payload.repository?.full_name || `${owner}/${repo}`,
+        prefix: `${process.env.GITHUB_WORKSPACE}/`,
+        pathPrefix,
+        covFile,
+        covXmlFile,
+        xmlFile,
+        title,
+        badgeTitle,
+        hideBadge,
+        hideReport,
+        createNewComment,
+        hideComment,
+        hideEmoji,
+        xmlSkipCovered,
+        reportOnlyChangedFiles,
+        removeLinkFromBadge,
+        removeLinksToFiles,
+        removeLinksToLines,
+        textInsteadBadge,
+        defaultBranch,
+        xmlTitle,
+        multipleFiles,
+    };
+    options.repoUrl =
+        payload.repository?.html_url || `${serverUrl}/${options.repository}`;
+    // Initialize octokit early so we can use it for tag resolution
+    const octokit = github.getOctokit(token);
+    if (eventName === 'pull_request' || eventName === 'pull_request_target') {
+        options.commit = payload.pull_request.head.sha;
+        options.head = payload.pull_request.head.ref;
+        options.base = payload.pull_request.base.ref;
+    }
+    else if (eventName === 'push') {
+        // For annotated tags, payload.after contains the tag object SHA, not the commit SHA
+        // Resolve it to the actual commit SHA
+        options.commit = await (0, exports.resolveCommitSha)(octokit, owner, repo, payload.after, context.ref);
+        options.head = context.ref;
+    }
+    else if (eventName === 'workflow_dispatch') {
+        options.commit = context.sha;
+        options.head = context.ref;
+    }
+    else if (eventName === 'workflow_run') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        options.commit = payload.workflow_run.head_sha;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        options.head = payload.workflow_run.head_branch;
+    }
+    if (options.reportOnlyChangedFiles) {
+        const changedFiles = await getChangedFiles(options, issueNumberInput);
+        options.changedFiles = changedFiles;
+        // when github event is different from `pull_request`, `workflow_dispatch`, `workflow_run` or `push`
+        if (!changedFiles) {
+            options.reportOnlyChangedFiles = false;
+        }
+    }
+    let report = options.covXmlFile
+        ? (0, parseXml_1.getCoverageXmlReport)(options)
+        : (0, parse_1.getCoverageReport)(options);
+    if (!report) {
+        report = { html: '', coverage: null, color: 'red' };
+    }
+    const { coverage, color } = report;
+    let { html } = report;
+    const warnings = report.warnings;
+    const summaryReport = (0, junitXml_1.getSummaryReport)(options);
+    if (summaryReport) {
+        core.setOutput('coverageHtml', summaryReport);
+    }
+    if (html) {
+        const newOptions = { ...options, commit: defaultBranch };
+        const output = newOptions.covXmlFile
+            ? (0, parseXml_1.getCoverageXmlReport)(newOptions)
+            : (0, parse_1.getCoverageReport)(newOptions);
+        if (output) {
+            core.setOutput('coverageHtml', output.html);
+        }
+    }
+    // set to output junitxml values
+    if (summaryReport) {
+        const parsedXml = (0, junitXml_1.getParsedXml)(options);
+        if (parsedXml) {
+            const { errors, failures, skipped, tests, time } = parsedXml;
+            const valuesToExport = { errors, failures, skipped, tests, time };
+            Object.entries(valuesToExport).forEach(([key, value]) => {
+                core.info(`${key}: ${value}`);
+                core.setOutput(key, value);
+            });
+            const notSuccessTestInfo = (0, junitXml_1.getNotSuccessTest)(options);
+            core.setOutput('notSuccessTestInfo', JSON.stringify(notSuccessTestInfo));
+        }
+        core.setOutput('summaryReport', JSON.stringify(summaryReport));
+    }
+    let multipleFilesHtml = '';
+    if (multipleFiles && multipleFiles.length) {
+        multipleFilesHtml = `\n\n${(0, multiFiles_1.getMultipleReport)(options)}`;
+    }
+    if (!options.hideReport &&
+        html.length + summaryReport.length > MAX_COMMENT_LENGTH &&
+        eventName != 'workflow_dispatch' &&
+        eventName != 'workflow_run') {
+        // generate new html without report
+        const warningsArr = [
+            `Your comment is too long (maximum is ${MAX_COMMENT_LENGTH} characters), coverage report will not be added.`,
+            'Try one/some of the following options:',
+            '- Add "--cov-report=term-missing:skip-covered" to pytest command',
+            '- Add "hide-report: true" to hide detailed coverage table',
+            '- Add "report-only-changed-files: true" to show only changed files',
+            '- Add "xml-skip-covered: true" to hide files with 100% coverage',
+            '- Switch to "multiple-files" mode',
+        ];
+        if (!options.removeLinksToFiles) {
+            // prettier-ignore
+            warningsArr.push('- Add "remove-links-to-files: true" to remove file links');
+        }
+        if (!options.removeLinksToLines) {
+            // prettier-ignore
+            warningsArr.push('- Add "remove-links-to-lines: true" to remove line number links');
+        }
+        core.warning(warningsArr.join('\n'));
+        report = options.covXmlFile
+            ? (0, parseXml_1.getCoverageXmlReport)({ ...options, hideReport: true })
+            : (0, parse_1.getCoverageReport)({ ...options, hideReport: true });
+        if (!report) {
+            report = { html: '', coverage: null, color: 'red' };
+        }
+        html = report.html;
+    }
+    finalHtml += html;
+    finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
+    finalHtml += multipleFilesHtml
+        ? `\n\n${multipleFilesHtml}`
+        : multipleFilesHtml;
+    core.setOutput('summaryReport', JSON.stringify(finalHtml));
+    if (coverage && typeof coverage === 'string') {
+        core.startGroup(options.covFile);
+        core.info(`coverage: ${coverage}`);
+        core.info(`color: ${color}`);
+        core.info(`warnings: ${warnings}`);
+        core.setOutput('coverage', coverage);
+        core.setOutput('color', color);
+        core.setOutput('warnings', warnings);
+        core.endGroup();
+    }
+    // support for output for `pytest-xml-coverage-path`
+    if (coverage &&
+        typeof coverage === 'object' &&
+        coverage.cover) {
+        core.startGroup(options.covXmlFile);
+        core.info(`coverage: ${coverage.cover}`);
+        core.info(`color: ${color}`);
+        core.setOutput('coverage', coverage.cover);
+        core.setOutput('color', color);
+        core.endGroup();
+    }
+    if (!finalHtml || options.hideComment) {
+        core.info('Nothing to report');
+        return;
+    }
+    const body = WATERMARK + finalHtml;
+    const issue_number = payload.pull_request
+        ? payload.pull_request.number
+        : issueNumberInput
+            ? parseInt(issueNumberInput)
+            : 0;
+    if (eventName === 'push') {
+        core.info('Create commit comment');
+        try {
+            await octokit.rest.repos.createCommitComment({
+                repo,
+                owner,
+                commit_sha: options.commit,
+                body,
+            });
+        }
+        catch (error) {
+            handlePermissionError(error, context);
+        }
+    }
+    else if (eventName === 'pull_request' ||
+        eventName === 'pull_request_target') {
+        if (createNewComment) {
+            core.info('Creating a new comment');
+            try {
+                await octokit.rest.issues.createComment({
+                    repo,
+                    owner,
+                    issue_number,
+                    body,
+                });
+            }
+            catch (error) {
+                handlePermissionError(error, context);
+            }
+        }
+        else {
+            await createOrEditComment(octokit, repo, owner, issue_number, body, WATERMARK, context);
+        }
+    }
+    else if (eventName === 'workflow_dispatch' ||
+        eventName === 'workflow_run') {
+        const truncatedBody = (0, exports.truncateSummary)(body, MAX_SUMMARY_LENGTH);
+        if (body.length > MAX_SUMMARY_LENGTH) {
+            // prettier-ignore
+            core.warning(`GitHub step summary was truncated from ${body.length} to ${truncatedBody.length} characters due to the 1MB limit.`);
+        }
+        await core.summary.addRaw(truncatedBody, true).write();
+        if (!issueNumberInput) {
+            // prettier-ignore
+            core.warning(`To use this action on a \`${eventName}\`, you need to pass a pull request number.`);
+        }
+        else {
+            if (createNewComment) {
+                core.info('Creating a new comment');
+                try {
+                    await octokit.rest.issues.createComment({
+                        repo,
+                        owner,
+                        issue_number,
+                        body,
+                    });
+                }
+                catch (error) {
+                    handlePermissionError(error, context);
+                }
+            }
+            else {
+                await createOrEditComment(octokit, repo, owner, issue_number, body, WATERMARK, context);
+            }
+        }
+    }
+    else {
+        if (!options.hideComment) {
+            // prettier-ignore
+            core.warning(`This action supports comments only on \`pull_request\`, \`pull_request_target\`, \`push\`, \`workflow_run\` and \`workflow_dispatch\`  events. \`${eventName}\` events are not supported.\nYou can use the output of the action.`);
+        }
+    }
+};
+// generate object of all files that changed based on commit through Github API
+const getChangedFiles = async (options, pr_number) => {
+    try {
+        const { context } = github;
+        const { eventName, payload } = context;
+        const { repo, owner } = context.repo;
+        const octokit = github.getOctokit(options.token);
+        // Define the base and head commits to be extracted from the payload
+        let base, head;
+        switch (eventName) {
+            case 'pull_request':
+            case 'pull_request_target':
+                base = payload.pull_request.base.sha;
+                head = payload.pull_request.head.sha;
+                break;
+            case 'push':
+                base = payload.before;
+                // Use the resolved commit SHA from options instead of payload.after
+                // This handles annotated tags correctly
+                head = options.commit || payload.after;
+                break;
+            case 'workflow_run':
+            case 'workflow_dispatch': {
+                const { data } = await octokit.rest.pulls.get({
+                    owner,
+                    repo,
+                    pull_number: parseInt(pr_number),
+                });
+                base = data.base.label;
+                head = data.head.label;
+                break;
+            }
+            default:
+                // prettier-ignore
+                core.warning(`\`report-only-changed-files: true\` supports only on \`pull_request\`, \`workflow_run\`, \`workflow_dispatch\` and \`push\`. Other \`${eventName}\` events are not supported.`);
+                return null;
+        }
+        core.startGroup('Changed files');
+        // Log the base and head commits
+        core.info(`Base commit: ${base}`);
+        core.info(`Head commit: ${head}`);
+        let response;
+        // that is first commit, we cannot get diff
+        if (base === '0000000000000000000000000000000000000000') {
+            response = await octokit.rest.repos.getCommit({
+                owner,
+                repo,
+                ref: head,
+            });
+        }
+        else {
+            // https://developer.github.com/v3/repos/commits/#compare-two-commits
+            response = await octokit.rest.repos.compareCommits({
+                base,
+                head,
+                owner,
+                repo,
+            });
+        }
+        // Ensure that the request was successful.
+        if (response.status !== 200) {
+            core.setFailed(`The GitHub API for comparing the base and head commits for this ${eventName} event returned ${response.status}, expected 200. ` +
+                "Please submit an issue on this action's GitHub repo.");
+        }
+        // Get the changed files from the response payload.
+        const files = response.data.files || [];
+        const all = [], added = [], modified = [], removed = [], renamed = [], addedModified = [];
+        for (const file of files) {
+            const { filename: filenameOriginal, status } = file;
+            const filename = filenameOriginal.replace(options.pathPrefix, '');
+            all.push(filename);
+            switch (status) {
+                case FILE_STATUSES.ADDED:
+                    added.push(filename);
+                    addedModified.push(filename);
+                    break;
+                case FILE_STATUSES.MODIFIED:
+                    modified.push(filename);
+                    addedModified.push(filename);
+                    break;
+                case FILE_STATUSES.REMOVED:
+                    removed.push(filename);
+                    break;
+                case FILE_STATUSES.RENAMED:
+                    renamed.push(filename);
+                    break;
+                default:
+                    // prettier-ignore
+                    core.setFailed(`One of your files includes an unsupported file status '${status}', expected ${Object.values(FILE_STATUSES).join(',')}.`);
+            }
+        }
+        core.info(`All: ${all.join(',')}`);
+        core.info(`Added: ${added.join(', ')}`);
+        core.info(`Modified: ${modified.join(', ')}`);
+        core.info(`Removed: ${removed.join(', ')}`);
+        core.info(`Renamed: ${renamed.join(', ')}`);
+        core.info(`Added or modified: ${addedModified.join(', ')}`);
+        core.endGroup();
+        return {
+            all,
+            added,
+            modified,
+            removed,
+            renamed,
+            AddedOrModified: addedModified,
+        };
+    }
+    catch (error) {
+        core.setFailed(error.message);
+        return null;
+    }
+};
+main().catch((err) => {
+    core.error(err);
+    core.setFailed(err.message);
+});
+
+
+/***/ }),
+
+/***/ 5394:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.exportedForTesting = exports.getNotSuccessTest = exports.getSummaryReport = exports.getParsedXml = void 0;
+const xml2js = __importStar(__nccwpck_require__(758));
+const core = __importStar(__nccwpck_require__(7484));
+const utils_1 = __nccwpck_require__(1798);
 // return parsed xml
 const getParsedXml = (options) => {
-  const content = getContent(options.xmlFile);
-
-  if (content) {
-    return getSummary(content);
-  }
-
-  return '';
+    const content = (0, utils_1.getContent)(options.xmlFile);
+    if (content) {
+        return getSummary(content);
+    }
+    return null;
 };
-
+exports.getParsedXml = getParsedXml;
 // return summary report in markdown format
 const getSummaryReport = (options) => {
-  try {
-    const parsedXml = getParsedXml(options);
-
-    if (parsedXml) {
-      return toMarkdown(parsedXml, options);
+    try {
+        const parsedXml = (0, exports.getParsedXml)(options);
+        if (parsedXml) {
+            return toMarkdown(parsedXml, options);
+        }
     }
-  } catch (error) {
-    core.error(`Error generating summary report. ${error.message}`);
-  }
-
-  return '';
+    catch (error) {
+        core.error(`Error generating summary report. ${error.message}`);
+    }
+    return '';
 };
-
+exports.getSummaryReport = getSummaryReport;
 // get summary from junitxml
 const getSummary = (data) => {
-  if (!data || !data.length) {
-    return null;
-  }
-
-  const parser = new xml2js.Parser();
-
-  const parsed = parser.parseString(data);
-  if (!parsed) {
-    core.warning(`JUnitXml file is not XML or not well-formed`);
-    return '';
-  }
-
-  const summary = { errors: 0, failures: 0, skipped: 0, tests: 0, time: 0 };
-  for (const testsuite of parser.resultObject.testsuites.testsuite) {
-    const { errors, failures, skipped, tests, time } = testsuite['$'];
-    summary.errors += +errors;
-    summary.failures += +failures;
-    summary.skipped += +skipped;
-    summary.tests += +tests;
-    summary.time += +time;
-  }
-  return summary;
-};
-
-const getTestCases = (data) => {
-  if (!data || !data.length) {
-    return null;
-  }
-
-  const parser = new xml2js.Parser();
-
-  const parsed = parser.parseString(data);
-  if (!parsed) {
-    core.warning(`JUnitXml file is not XML or not well-formed`);
-    return '';
-  }
-
-  return parser.resultObject.testsuites.testsuite.map((t) => t.testcase).flat();
-};
-
-const getNotSuccessTest = (options) => {
-  const initData = { count: 0, failures: [], errors: [], skipped: [] };
-
-  try {
-    const content = getContent(options.xmlFile);
-
-    if (content) {
-      const testCaseToOutput = (testcase) => {
-        const { classname, name } = testcase['$'];
-        return { classname, name };
-      };
-
-      const testcases = getTestCases(content);
-
-      const failures = testcases.filter((t) => t.failure).map(testCaseToOutput);
-      const errors = testcases.filter((t) => t.error).map(testCaseToOutput);
-      const skipped = testcases.filter((t) => t.skipped).map(testCaseToOutput);
-
-      return {
-        failures,
-        errors,
-        skipped,
-        count: failures.length + errors.length + skipped.length,
-      };
+    if (!data || !data.length) {
+        return null;
     }
-  } catch (error) {
-    core.warning(
-      `Could not get notSuccessTestInfo successfully. ${error.message}`,
-    );
-  }
-
-  return initData;
+    const parser = new xml2js.Parser();
+    let parseResult = null;
+    let errorMessage = '';
+    parser.parseString(data, (err, result) => {
+        if (err) {
+            errorMessage = err.message;
+        }
+        parseResult = result;
+    });
+    if (!parseResult) {
+        // prettier-ignore
+        core.warning(`JUnitXml file is not XML or not well-formed${errorMessage ? `: ${errorMessage}` : ''}`);
+        return null;
+    }
+    if (!parseResult.testsuites?.testsuite) {
+        // prettier-ignore
+        core.warning('JUnitXml file does not contain expected testsuites structure');
+        return null;
+    }
+    const summary = {
+        errors: 0,
+        failures: 0,
+        skipped: 0,
+        tests: 0,
+        time: 0,
+    };
+    for (const testsuite of parseResult.testsuites.testsuite) {
+        const { errors, failures, skipped, tests, time } = testsuite['$'];
+        summary.errors += +errors;
+        summary.failures += +failures;
+        summary.skipped += +skipped;
+        summary.tests += +tests;
+        summary.time += +time;
+    }
+    return summary;
 };
-
+const getTestCases = (data) => {
+    if (!data || !data.length) {
+        return null;
+    }
+    const parser = new xml2js.Parser();
+    let parseResult = null;
+    let errorMessage = '';
+    parser.parseString(data, (err, result) => {
+        if (err) {
+            errorMessage = err.message;
+        }
+        parseResult = result;
+    });
+    if (!parseResult) {
+        // prettier-ignore
+        core.warning(`JUnitXml file is not XML or not well-formed${errorMessage ? `: ${errorMessage}` : ''}`);
+        return null;
+    }
+    if (!parseResult.testsuites?.testsuite) {
+        // prettier-ignore
+        core.warning('JUnitXml file does not contain expected testsuites structure');
+        return null;
+    }
+    return parseResult.testsuites.testsuite
+        .map((t) => t.testcase)
+        .flat();
+};
+const getNotSuccessTest = (options) => {
+    const initData = {
+        count: 0,
+        failures: [],
+        errors: [],
+        skipped: [],
+    };
+    try {
+        const content = (0, utils_1.getContent)(options.xmlFile);
+        if (content) {
+            const testCaseToOutput = (testcase) => {
+                const { classname, name } = testcase['$'];
+                return { classname, name };
+            };
+            const testcases = getTestCases(content);
+            if (!testcases) {
+                return initData;
+            }
+            const failures = testcases.filter((t) => t.failure).map(testCaseToOutput);
+            const errors = testcases.filter((t) => t.error).map(testCaseToOutput);
+            const skipped = testcases.filter((t) => t.skipped).map(testCaseToOutput);
+            return {
+                failures,
+                errors,
+                skipped,
+                count: failures.length + errors.length + skipped.length,
+            };
+        }
+    }
+    catch (error) {
+        core.warning(`Could not get notSuccessTestInfo successfully. ${error.message}`);
+    }
+    return initData;
+};
+exports.getNotSuccessTest = getNotSuccessTest;
 // convert summary from junitxml to md
 const toMarkdown = (summary, options) => {
-  const { errors, failures, skipped, tests, time } = summary;
-  const displayTime =
-    time > 60
-      ? `${(time / 60) | 0}m ${(time % 60) | 0}s`
-      : `${time.toFixed(3)}s`;
-  const e = (emoji) => (options.hideEmoji ? '' : ` ${emoji}`);
-  const table = `| Tests | Skipped | Failures | Errors | Time |
+    const { errors, failures, skipped, tests, time } = summary;
+    const displayTime = time > 60
+        ? `${(time / 60) | 0}m ${(time % 60) | 0}s`
+        : `${time.toFixed(3)}s`;
+    const e = (emoji) => (options.hideEmoji ? '' : ` ${emoji}`);
+    const table = `| Tests | Skipped | Failures | Errors | Time |
 | ----- | ------- | -------- | -------- | ------------------ |
 | ${tests} | ${skipped}${e(':zzz:')} | ${failures}${e(':x:')} | ${errors}${e(':fire:')} | ${displayTime}${e(':stopwatch:')} |
 `;
-
-  if (options.xmlTitle) {
-    return `## ${options.xmlTitle}
-${table}`;
-  }
-
-  return table;
+    if (options.xmlTitle) {
+        return `## ${options.xmlTitle}\n${table}`;
+    }
+    return table;
 };
-
-module.exports = { getSummaryReport, getParsedXml, getNotSuccessTest };
+exports.exportedForTesting = {
+    getSummary,
+    getTestCases,
+    toMarkdown,
+};
 
 
 /***/ }),
 
-/***/ 7221:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+/***/ 6211:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-const { getCoverageReport } = __nccwpck_require__(3046);
-const { getCoverageXmlReport } = __nccwpck_require__(841);
-const { getParsedXml } = __nccwpck_require__(2744);
-const core = __nccwpck_require__(7484);
+"use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.exportedForTesting = exports.getMultipleReport = void 0;
+const parse_1 = __nccwpck_require__(2828);
+const parseXml_1 = __nccwpck_require__(1775);
+const junitXml_1 = __nccwpck_require__(5394);
+const core = __importStar(__nccwpck_require__(7484));
 // parse oneline from multiple files to object
 const parseLine = (line) => {
-  if (!line || !line.includes(',')) {
-    return '';
-  }
-
-  const lineArr = line.split(',');
-
-  return {
-    title: lineArr[0].trim(),
-    covFile: lineArr[1].trim(),
-    xmlFile: lineArr.length > 2 ? lineArr[2].trim() : '',
-  };
+    if (!line || !line.includes(',')) {
+        return null;
+    }
+    const lineArr = line.split(',');
+    return {
+        title: lineArr[0].trim(),
+        covFile: lineArr[1].trim(),
+        xmlFile: lineArr.length > 2 ? lineArr[2].trim() : '',
+    };
 };
-
 // make internal options
 // covFile and covXmlFile are mutually exclusive — detected by .xml extension
-const getOptions = (options = {}, line = {}) => {
-  const isXmlCoverage =
-    line.covFile && line.covFile.toLowerCase().endsWith('.xml');
-  return {
-    ...options,
-    title: line.title,
-    covFile: isXmlCoverage ? '' : line.covFile,
-    covXmlFile: isXmlCoverage ? line.covFile : '',
-    hideReport: true,
-    xmlFile: line.xmlFile,
-    xmlTitle: '',
-  };
+const getOptions = (options, line) => {
+    const isXmlCoverage = line.covFile && line.covFile.toLowerCase().endsWith('.xml');
+    return {
+        ...options,
+        title: line.title,
+        covFile: isXmlCoverage ? '' : line.covFile,
+        covXmlFile: isXmlCoverage ? line.covFile : '',
+        hideReport: true,
+        xmlFile: line.xmlFile,
+        xmlTitle: '',
+    };
 };
-
 // return multiple report in markdown format
 const getMultipleReport = (options) => {
-  const { multipleFiles, defaultBranch } = options;
-
-  try {
-    const lineReports = multipleFiles.map(parseLine).filter((l) => l);
-    const hasXmlReports = lineReports.some((l) => l.xmlFile);
-    const miniTable = `| Title | Coverage |
+    const { multipleFiles, defaultBranch } = options;
+    try {
+        const lineReports = multipleFiles
+            .map(parseLine)
+            .filter((l) => l !== null);
+        const hasXmlReports = lineReports.some((l) => l.xmlFile);
+        const miniTable = `| Title | Coverage |
 | ----- | ----- |
 `;
-    const fullTable = `| Title | Coverage | Tests | Skipped | Failures | Errors | Time |
+        const fullTable = `| Title | Coverage | Tests | Skipped | Failures | Errors | Time |
 | ----- | ----- | ----- | ------- | -------- | -------- | ------------------ |
 `;
-    let table = hasXmlReports ? fullTable : miniTable;
-
-    lineReports.forEach((l, i) => {
-      const internalOptions = getOptions(options, l);
-      const report = internalOptions.covXmlFile
-        ? getCoverageXmlReport(internalOptions)
-        : getCoverageReport(internalOptions);
-      const summary = getParsedXml(internalOptions);
-
-      if (report && report.html) {
-        table += `| ${l.title} | ${report.html}`;
-
-        if (i === 0) {
-          core.startGroup(
-            internalOptions.covXmlFile || internalOptions.covFile,
-          );
-          const coverageValue = internalOptions.covXmlFile
-            ? (report.coverage && report.coverage.cover) || ''
-            : report.coverage;
-          core.info(`coverage: ${coverageValue}`);
-          core.info(`color: ${report.color}`);
-          if (!internalOptions.covXmlFile) {
-            core.info(`warnings: ${report.warnings}`);
-          }
-          core.endGroup();
-
-          core.setOutput('coverage', coverageValue);
-          core.setOutput('color', report.color);
-          if (!internalOptions.covXmlFile) {
-            core.setOutput('warnings', report.warnings);
-          }
-
-          const newOptions = { ...internalOptions, commit: defaultBranch };
-          const output = newOptions.covXmlFile
-            ? getCoverageXmlReport(newOptions)
-            : getCoverageReport(newOptions);
-          core.setOutput('coverageHtml', output.html);
-
-          if (summary) {
-            const { errors, failures, skipped, tests, time } = summary;
-            const valuesToExport = { errors, failures, skipped, tests, time };
-
-            core.startGroup(internalOptions.xmlFile);
-            Object.entries(valuesToExport).forEach(([key, value]) => {
-              core.setOutput(key, value);
-              core.info(`${key}: ${value}`);
-            });
-            core.endGroup();
-          }
-        }
-      } else if (summary) {
-        table += `| ${l.title} |  `;
-      }
-
-      if (hasXmlReports && summary) {
-        const { errors, failures, skipped, tests, time } = summary;
-        const displayTime =
-          time > 60 ? `${(time / 60) | 0}m ${(time % 60) | 0}s` : `${time}s`;
-        const e = (emoji) => (options.hideEmoji ? '' : ` ${emoji}`);
-        table += `| ${tests} | ${skipped}${e(':zzz:')} | ${failures}${e(':x:')} | ${errors}${e(':fire:')} | ${displayTime}${e(':stopwatch:')} |
-`;
-      } else {
-        table += `
-`;
-      }
-    });
-
-    return table;
-  } catch (error) {
-    core.error(`Error generating summary report. ${error.message}`);
-  }
-
-  return '';
+        let table = hasXmlReports ? fullTable : miniTable;
+        lineReports.forEach((l, i) => {
+            const internalOptions = getOptions(options, l);
+            const report = internalOptions.covXmlFile
+                ? (0, parseXml_1.getCoverageXmlReport)(internalOptions)
+                : (0, parse_1.getCoverageReport)(internalOptions);
+            const summary = (0, junitXml_1.getParsedXml)(internalOptions);
+            if (report && report.html) {
+                table += `| ${l.title} | ${report.html}`;
+                if (i === 0) {
+                    core.startGroup(internalOptions.covXmlFile || internalOptions.covFile);
+                    const coverageValue = internalOptions.covXmlFile
+                        ? report.coverage?.cover || ''
+                        : report.coverage;
+                    core.info(`coverage: ${coverageValue}`);
+                    core.info(`color: ${report.color}`);
+                    if (!internalOptions.covXmlFile) {
+                        core.info(`warnings: ${report.warnings}`);
+                    }
+                    core.endGroup();
+                    core.setOutput('coverage', coverageValue);
+                    core.setOutput('color', report.color);
+                    if (!internalOptions.covXmlFile) {
+                        core.setOutput('warnings', report.warnings);
+                    }
+                    const newOptions = { ...internalOptions, commit: defaultBranch };
+                    const output = newOptions.covXmlFile
+                        ? (0, parseXml_1.getCoverageXmlReport)(newOptions)
+                        : (0, parse_1.getCoverageReport)(newOptions);
+                    if (output) {
+                        core.setOutput('coverageHtml', output.html);
+                    }
+                    if (summary) {
+                        const { errors, failures, skipped, tests, time } = summary;
+                        const valuesToExport = { errors, failures, skipped, tests, time };
+                        core.startGroup(internalOptions.xmlFile);
+                        Object.entries(valuesToExport).forEach(([key, value]) => {
+                            core.setOutput(key, value);
+                            core.info(`${key}: ${value}`);
+                        });
+                        core.endGroup();
+                    }
+                }
+            }
+            else if (summary) {
+                table += `| ${l.title} |  `;
+            }
+            if (hasXmlReports && summary) {
+                const { errors, failures, skipped, tests, time } = summary;
+                const displayTime = time > 60
+                    ? `${(time / 60) | 0}m ${(time % 60) | 0}s`
+                    : `${time.toFixed(3)}s`;
+                const e = (emoji) => options.hideEmoji ? '' : ` ${emoji}`;
+                table += `| ${tests} | ${skipped}${e(':zzz:')} | ${failures}${e(':x:')} | ${errors}${e(':fire:')} | ${displayTime}${e(':stopwatch:')} |\n`;
+            }
+            else {
+                table += '\n';
+            }
+        });
+        return table;
+    }
+    catch (error) {
+        core.error(`Error generating summary report. ${error.message}`);
+    }
+    return '';
 };
-
-module.exports = { getMultipleReport };
+exports.getMultipleReport = getMultipleReport;
+exports.exportedForTesting = {
+    parseLine,
+    getOptions,
+};
 
 
 /***/ }),
 
-/***/ 3046:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+/***/ 2828:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-const core = __nccwpck_require__(7484);
-const { getPathToFile, getContentFile, getCoverageColor } = __nccwpck_require__(5804);
+"use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.exportedForTesting = exports.toHtml = exports.getCoverageReport = void 0;
+const core = __importStar(__nccwpck_require__(7484));
+const utils_1 = __nccwpck_require__(1798);
 // return true if "coverage file" include all special words
 const isValidCoverageContent = (data) => {
-  if (!data || !data.length) {
-    return false;
-  }
-
-  const wordsToInclude = [
-    'coverage: platform',
-    'Stmts',
-    'Miss',
-    'Cover',
-    'TOTAL',
-  ];
-
-  return wordsToInclude.every((w) => data.includes(w));
+    if (!data || !data.length) {
+        return false;
+    }
+    const wordsToInclude = [
+        'coverage: platform',
+        'Stmts',
+        'Miss',
+        'Cover',
+        'TOTAL',
+    ];
+    return wordsToInclude.every((w) => data.includes(w));
 };
-
 // return true if coverage data includes branch coverage columns
 const hasBranchCoverage = (data) => {
-  if (!data || !data.length) {
-    return false;
-  }
-
-  return data.includes('Branch') && data.includes('BrPart');
+    if (!data || !data.length) {
+        return false;
+    }
+    return data.includes('Branch') && data.includes('BrPart');
 };
-
 // return full html coverage report and coverage percentage
 const getCoverageReport = (options) => {
-  const { covFile, covXmlFile } = options;
-
-  if (!covXmlFile) {
-    try {
-      const covFilePath = getPathToFile(covFile);
-      const content = getContentFile(covFilePath);
-      const coverage = getTotalCoverage(content);
-      const isValid = isValidCoverageContent(content);
-
-      if (content && !isValid) {
-        // prettier-ignore
-        core.error(`Coverage file "${covFilePath}" has bad format or wrong data`);
-      }
-
-      if (content && isValid) {
-        const html = toHtml(content, options);
-        const total = getTotal(content);
-        const warnings = getWarnings(content);
-        const color = getCoverageColor(total ? total.cover : '0');
-
-        return { html, coverage, color, warnings };
-      }
-    } catch (error) {
-      core.error(`Generating coverage report. ${error.message}`);
+    const { covFile, covXmlFile } = options;
+    if (!covXmlFile) {
+        try {
+            const covFilePath = (0, utils_1.getPathToFile)(covFile);
+            const content = (0, utils_1.getContentFile)(covFilePath);
+            const coverage = getTotalCoverage(content);
+            const isValid = isValidCoverageContent(content);
+            if (content && !isValid) {
+                // prettier-ignore
+                core.error(`Coverage file "${covFilePath}" has bad format or wrong data`);
+            }
+            if (content && isValid) {
+                const html = (0, exports.toHtml)(content, options);
+                const total = getTotal(content);
+                const warnings = getWarnings(content);
+                const color = (0, utils_1.getCoverageColor)(total ? total.cover : '0');
+                return { html, coverage, color, warnings: warnings ?? 0 };
+            }
+        }
+        catch (error) {
+            core.error(`Generating coverage report. ${error.message}`);
+        }
     }
-  }
-
-  return { html: '', coverage: '0', color: 'red', warnings: 0 };
+    return { html: '', coverage: '0', color: 'red', warnings: 0 };
 };
-
+exports.getCoverageReport = getCoverageReport;
 // get actual lines from coverage-file
 const getActualLines = (data) => {
-  if (!data || !data.length) {
-    return null;
-  }
-
-  const lines = data.split('\n');
-  const startIndex = lines.findIndex((l) => l.includes('coverage: platform'));
-  const endIndex = lines.findIndex((l) => l.includes('TOTAL '));
-  if (startIndex === -1) {
-    return null;
-  }
-
-  const oldFormatLines = lines.slice(startIndex + 3, endIndex - 1);
-  const newFormatLines = oldFormatLines.filter(
-    (l) => !l.split('').every((c) => c === '-'),
-  );
-
-  return newFormatLines;
+    if (!data || !data.length) {
+        return null;
+    }
+    const lines = data.split('\n');
+    const startIndex = lines.findIndex((l) => l.includes('coverage: platform'));
+    const endIndex = lines.findIndex((l) => l.includes('TOTAL '));
+    if (startIndex === -1) {
+        return null;
+    }
+    const oldFormatLines = lines.slice(startIndex + 3, endIndex - 1);
+    const newFormatLines = oldFormatLines.filter((l) => !l.split('').every((c) => c === '-'));
+    return newFormatLines;
 };
-
 // get total line from coverage-file
 const getTotal = (data) => {
-  if (!data || !data.length) {
-    return null;
-  }
-
-  const lines = data.split('\n');
-  const line = lines.find((l) => l.includes('TOTAL    '));
-  const hasBranch = hasBranchCoverage(data);
-
-  return parseTotalLine(line, hasBranch);
+    if (!data || !data.length) {
+        return null;
+    }
+    const lines = data.split('\n');
+    const line = lines.find((l) => l.includes('TOTAL    '));
+    const hasBranch = hasBranchCoverage(data);
+    return parseTotalLine(line ?? null, hasBranch);
 };
-
 // get number of warnings from coverage-file
 const getWarnings = (data) => {
-  if (!data || !data.length) {
-    return null;
-  }
-
-  const WARNINGS_KEY = ' warnings in ';
-  if (!data.includes(WARNINGS_KEY)) {
-    return 0;
-  }
-
-  const line = data.split('\n').find((l) => l.includes(WARNINGS_KEY));
-  const lineArr = line.split(' ');
-  const indexOfWarnings = lineArr.findIndex((i) => i === 'warnings');
-
-  return parseInt(lineArr[indexOfWarnings - 1]);
+    if (!data || !data.length) {
+        return 0;
+    }
+    const WARNINGS_KEY = ' warnings in ';
+    if (!data.includes(WARNINGS_KEY)) {
+        return 0;
+    }
+    const line = data.split('\n').find((l) => l.includes(WARNINGS_KEY));
+    if (!line) {
+        return 0;
+    }
+    const lineArr = line.split(' ');
+    const indexOfWarnings = lineArr.findIndex((i) => i === 'warnings');
+    return parseInt(lineArr[indexOfWarnings - 1]);
 };
-
 // parse one line from coverage-file
 const parseOneLine = (line, hasBranch = false) => {
-  if (!line) {
-    return null;
-  }
-
-  const parsedLine = line.split('   ').filter((l) => l);
-  const minCols = hasBranch ? 6 : 4;
-
-  if (parsedLine.length < minCols) {
-    return null;
-  }
-
-  const lastItem = parsedLine[parsedLine.length - 1];
-  const isFullCoverage = lastItem === '100%';
-  const cover = isFullCoverage
-    ? '100%'
-    : parsedLine[parsedLine.length - 2].trim();
-  const missing = isFullCoverage
-    ? null
-    : parsedLine[parsedLine.length - 1] &&
-      parsedLine[parsedLine.length - 1].split(', ');
-
-  const result = {
-    name: parsedLine[0],
-    stmts: parsedLine[1].trim(),
-    miss: parsedLine[2].trim(),
-    cover,
-    missing,
-  };
-
-  if (hasBranch) {
-    result.branch = parsedLine[3].trim();
-    result.brpart = parsedLine[4].trim();
-  }
-
-  return result;
+    if (!line) {
+        return null;
+    }
+    const parsedLine = line.split('   ').filter((l) => l);
+    const minCols = hasBranch ? 6 : 4;
+    if (parsedLine.length < minCols) {
+        return null;
+    }
+    const lastItem = parsedLine[parsedLine.length - 1];
+    const isFullCoverage = lastItem === '100%';
+    const cover = isFullCoverage
+        ? '100%'
+        : parsedLine[parsedLine.length - 2].trim();
+    const missing = isFullCoverage
+        ? null
+        : parsedLine[parsedLine.length - 1]
+            ? parsedLine[parsedLine.length - 1].split(', ')
+            : null;
+    const result = {
+        name: parsedLine[0],
+        stmts: parsedLine[1].trim(),
+        miss: parsedLine[2].trim(),
+        cover,
+        missing,
+    };
+    if (hasBranch) {
+        result.branch = parsedLine[3].trim();
+        result.brpart = parsedLine[4].trim();
+    }
+    return result;
 };
-
 // parse total line from coverage-file
 const parseTotalLine = (line, hasBranch = false) => {
-  if (!line) {
-    return null;
-  }
-
-  const parsedLine = line.split('  ').filter((l) => l);
-  const minCols = hasBranch ? 6 : 4;
-
-  if (parsedLine.length < minCols) {
-    return null;
-  }
-
-  const result = {
-    name: parsedLine[0],
-    stmts: parsedLine[1].trim(),
-    miss: parsedLine[2].trim(),
-    cover: parsedLine[parsedLine.length - 1].trim(),
-  };
-
-  if (hasBranch) {
-    result.branch = parsedLine[3].trim();
-    result.brpart = parsedLine[4].trim();
-  }
-
-  return result;
+    if (!line) {
+        return null;
+    }
+    const parsedLine = line.split('  ').filter((l) => l);
+    const minCols = hasBranch ? 6 : 4;
+    if (parsedLine.length < minCols) {
+        return null;
+    }
+    const result = {
+        name: parsedLine[0],
+        stmts: parsedLine[1].trim(),
+        miss: parsedLine[2].trim(),
+        cover: parsedLine[parsedLine.length - 1].trim(),
+    };
+    if (hasBranch) {
+        result.branch = parsedLine[3].trim();
+        result.brpart = parsedLine[4].trim();
+    }
+    return result;
 };
-
 // parse coverage-file
 const parse = (data) => {
-  const actualLines = getActualLines(data);
-
-  if (!actualLines) {
-    return null;
-  }
-
-  const hasBranch = hasBranchCoverage(data);
-
-  return actualLines.map((line) => parseOneLine(line, hasBranch));
+    const actualLines = getActualLines(data);
+    if (!actualLines) {
+        return null;
+    }
+    const hasBranch = hasBranchCoverage(data);
+    return actualLines
+        .map((line) => parseOneLine(line, hasBranch))
+        .filter((line) => line !== null);
 };
-
 // collapse all lines to folders structure
 const makeFolders = (coverage, options) => {
-  const folders = {};
-
-  for (const line of coverage) {
-    const parts = line.name.replace(options.prefix, '').split('/');
-    const folder = parts.slice(0, -1).join('/');
-
-    folders[folder] = folders[folder] || [];
-    folders[folder].push(line);
-  }
-
-  return folders;
+    const folders = {};
+    for (const line of coverage) {
+        const parts = line.name.replace(options.prefix, '').split('/');
+        const folder = parts.slice(0, -1).join('/');
+        folders[folder] = folders[folder] || [];
+        folders[folder].push(line);
+    }
+    return folders;
 };
-
 // gets total coverage in percentage
 const getTotalCoverage = (data) => {
-  const total = getTotal(data);
-
-  return total ? total.cover : '0';
+    const total = getTotal(data);
+    return total ? total.cover : '0';
 };
-
 // convert all data to html output
 const toHtml = (data, options, dataFromXml = null) => {
-  const {
-    badgeTitle,
-    title,
-    hideBadge,
-    hideReport,
-    reportOnlyChangedFiles,
-    removeLinkFromBadge,
-    textInsteadBadge,
-  } = options;
-  const table = hideReport ? '' : toTable(data, options, dataFromXml);
-  const total = dataFromXml ? dataFromXml.total : getTotal(data);
-  const color = getCoverageColor(total.cover);
-  const onlyChnaged = reportOnlyChangedFiles ? '• ' : '';
-  const readmeHref = `${options.repoUrl}/blob/${options.commit}/README.md`;
-  const badge = `<img alt="${badgeTitle}" src="https://img.shields.io/badge/${badgeTitle}-${total.cover}25-${color}.svg" />`;
-  const badgeWithLink = removeLinkFromBadge
-    ? badge
-    : `<a href="${readmeHref}">${badge}</a>`;
-  const covered = total.stmts - total.miss;
-  const textBadge = `${total.cover} (${covered}/${total.stmts})`;
-  const badgeContent = textInsteadBadge ? textBadge : badgeWithLink;
-  const badgeHtml = hideBadge ? '' : badgeContent;
-  const reportHtml = hideReport
-    ? ''
-    : `<details><summary>${title} ${onlyChnaged}</summary>${table}</details>`;
-
-  return `${badgeHtml}${reportHtml}`;
+    const { badgeTitle, title, hideBadge, hideReport, reportOnlyChangedFiles, removeLinkFromBadge, textInsteadBadge, } = options;
+    const table = hideReport ? '' : toTable(data, options, dataFromXml);
+    const total = dataFromXml ? dataFromXml.total : getTotal(data);
+    if (!total) {
+        return '';
+    }
+    const color = (0, utils_1.getCoverageColor)(total.cover);
+    const onlyChanged = reportOnlyChangedFiles ? '\u2022 ' : '';
+    const readmeHref = `${options.repoUrl}/blob/${options.commit}/README.md`;
+    const badge = `<img alt="${badgeTitle}" src="https://img.shields.io/badge/${badgeTitle}-${total.cover}25-${color}.svg" />`;
+    const badgeWithLink = removeLinkFromBadge
+        ? badge
+        : `<a href="${readmeHref}">${badge}</a>`;
+    const covered = (typeof total.stmts === 'number' ? total.stmts : parseInt(total.stmts)) -
+        (typeof total.miss === 'number' ? total.miss : parseInt(total.miss));
+    const textBadge = `${total.cover} (${covered}/${total.stmts})`;
+    const badgeContent = textInsteadBadge ? textBadge : badgeWithLink;
+    const badgeHtml = hideBadge ? '' : badgeContent;
+    const reportHtml = hideReport
+        ? ''
+        : `<details><summary>${title} ${onlyChanged}</summary>${table}</details>`;
+    return `${badgeHtml}${reportHtml}`;
 };
-
+exports.toHtml = toHtml;
 // make html table from coverage-file
 const toTable = (data, options, dataFromXml = null) => {
-  const coverage = dataFromXml ? dataFromXml.coverage : parse(data);
-  const { reportOnlyChangedFiles, changedFiles } = options;
-
-  if (!coverage) {
-    core.warning(`Coverage file not well-formed`);
-    return null;
-  }
-  const totalLine = dataFromXml ? dataFromXml.total : getTotal(data);
-  options.hasMissing = coverage.some((c) => c.missing);
-  options.hasBranch = coverage.some((c) => c.branch !== undefined);
-
-  core.info(`Generating coverage report`);
-  const headTr = toHeadRow(options);
-  const totalTr = toTotalRow(totalLine, options);
-  const folders = makeFolders(coverage, options);
-
-  const rows = Object.keys(folders)
-    .sort()
-    .filter((folderPath) => {
-      if (!reportOnlyChangedFiles) {
-        return true;
-      }
-
-      const allFilesInFolder = Object.values(folders[folderPath]).map(
-        (f) => f.name,
-      );
-
-      folders[folderPath] = folders[folderPath].filter((f) =>
-        changedFiles.all.some((c) => c.includes(f.name)),
-      );
-      const fileExistsInFolder = allFilesInFolder.some((f) =>
-        changedFiles.all.some((c) => c.includes(f)),
-      );
-      return fileExistsInFolder;
+    const coverage = dataFromXml ? dataFromXml.coverage : parse(data);
+    const { reportOnlyChangedFiles, changedFiles } = options;
+    if (!coverage) {
+        core.warning(`Coverage file not well-formed`);
+        return null;
+    }
+    const totalLine = dataFromXml ? dataFromXml.total : getTotal(data);
+    options.hasMissing = coverage.some((c) => c.missing);
+    options.hasBranch = coverage.some((c) => c.branch !== undefined);
+    core.info(`Generating coverage report`);
+    const headTr = toHeadRow(options);
+    const totalTr = toTotalRow(totalLine, options);
+    const folders = makeFolders(coverage, options);
+    const rows = Object.keys(folders)
+        .sort()
+        .filter((folderPath) => {
+        if (!reportOnlyChangedFiles) {
+            return true;
+        }
+        const allFilesInFolder = Object.values(folders[folderPath]).map((f) => f.name);
+        folders[folderPath] = folders[folderPath].filter((f) => changedFiles.all.some((c) => c.includes(f.name)));
+        const fileExistsInFolder = allFilesInFolder.some((f) => changedFiles.all.some((c) => c.includes(f)));
+        return fileExistsInFolder;
     })
-    .reduce(
-      (acc, key) => [
+        .reduce((acc, key) => [
         ...acc,
         toFolderTd(key, options),
         ...folders[key].map((file) => toRow(file, key !== '', options)),
-      ],
-      [],
-    );
-
-  const hasLines = rows.length > 0;
-  const isFilesChanged =
-    reportOnlyChangedFiles && !hasLines
-      ? `<i>report-only-changed-files is enabled. No files were changed during this commit :)</i>`
-      : '';
-
-  // prettier-ignore
-  return `<table>${headTr}<tbody>${rows.join('')}${totalTr}</tbody></table>${isFilesChanged}`;
+    ], []);
+    const hasLines = rows.length > 0;
+    const isFilesChanged = reportOnlyChangedFiles && !hasLines
+        ? `<i>report-only-changed-files is enabled. No files were changed during this commit :)</i>`
+        : '';
+    // prettier-ignore
+    return `<table>${headTr}<tbody>${rows.join('')}${totalTr}</tbody></table>${isFilesChanged}`;
 };
-
 // make html head row - th
 const toHeadRow = (options) => {
-  const branchTh = options.hasBranch ? '<th>Branch</th><th>BrPart</th>' : '';
-  const missingTh = options.hasMissing ? '<th>Missing</th>' : '';
-
-  // prettier-ignore
-  return `<tr><th>File</th><th>Stmts</th><th>Miss</th>${branchTh}<th>Cover</th>${missingTh}</tr>`;
+    const branchTh = options.hasBranch ? '<th>Branch</th><th>BrPart</th>' : '';
+    const missingTh = options.hasMissing ? '<th>Missing</th>' : '';
+    // prettier-ignore
+    return `<tr><th>File</th><th>Stmts</th><th>Miss</th>${branchTh}<th>Cover</th>${missingTh}</tr>`;
 };
-
 // make html row - tr
 const toRow = (item, indent = false, options) => {
-  const { stmts, miss, cover } = item;
-
-  const name = toFileNameTd(item, indent, options);
-  const missing = toMissingTd(item, options);
-  const branchTd = options.hasBranch
-    ? `<td>${item.branch || 0}</td><td>${item.brpart || 0}</td>`
-    : '';
-  const missingTd = options.hasMissing ? `<td>${missing}</td>` : '';
-
-  // prettier-ignore
-  return `<tr><td>${name}</td><td>${stmts}</td><td>${miss}</td>${branchTd}<td>${cover}</td>${missingTd}</tr>`;
+    const { stmts, miss, cover } = item;
+    const name = toFileNameTd(item, indent, options);
+    const missing = toMissingTd(item, options);
+    const branchTd = options.hasBranch
+        ? `<td>${item.branch || 0}</td><td>${item.brpart || 0}</td>`
+        : '';
+    const missingTd = options.hasMissing ? `<td>${missing}</td>` : '';
+    // prettier-ignore
+    return `<tr><td>${name}</td><td>${stmts}</td><td>${miss}</td>${branchTd}<td>${cover}</td>${missingTd}</tr>`;
 };
-
 // make summary row - tr
 const toTotalRow = (item, options) => {
-  const { name, stmts, miss, cover } = item;
-  const branchTd = options.hasBranch
-    ? `<td><b>${item.branch || 0}</b></td>` +
-      `<td><b>${item.brpart || 0}</b></td>`
-    : '';
-  const missingTd = options.hasMissing ? '<td>&nbsp;</td>' : '';
-
-  // prettier-ignore
-  return `<tr><td><b>${name}</b></td><td><b>${stmts}</b></td><td><b>${miss}</b></td>${branchTd}<td><b>${cover}</b></td>${missingTd}</tr>`;
+    const { name, stmts, miss, cover } = item;
+    const branchTd = options.hasBranch
+        ? `<td><b>${item.branch || 0}</b></td>` +
+            `<td><b>${item.brpart || 0}</b></td>`
+        : '';
+    const missingTd = options.hasMissing ? '<td>&nbsp;</td>' : '';
+    // prettier-ignore
+    return `<tr><td><b>${name}</b></td><td><b>${stmts}</b></td><td><b>${miss}</b></td>${branchTd}<td><b>${cover}</b></td>${missingTd}</tr>`;
 };
-
 // make fileName cell - td
 const toFileNameTd = (item, indent = false, options) => {
-  const relative = item.name.replace(options.prefix, '');
-  const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}`;
-  const parts = relative.split('/');
-  const last = parts[parts.length - 1];
-  const space = indent ? '&nbsp; &nbsp;' : '';
-  const fileName = last.replace(/__/g, '\\_\\_');
-
-  return options.removeLinksToFiles
-    ? `${space}${fileName}`
-    : `${space}<a href="${href}">${fileName}</a>`;
+    const relative = item.name.replace(options.prefix, '');
+    const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}`;
+    const parts = relative.split('/');
+    const last = parts[parts.length - 1];
+    const space = indent ? '&nbsp; &nbsp;' : '';
+    const fileName = last.replace(/__/g, '\\_\\_');
+    return options.removeLinksToFiles
+        ? `${space}${fileName}`
+        : `${space}<a href="${href}">${fileName}</a>`;
 };
-
 // make folder row - tr
 const toFolderTd = (path, options) => {
-  if (path === '') {
-    return '';
-  }
-
-  const colspan =
-    4 + (options.hasBranch ? 2 : 0) + (options.hasMissing ? 1 : 0);
-  return `<tr><td colspan="${colspan}"><b>${path}</b></td></tr>`;
+    if (path === '') {
+        return '';
+    }
+    const colspan = 4 + (options.hasBranch ? 2 : 0) + (options.hasMissing ? 1 : 0);
+    return `<tr><td colspan="${colspan}"><b>${path}</b></td></tr>`;
 };
-
 // make missing cell - td
 const toMissingTd = (item, options) => {
-  if (!item.missing || !item.missing.length) {
-    return '&nbsp;';
-  }
-
-  return item.missing
-    .map((range) => {
-      const [start, end = start] = range.split('-');
-      const fragment = start === end ? `L${start}` : `L${start}-L${end}`;
-      const relative = item.name;
-      const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}#${fragment}`;
-      const text = start === end ? start : `${start}&ndash;${end}`;
-
-      return options.removeLinksToLines
-        ? text
-        : `<a href="${href}">${text}</a>`;
+    if (!item.missing || !item.missing.length) {
+        return '&nbsp;';
+    }
+    return item.missing
+        .map((range) => {
+        const [start, end = start] = range.split('-');
+        const fragment = start === end ? `L${start}` : `L${start}-L${end}`;
+        const relative = item.name;
+        const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}#${fragment}`;
+        const text = start === end ? start : `${start}&ndash;${end}`;
+        return options.removeLinksToLines
+            ? text
+            : `<a href="${href}">${text}</a>`;
     })
-    .join(', ');
+        .join(', ');
 };
-
-module.exports = { getCoverageReport, getCoverageColor, toTable, toHtml };
+exports.exportedForTesting = {
+    parseOneLine,
+    parseTotalLine,
+    getActualLines,
+    getTotal,
+    getWarnings,
+    isValidCoverageContent,
+    hasBranchCoverage,
+    parse,
+    toTable,
+};
 
 
 /***/ }),
 
-/***/ 841:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+/***/ 1775:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-const xml2js = __nccwpck_require__(758);
-const core = __nccwpck_require__(7484);
-const { getContent, getCoverageColor } = __nccwpck_require__(5804);
-const { toHtml } = __nccwpck_require__(3046);
+"use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getCoverageXmlReport = void 0;
+const xml2js = __importStar(__nccwpck_require__(758));
+const core = __importStar(__nccwpck_require__(7484));
+const utils_1 = __nccwpck_require__(1798);
+const parse_1 = __nccwpck_require__(2828);
 // return parsed xml
 const getParsedXml = (options) => {
-  const content = getContent(options.covXmlFile);
-
-  if (content) {
-    return getXmlContent(content);
-  }
-
-  return '';
-};
-
-const getTotalCoverage = (parsedXml) => {
-  if (!parsedXml) {
+    const content = (0, utils_1.getContent)(options.covXmlFile);
+    if (content) {
+        return getXmlContent(content);
+    }
     return null;
-  }
-
-  const coverage = parsedXml['$'];
-  const cover = parseInt(parseFloat(coverage['line-rate']) * 100);
-  const linesValid = parseInt(coverage['lines-valid']);
-  const linesCovered = parseInt(coverage['lines-covered']);
-  const branchesValid = parseInt(coverage['branches-valid']) || 0;
-  const branchesCovered = parseInt(coverage['branches-covered']) || 0;
-
-  const result = {
-    name: 'TOTAL',
-    stmts: linesValid,
-    miss: linesValid - linesCovered,
-    cover: cover !== '0' ? `${cover}%` : '0',
-  };
-
-  if (branchesValid > 0) {
-    result.branch = branchesValid.toString();
-    result.brpart = (branchesValid - branchesCovered).toString();
-  }
-
-  return result;
 };
-
+const getTotalCoverage = (parsedXml) => {
+    if (!parsedXml) {
+        return null;
+    }
+    const coverage = parsedXml['$'];
+    const cover = parseInt(String(parseFloat(coverage['line-rate']) * 100));
+    const linesValid = parseInt(coverage['lines-valid']);
+    const linesCovered = parseInt(coverage['lines-covered']);
+    const branchesValid = parseInt(coverage['branches-valid']) || 0;
+    const branchesCovered = parseInt(coverage['branches-covered']) || 0;
+    const result = {
+        name: 'TOTAL',
+        stmts: linesValid,
+        miss: linesValid - linesCovered,
+        cover: cover !== 0 ? `${cover}%` : '0',
+    };
+    if (branchesValid > 0) {
+        result.branch = branchesValid.toString();
+        result.brpart = (branchesValid - branchesCovered).toString();
+    }
+    return result;
+};
 // return true if "coverage file" include right structure
 const isValidCoverageContent = (parsedXml) => {
-  if (!parsedXml || !parsedXml.packages || !parsedXml.packages.length) {
-    return false;
-  }
-
-  const { packages } = parsedXml;
-  if (!packages[0] || !packages[0].package || !packages[0].package.length) {
-    return false;
-  }
-
-  return true;
+    if (!parsedXml || !parsedXml.packages || !parsedXml.packages.length) {
+        return false;
+    }
+    const { packages } = parsedXml;
+    if (!packages[0] || !packages[0].package || !packages[0].package.length) {
+        return false;
+    }
+    return true;
 };
-
 // return summary report in markdown format
 const getCoverageXmlReport = (options) => {
-  try {
-    const parsedXml = getParsedXml(options);
-
-    const coverage = getTotalCoverage(parsedXml);
-    // const coverage = getCoverageReportXml(getContent(options.covXmlFile));
-    const isValid = isValidCoverageContent(parsedXml);
-
-    if (parsedXml && !isValid) {
-      // prettier-ignore
-      core.error(`Error: coverage file "${options.covXmlFile}" has bad format or wrong data`);
+    try {
+        const parsedXml = getParsedXml(options);
+        const coverage = getTotalCoverage(parsedXml);
+        const isValid = isValidCoverageContent(parsedXml);
+        if (parsedXml && !isValid) {
+            // prettier-ignore
+            core.error(`Error: coverage file "${options.covXmlFile}" has bad format or wrong data`);
+        }
+        if (parsedXml && isValid) {
+            const coverageObj = coverageXmlToFiles(parsedXml, options.xmlSkipCovered);
+            const dataFromXml = {
+                coverage: coverageObj,
+                total: coverage,
+            };
+            const html = (0, parse_1.toHtml)(null, options, dataFromXml);
+            const color = (0, utils_1.getCoverageColor)(coverage ? coverage.cover : '0');
+            return { html, coverage, color };
+        }
+        return null;
     }
-
-    if (parsedXml && isValid) {
-      const coverageObj = coverageXmlToFiles(parsedXml, options.xmlSkipCovered);
-      const dataFromXml = { coverage: coverageObj, total: coverage };
-      const html = toHtml(null, options, dataFromXml);
-      const color = getCoverageColor(coverage ? coverage.cover : '0');
-
-      return { html, coverage, color };
+    catch (error) {
+        // prettier-ignore
+        core.error(`Error generating coverage report from "${options.covXmlFile}". ${error.message}`);
     }
     return null;
-  } catch (error) {
-    // prettier-ignore
-    core.error(`Error generating coverage report from "${options.covXmlFile}". ${error.message}`);
-  }
-
-  return '';
 };
-
+exports.getCoverageXmlReport = getCoverageXmlReport;
 // get content from coverage xml
 const getXmlContent = (data) => {
-  try {
-    if (!data || !data.length) {
-      return null;
+    try {
+        if (!data || !data.length) {
+            return null;
+        }
+        const parser = new xml2js.Parser();
+        let parseResult = null;
+        let errorMessage = '';
+        parser.parseString(data, (err, result) => {
+            if (err) {
+                errorMessage = err.message;
+            }
+            parseResult = result;
+        });
+        if (!parseResult) {
+            // prettier-ignore
+            core.warning(`Coverage xml file is not XML or not well-formed${errorMessage ? `: ${errorMessage}` : ''}`);
+            return '';
+        }
+        return parseResult.coverage;
     }
-
-    const parser = new xml2js.Parser();
-
-    const parsed = parser.parseString(data);
-    if (!parsed || !parser.resultObject) {
-      core.warning(`Coverage xml file is not XML or not well-formed`);
-      return '';
+    catch (error) {
+        core.error(`Error parsing coverage xml. ${error.message}`);
     }
-
-    return parser.resultObject.coverage;
-  } catch (error) {
-    core.error(`Error parsing coverage xml. ${error.message}`);
-  }
-
-  return '';
+    return '';
 };
-
 // parse coverage xml to Files structure
 const coverageXmlToFiles = (coverageXml, xmlSkipCovered) => {
-  let files = [];
-
-  coverageXml.packages[0].package
-    .filter((package) => package.classes && package.classes.length)
-    .forEach((package) => {
-      package.classes[0].class
-        .filter((c) => c.lines)
-        .forEach((c) => {
-          const fileObj = parseClass(c, xmlSkipCovered);
-
-          if (fileObj) {
-            files.push(fileObj);
-          }
+    const files = [];
+    coverageXml.packages[0].package
+        .filter((pkg) => pkg.classes && pkg.classes.length)
+        .forEach((pkg) => {
+        pkg.classes[0].class
+            .filter((c) => c.lines)
+            .forEach((c) => {
+            const fileObj = parseClass(c, xmlSkipCovered);
+            if (fileObj) {
+                files.push(fileObj);
+            }
         });
     });
-
-  return files;
+    return files;
 };
-
 const parseClass = (classObj, xmlSkipCovered) => {
-  if (!classObj || !classObj.lines) {
-    return null;
-  }
-
-  const {
-    stmts,
-    missing,
-    totalMissing: miss,
-    branchTotal,
-    branchMissing,
-  } = parseLines(classObj.lines);
-  const { filename: name, 'line-rate': lineRate } = classObj['$'];
-  const isFullCoverage = lineRate === '1';
-
-  if (xmlSkipCovered && isFullCoverage) {
-    return null;
-  }
-
-  const cover = isFullCoverage
-    ? '100%'
-    : `${parseInt(parseFloat(lineRate) * 100)}%`;
-
-  const result = { name, stmts, miss, cover, missing };
-
-  if (branchTotal > 0) {
-    result.branch = branchTotal.toString();
-    result.brpart = branchMissing.toString();
-  }
-
-  return result;
+    if (!classObj || !classObj.lines) {
+        return null;
+    }
+    const { stmts, missing, totalMissing: miss, branchTotal, branchMissing, } = parseLines(classObj.lines);
+    const { filename: name, 'line-rate': lineRate } = classObj['$'];
+    const isFullCoverage = lineRate === '1';
+    if (xmlSkipCovered && isFullCoverage) {
+        return null;
+    }
+    const cover = isFullCoverage
+        ? '100%'
+        : `${parseInt(String(parseFloat(lineRate) * 100))}%`;
+    const result = { name, stmts, miss, cover, missing };
+    if (branchTotal > 0) {
+        result.branch = branchTotal.toString();
+        result.brpart = branchMissing.toString();
+    }
+    return result;
 };
-
 const parseLines = (lines) => {
-  const emptyResult = {
-    stmts: '0',
-    missing: '',
-    totalMissing: '0',
-    branchTotal: 0,
-    branchMissing: 0,
-  };
-
-  if (!lines || !lines.length || !lines[0].line) {
-    return emptyResult;
-  }
-
-  let stmts = 0;
-  const missingLines = [];
-  let branchTotal = 0;
-  let branchMissing = 0;
-
-  lines[0].line.forEach((line) => {
-    stmts++;
-    const {
-      hits,
-      number,
-      branch,
-      'condition-coverage': condCoverage,
-    } = line['$'];
-
-    if (hits === '0') {
-      missingLines.push(parseInt(number));
+    const emptyResult = {
+        stmts: '0',
+        missing: [],
+        totalMissing: '0',
+        branchTotal: 0,
+        branchMissing: 0,
+    };
+    if (!lines || !lines.length || !lines[0].line) {
+        return emptyResult;
     }
-
-    if (branch === 'true' && condCoverage) {
-      const match = condCoverage.match(/\((\d+)\/(\d+)\)/);
-
-      if (match) {
-        const covered = parseInt(match[1]);
-        const total = parseInt(match[2]);
-        branchTotal += total;
-        branchMissing += total - covered;
-      }
-    }
-  });
-
-  const missing = missingLines.reduce((arr, val, i, a) => {
-    if (!i || val !== a[i - 1] + 1) arr.push([]);
-    arr[arr.length - 1].push(val);
-    return arr;
-  }, []);
-
-  const missingText = [];
-  missing.forEach((m) => {
-    if (m.length === 1) {
-      missingText.push(`${m[0]}`);
-    } else {
-      missingText.push(`${m[0]}-${m[m.length - 1]}`);
-    }
-  });
-
-  return {
-    stmts: stmts.toString(),
-    missing: missingText,
-    totalMissing: missingLines.length.toString(),
-    branchTotal,
-    branchMissing,
-  };
+    let stmts = 0;
+    const missingLines = [];
+    let branchTotal = 0;
+    let branchMissing = 0;
+    lines[0].line.forEach((line) => {
+        stmts++;
+        const { hits, number: lineNumber, branch, 'condition-coverage': condCoverage, } = line['$'];
+        if (hits === '0') {
+            missingLines.push(parseInt(lineNumber));
+        }
+        if (branch === 'true' && condCoverage) {
+            const match = condCoverage.match(/\((\d+)\/(\d+)\)/);
+            if (match) {
+                const covered = parseInt(match[1]);
+                const total = parseInt(match[2]);
+                branchTotal += total;
+                branchMissing += total - covered;
+            }
+        }
+    });
+    const missing = missingLines.reduce((arr, val, i, a) => {
+        if (!i || val !== a[i - 1] + 1)
+            arr.push([]);
+        arr[arr.length - 1].push(val);
+        return arr;
+    }, []);
+    const missingText = [];
+    missing.forEach((m) => {
+        if (m.length === 1) {
+            missingText.push(`${m[0]}`);
+        }
+        else {
+            missingText.push(`${m[0]}-${m[m.length - 1]}`);
+        }
+    });
+    return {
+        stmts: stmts.toString(),
+        missing: missingText,
+        totalMissing: missingLines.length.toString(),
+        branchTotal,
+        branchMissing,
+    };
 };
-
-module.exports = { getCoverageXmlReport };
 
 
 /***/ }),
 
-/***/ 5804:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+/***/ 1798:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-const fs = __nccwpck_require__(9896);
-const core = __nccwpck_require__(7484);
+"use strict";
 
-const getPathToFile = (pathToFile) => {
-  if (!pathToFile) {
-    return null;
-  }
-
-  // supports absolute path like '/tmp/pytest-coverage.txt'
-  return pathToFile.startsWith('/')
-    ? pathToFile
-    : `${process.env.GITHUB_WORKSPACE}/${pathToFile}`;
-};
-
-const getContentFile = (pathToFile) => {
-  if (!pathToFile) {
-    return null;
-  }
-
-  const fileExists = fs.existsSync(pathToFile);
-
-  if (!fileExists) {
-    core.warning(`File "${pathToFile}" doesn't exist`);
-    return null;
-  }
-
-  const content = fs.readFileSync(pathToFile, 'utf8');
-
-  if (!content) {
-    core.warning(`No content found in file "${pathToFile}"`);
-    return null;
-  }
-
-  core.info(`File read successfully "${pathToFile}"`);
-  return content;
-};
-
-const getContent = (filePath) => {
-  try {
-    const fullFilePath = getPathToFile(filePath);
-
-    if (fullFilePath) {
-      const content = getContentFile(fullFilePath);
-
-      return content;
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
     }
-  } catch (error) {
-    core.error(`Could not get content of "${filePath}". ${error.message}`);
-  }
-
-  return null;
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getCoverageColor = exports.getContent = exports.getContentFile = exports.getPathToFile = void 0;
+const fs = __importStar(__nccwpck_require__(9896));
+const core = __importStar(__nccwpck_require__(7484));
+const getPathToFile = (pathToFile) => {
+    if (!pathToFile) {
+        return null;
+    }
+    // supports absolute path like '/tmp/pytest-coverage.txt'
+    return pathToFile.startsWith('/')
+        ? pathToFile
+        : `${process.env.GITHUB_WORKSPACE}/${pathToFile}`;
 };
-
+exports.getPathToFile = getPathToFile;
+const getContentFile = (pathToFile) => {
+    if (!pathToFile) {
+        return null;
+    }
+    const fileExists = fs.existsSync(pathToFile);
+    if (!fileExists) {
+        core.warning(`File "${pathToFile}" doesn't exist`);
+        return null;
+    }
+    const content = fs.readFileSync(pathToFile, 'utf8');
+    if (!content) {
+        core.warning(`No content found in file "${pathToFile}"`);
+        return null;
+    }
+    core.info(`File read successfully "${pathToFile}"`);
+    return content;
+};
+exports.getContentFile = getContentFile;
+const getContent = (filePath) => {
+    try {
+        const fullFilePath = (0, exports.getPathToFile)(filePath);
+        if (fullFilePath) {
+            const content = (0, exports.getContentFile)(fullFilePath);
+            return content;
+        }
+    }
+    catch (error) {
+        core.error(`Could not get content of "${filePath}". ${error.message}`);
+    }
+    return null;
+};
+exports.getContent = getContent;
 // get coverage color from coverage percentage
 const getCoverageColor = (percentage) => {
-  // https://shields.io/category/coverage
-  const rangeColors = [
-    {
-      color: 'red',
-      range: [0, 40],
-    },
-    {
-      color: 'orange',
-      range: [40, 60],
-    },
-    {
-      color: 'yellow',
-      range: [60, 80],
-    },
-    {
-      color: 'green',
-      range: [80, 90],
-    },
-    {
-      color: 'brightgreen',
-      range: [90, 101],
-    },
-  ];
-
-  const num = parseFloat(percentage);
-
-  const { color } =
-    rangeColors.find(({ range: [min, max] }) => num >= min && num < max) ||
-    rangeColors[0];
-
-  return color;
+    // https://shields.io/category/coverage
+    const rangeColors = [
+        {
+            color: 'red',
+            range: [0, 40],
+        },
+        {
+            color: 'orange',
+            range: [40, 60],
+        },
+        {
+            color: 'yellow',
+            range: [60, 80],
+        },
+        {
+            color: 'green',
+            range: [80, 90],
+        },
+        {
+            color: 'brightgreen',
+            range: [90, 101],
+        },
+    ];
+    const num = parseFloat(String(percentage));
+    const found = rangeColors.find(({ range: [min, max] }) => num >= min && num < max);
+    return (found || rangeColors[0]).color;
 };
-
-module.exports = {
-  getPathToFile,
-  getContentFile,
-  getContent,
-  getCoverageColor,
-};
+exports.getCoverageColor = getCoverageColor;
 
 
 /***/ }),
@@ -43649,648 +44291,12 @@ legacyRestEndpointMethods.VERSION = VERSION;
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
 /******/ 	
 /************************************************************************/
-var __webpack_exports__ = {};
-const core = __nccwpck_require__(7484);
-const github = __nccwpck_require__(3228);
-const { getCoverageReport } = __nccwpck_require__(3046);
-const { getCoverageXmlReport } = __nccwpck_require__(841);
-const {
-  getSummaryReport,
-  getParsedXml,
-  getNotSuccessTest,
-} = __nccwpck_require__(2744);
-const { getMultipleReport } = __nccwpck_require__(7221);
-
-const MAX_COMMENT_LENGTH = 65536;
-const MAX_SUMMARY_LENGTH = 1024 * 1024; // 1MB limit for GitHub step summary
-const FILE_STATUSES = Object.freeze({
-  ADDED: 'added',
-  MODIFIED: 'modified',
-  REMOVED: 'removed',
-  RENAMED: 'renamed',
-});
-
-/**
- * Resolves a potential tag object SHA to the underlying commit SHA.
- * For annotated tags, GitHub's push event payload.after contains the tag object SHA,
- * not the commit SHA. This function detects tag pushes and resolves them to commits.
- *
- * @param {object} octokit - GitHub API client
- * @param {string} owner - Repository owner
- * @param {string} repo - Repository name
- * @param {string} sha - SHA to resolve (might be tag object or commit)
- * @param {string} ref - Git ref (e.g., refs/tags/v1.0.0 or refs/heads/main)
- * @returns {Promise<string>} - The commit SHA
- */
-const resolveCommitSha = async (octokit, owner, repo, sha, ref) => {
-  // Check if this is a tag push
-  if (ref && ref.startsWith('refs/tags/')) {
-    try {
-      core.info(`Detected tag push: ${ref}`);
-      core.info(`Attempting to resolve SHA: ${sha}`);
-
-      // Try to get the tag object
-      const { data: tag } = await octokit.rest.git.getTag({
-        owner,
-        repo,
-        tag_sha: sha,
-      });
-
-      // If it's an annotated tag, it will have an object field pointing to the commit
-      if (tag && tag.object && tag.object.sha) {
-        core.info(`Resolved annotated tag to commit: ${tag.object.sha}`);
-        return tag.object.sha;
-      }
-    } catch (error) {
-      // If getTag fails, it might be a lightweight tag or direct commit
-      // In this case, the SHA is already a commit SHA
-      // prettier-ignore
-      core.info(`SHA is not an annotated tag object, using as commit SHA: ${sha}`);
-      core.debug(`Error details: ${error.message}`);
-    }
-  }
-
-  // Return original SHA if not a tag or if it's a lightweight tag
-  return sha;
-};
-
-const truncateSummary = (content, maxLength) => {
-  if (content.length <= maxLength) {
-    return content;
-  }
-
-  // prettier-ignore
-  const truncationMessage = '\n\n**Warning: Summary truncated due to GitHub\'s 1MB limit**';
-  const messageLength = truncationMessage.length;
-  // prettier-ignore
-  const truncatedContent = content.substring(0, maxLength - messageLength - 100); // Leave some buffer
-
-  // Try to find a good break point (end of line or closing tag)
-  const lastNewline = truncatedContent.lastIndexOf('\n');
-  const lastClosingTag = truncatedContent.lastIndexOf('</');
-  const breakPoint = Math.max(lastNewline, lastClosingTag);
-
-  // If we found a good break point
-  if (breakPoint > maxLength * 0.8) {
-    return truncatedContent.substring(0, breakPoint) + truncationMessage;
-  }
-
-  return truncatedContent + truncationMessage;
-};
-
-const handlePermissionError = (error, context) => {
-  if (error?.status !== 403) {
-    core.setFailed(`Failed to create/update comment: ${error.message}`);
-    throw error;
-  }
-
-  const isForkPR = context?.payload?.pull_request?.head?.repo?.fork === true;
-  const lines = ['Permission denied when trying to create/update comment.', ''];
-
-  if (isForkPR) {
-    lines.push(
-      'This PR is from a fork. GitHub restricts the GITHUB_TOKEN to read-only',
-      'for fork PRs triggered by the `pull_request` event.',
-      '',
-      'To fix this, use the `pull_request_target` event instead:',
-      '',
-      '```yaml',
-      'on:',
-      '  pull_request_target:',
-      '    types: [opened, synchronize, reopened]',
-      '',
-      'permissions:',
-      '  contents: read',
-      '  pull-requests: write',
-      '```',
-      '',
-      'Note: `pull_request_target` runs in the context of the base branch.',
-      'Be cautious when checking out fork code — never run untrusted code',
-      'from the fork with elevated permissions.',
-      '',
-      'For more information, see:',
-      'https://github.com/MishaKav/pytest-coverage-comment#fork-prs',
-    );
-  } else {
-    const eventName = context?.eventName || 'this event';
-    lines.push(
-      'This error usually occurs because the GITHUB_TOKEN lacks necessary permissions.',
-      '',
-      'To fix this, add a permissions block to your workflow:',
-      '',
-      '```yaml',
-      'permissions:',
-      '  contents: read        # For checkout and comparing commits',
-      '  pull-requests: write  # For creating/updating PR comments',
-      '```',
-      '',
-      `For ${eventName === 'push' ? 'push events creating commit comments' : 'pull request events and more information'}, see:`,
-      'https://github.com/MishaKav/pytest-coverage-comment#comment-not-appearing',
-    );
-  }
-
-  core.setFailed(lines.join('\n'));
-  throw error;
-};
-
-const createOrEditComment = async (
-  octokit,
-  repo,
-  owner,
-  issue_number,
-  body,
-  WATERMARK,
-  context,
-) => {
-  try {
-    // Now decide if we should issue a new comment or edit an old one
-    const { data: comments } = await octokit.rest.issues.listComments({
-      repo,
-      owner,
-      issue_number,
-    });
-
-    const comment = comments.find((c) => c.body.startsWith(WATERMARK));
-
-    if (comment) {
-      core.info('Found previous comment, updating');
-      await octokit.rest.issues.updateComment({
-        repo,
-        owner,
-        comment_id: comment.id,
-        body,
-      });
-    } else {
-      core.info('No previous comment found, creating a new one');
-      await octokit.rest.issues.createComment({
-        repo,
-        owner,
-        issue_number,
-        body,
-      });
-    }
-  } catch (error) {
-    handlePermissionError(error, context);
-  }
-};
-
-const main = async () => {
-  const token = core.getInput('github-token', { required: true });
-  const title = core.getInput('title', { required: false });
-  const badgeTitle = core.getInput('badge-title', { required: false });
-  const hideBadge = core.getBooleanInput('hide-badge', { required: false });
-  const hideReport = core.getBooleanInput('hide-report', { required: false });
-  const createNewComment = core.getBooleanInput('create-new-comment', {
-    required: false,
-  });
-  const hideComment = core.getBooleanInput('hide-comment', { required: false });
-  const hideEmoji = core.getBooleanInput('hide-emoji', { required: false });
-  const xmlSkipCovered = core.getBooleanInput('xml-skip-covered', {
-    required: false,
-  });
-  const reportOnlyChangedFiles = core.getBooleanInput(
-    'report-only-changed-files',
-    { required: false },
-  );
-  const removeLinkFromBadge = core.getBooleanInput('remove-link-from-badge', {
-    required: false,
-  });
-  const removeLinksToFiles = core.getBooleanInput('remove-links-to-files', {
-    required: false,
-  });
-  const removeLinksToLines = core.getBooleanInput('remove-links-to-lines', {
-    required: false,
-  });
-  const textInsteadBadge = core.getBooleanInput('text-instead-badge', {
-    required: false,
-  });
-  const uniqueIdForComment = core.getInput('unique-id-for-comment', {
-    required: false,
-  });
-  const defaultBranch = core.getInput('default-branch', { required: false });
-  const covFile = core.getInput('pytest-coverage-path', { required: false });
-  const issueNumberInput = core.getInput('issue-number', { required: false });
-  const covXmlFile = core.getInput('pytest-xml-coverage-path', {
-    required: false,
-  });
-  const pathPrefix = core.getInput('coverage-path-prefix', { required: false });
-  const xmlFile = core.getInput('junitxml-path', { required: false });
-  const xmlTitle = core.getInput('junitxml-title', { required: false });
-  const multipleFiles = core.getMultilineInput('multiple-files', {
-    required: false,
-  });
-  const { context, repository } = github;
-  const { repo, owner } = context.repo;
-  const { eventName, payload } = context;
-  const serverUrl = context.serverUrl || 'https://github.com';
-
-  core.info(`Uses Github URL: ${serverUrl}`);
-  const watermarkUniqueId = uniqueIdForComment
-    ? `| ${uniqueIdForComment} `
-    : '';
-  const WATERMARK = `<!-- Pytest Coverage Comment: ${context.job} ${watermarkUniqueId}-->\n`;
-  let finalHtml = '';
-
-  const options = {
-    token,
-    repository: repository || `${owner}/${repo}`,
-    prefix: `${process.env.GITHUB_WORKSPACE}/`,
-    pathPrefix,
-    covFile,
-    covXmlFile,
-    xmlFile,
-    title,
-    badgeTitle,
-    hideBadge,
-    hideReport,
-    createNewComment,
-    hideComment,
-    hideEmoji,
-    xmlSkipCovered,
-    reportOnlyChangedFiles,
-    removeLinkFromBadge,
-    removeLinksToFiles,
-    removeLinksToLines,
-    textInsteadBadge,
-    defaultBranch,
-    xmlTitle,
-    multipleFiles,
-  };
-
-  options.repoUrl =
-    payload.repository?.html_url || `${serverUrl}/${options.repository}`;
-
-  // Initialize octokit early so we can use it for tag resolution
-  const octokit = github.getOctokit(token);
-
-  if (eventName === 'pull_request' || eventName === 'pull_request_target') {
-    options.commit = payload.pull_request.head.sha;
-    options.head = payload.pull_request.head.ref;
-    options.base = payload.pull_request.base.ref;
-  } else if (eventName === 'push') {
-    // For annotated tags, payload.after contains the tag object SHA, not the commit SHA
-    // Resolve it to the actual commit SHA
-    options.commit = await resolveCommitSha(
-      octokit,
-      owner,
-      repo,
-      payload.after,
-      context.ref,
-    );
-    options.head = context.ref;
-  } else if (eventName === 'workflow_dispatch') {
-    options.commit = context.sha;
-    options.head = context.ref;
-  } else if (eventName === 'workflow_run') {
-    options.commit = payload.workflow_run.head_sha;
-    options.head = payload.workflow_run.head_branch;
-  }
-
-  if (options.reportOnlyChangedFiles) {
-    const changedFiles = await getChangedFiles(options, issueNumberInput);
-    options.changedFiles = changedFiles;
-
-    // when github event is different from `pull_request`, `workflow_dispatch`, `workflow_run` or `push`
-    if (!changedFiles) {
-      options.reportOnlyChangedFiles = false;
-    }
-  }
-
-  let report = options.covXmlFile
-    ? getCoverageXmlReport(options)
-    : getCoverageReport(options);
-  let { coverage, color, html, warnings } = report;
-  const summaryReport = getSummaryReport(options);
-
-  if (summaryReport && summaryReport.html) {
-    core.setOutput('coverageHtml', summaryReport.html);
-  }
-
-  if (html) {
-    const newOptions = { ...options, commit: defaultBranch };
-    const output = newOptions.covXmlFile
-      ? getCoverageXmlReport(newOptions)
-      : getCoverageReport(newOptions);
-    core.setOutput('coverageHtml', output.html);
-  }
-
-  // set to output junitxml values
-  if (summaryReport) {
-    const parsedXml = getParsedXml(options);
-    const { errors, failures, skipped, tests, time } = parsedXml;
-    const valuesToExport = { errors, failures, skipped, tests, time };
-
-    Object.entries(valuesToExport).forEach(([key, value]) => {
-      core.info(`${key}: ${value}`);
-      core.setOutput(key, value);
-    });
-
-    const notSuccessTestInfo = getNotSuccessTest(options);
-    core.setOutput('notSuccessTestInfo', JSON.stringify(notSuccessTestInfo));
-    core.setOutput('summaryReport', JSON.stringify(summaryReport));
-  }
-
-  let multipleFilesHtml = '';
-  if (multipleFiles && multipleFiles.length) {
-    multipleFilesHtml = `\n\n${getMultipleReport(options)}`;
-  }
-
-  if (
-    !options.hideReport &&
-    html.length + summaryReport.length > MAX_COMMENT_LENGTH &&
-    eventName != 'workflow_dispatch' &&
-    eventName != 'workflow_run'
-  ) {
-    // generate new html without report
-    const warningsArr = [
-      `Your comment is too long (maximum is ${MAX_COMMENT_LENGTH} characters), coverage report will not be added.`,
-      'Try one/some of the following options:',
-      '- Add "--cov-report=term-missing:skip-covered" to pytest command',
-      '- Add "hide-report: true" to hide detailed coverage table',
-      '- Add "report-only-changed-files: true" to show only changed files',
-      '- Add "xml-skip-covered: true" to hide files with 100% coverage',
-      '- Switch to "multiple-files" mode',
-    ];
-
-    if (!options.removeLinksToFiles) {
-      // prettier-ignore
-      warningsArr.push('- Add "remove-links-to-files: true" to remove file links');
-    }
-
-    if (!options.removeLinksToLines) {
-      // prettier-ignore
-      warningsArr.push('- Add "remove-links-to-lines: true" to remove line number links');
-    }
-    core.warning(warningsArr.join('\n'));
-    report = options.covXmlFile
-      ? getCoverageXmlReport({ ...options, hideReport: true })
-      : getCoverageReport({ ...options, hideReport: true });
-    html = report.html;
-  }
-
-  finalHtml += html;
-  finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
-  finalHtml += multipleFilesHtml
-    ? `\n\n${multipleFilesHtml}`
-    : multipleFilesHtml;
-  core.setOutput('summaryReport', JSON.stringify(finalHtml));
-
-  if (coverage && typeof coverage === 'string') {
-    core.startGroup(options.covFile);
-    core.info(`coverage: ${coverage}`);
-    core.info(`color: ${color}`);
-    core.info(`warnings: ${warnings}`);
-
-    core.setOutput('coverage', coverage);
-    core.setOutput('color', color);
-    core.setOutput('warnings', warnings);
-    core.endGroup();
-  }
-
-  // support for output for `pytest-xml-coverage-path`
-  if (coverage && coverage.cover) {
-    core.startGroup(options.covXmlFile);
-    core.info(`coverage: ${coverage.cover}`);
-    core.info(`color: ${color}`);
-
-    core.setOutput('coverage', coverage.cover);
-    core.setOutput('color', color);
-    core.endGroup();
-  }
-
-  if (!finalHtml || options.hideComment) {
-    core.info('Nothing to report');
-    return;
-  }
-  const body = WATERMARK + finalHtml;
-
-  const issue_number = payload.pull_request
-    ? payload.pull_request.number
-    : issueNumberInput
-      ? issueNumberInput
-      : 0;
-
-  if (eventName === 'push') {
-    core.info('Create commit comment');
-    try {
-      await octokit.rest.repos.createCommitComment({
-        repo,
-        owner,
-        commit_sha: options.commit,
-        body,
-      });
-    } catch (error) {
-      handlePermissionError(error, context);
-    }
-  } else if (
-    eventName === 'pull_request' ||
-    eventName === 'pull_request_target'
-  ) {
-    if (createNewComment) {
-      core.info('Creating a new comment');
-
-      try {
-        await octokit.rest.issues.createComment({
-          repo,
-          owner,
-          issue_number,
-          body,
-        });
-      } catch (error) {
-        handlePermissionError(error, context);
-      }
-    } else {
-      await createOrEditComment(
-        octokit,
-        repo,
-        owner,
-        issue_number,
-        body,
-        WATERMARK,
-        context,
-      );
-    }
-  } else if (
-    eventName === 'workflow_dispatch' ||
-    eventName === 'workflow_run'
-  ) {
-    const truncatedBody = truncateSummary(body, MAX_SUMMARY_LENGTH);
-    if (body.length > MAX_SUMMARY_LENGTH) {
-      // prettier-ignore
-      core.warning(`GitHub step summary was truncated from ${body.length} to ${truncatedBody.length} characters due to the 1MB limit.`);
-    }
-    await core.summary.addRaw(truncatedBody, true).write();
-    if (!issueNumberInput) {
-      // prettier-ignore
-      core.warning(`To use this action on a \`${eventName}\`, you need to pass a pull request number.`)
-    } else {
-      if (createNewComment) {
-        core.info('Creating a new comment');
-        try {
-          await octokit.rest.issues.createComment({
-            repo,
-            owner,
-            issue_number,
-            body,
-          });
-        } catch (error) {
-          handlePermissionError(error, context);
-        }
-      } else {
-        await createOrEditComment(
-          octokit,
-          repo,
-          owner,
-          issue_number,
-          body,
-          WATERMARK,
-          context,
-        );
-      }
-    }
-  } else {
-    if (!options.hideComment) {
-      // prettier-ignore
-      core.warning(`This action supports comments only on \`pull_request\`, \`pull_request_target\`, \`push\`, \`workflow_run\` and \`workflow_dispatch\`  events. \`${eventName}\` events are not supported.\nYou can use the output of the action.`)
-    }
-  }
-};
-
-// generate object of all files that changed based on commit through Github API
-const getChangedFiles = async (options, pr_number) => {
-  try {
-    const { context } = github;
-    const { eventName, payload } = context;
-    const { repo, owner } = context.repo;
-    const octokit = github.getOctokit(options.token);
-
-    // Define the base and head commits to be extracted from the payload
-    let base, head;
-
-    switch (eventName) {
-      case 'pull_request':
-      case 'pull_request_target':
-        base = payload.pull_request.base.sha;
-        head = payload.pull_request.head.sha;
-        break;
-      case 'push':
-        base = payload.before;
-        // Use the resolved commit SHA from options instead of payload.after
-        // This handles annotated tags correctly
-        head = options.commit || payload.after;
-        break;
-      case 'workflow_run':
-      case 'workflow_dispatch': {
-        const { data } = await octokit.rest.pulls.get({
-          owner,
-          repo,
-          pull_number: pr_number,
-        });
-
-        base = data.base.label;
-        head = data.head.label;
-        break;
-      }
-      default:
-        // prettier-ignore
-        core.warning(`\`report-only-changed-files: true\` supports only on \`pull_request\`, \`workflow_run\`, \`workflow_dispatch\` and \`push\`. Other \`${eventName}\` events are not supported.`)
-        return null;
-    }
-
-    core.startGroup('Changed files');
-    // Log the base and head commits
-    core.info(`Base commit: ${base}`);
-    core.info(`Head commit: ${head}`);
-
-    let response = null;
-    // that is first commit, we cannot get diff
-    if (base === '0000000000000000000000000000000000000000') {
-      response = await octokit.rest.repos.getCommit({
-        owner,
-        repo,
-        ref: head,
-      });
-    } else {
-      // https://developer.github.com/v3/repos/commits/#compare-two-commits
-      response = await octokit.rest.repos.compareCommits({
-        base,
-        head,
-        owner,
-        repo,
-      });
-    }
-
-    // Ensure that the request was successful.
-    if (response.status !== 200) {
-      core.setFailed(
-        `The GitHub API for comparing the base and head commits for this ${eventName} event returned ${response.status}, expected 200. ` +
-          "Please submit an issue on this action's GitHub repo.",
-      );
-    }
-
-    // Get the changed files from the response payload.
-    const files = response.data.files;
-    const all = [],
-      added = [],
-      modified = [],
-      removed = [],
-      renamed = [],
-      addedModified = [];
-
-    for (const file of files) {
-      const { filename: filenameOriginal, status } = file;
-      const filename = filenameOriginal.replace(options.pathPrefix, '');
-
-      all.push(filename);
-
-      switch (status) {
-        case FILE_STATUSES.ADDED:
-          added.push(filename);
-          addedModified.push(filename);
-          break;
-        case FILE_STATUSES.MODIFIED:
-          modified.push(filename);
-          addedModified.push(filename);
-          break;
-        case FILE_STATUSES.REMOVED:
-          removed.push(filename);
-          break;
-        case FILE_STATUSES.RENAMED:
-          renamed.push(filename);
-          break;
-        default:
-          // prettier-ignore
-          core.setFailed(`One of your files includes an unsupported file status '${status}', expected ${Object.values(FILE_STATUSES).join(',')}.`);
-      }
-    }
-
-    core.info(`All: ${all.join(',')}`);
-    core.info(`Added: ${added.join(', ')}`);
-    core.info(`Modified: ${modified.join(', ')}`);
-    core.info(`Removed: ${removed.join(', ')}`);
-    core.info(`Renamed: ${renamed.join(', ')}`);
-    core.info(`Added or modified: ${addedModified.join(', ')}`);
-
-    core.endGroup();
-
-    return {
-      all: all,
-      [FILE_STATUSES.ADDED]: added,
-      [FILE_STATUSES.MODIFIED]: modified,
-      [FILE_STATUSES.REMOVED]: removed,
-      [FILE_STATUSES.RENAMED]: renamed,
-      AddedOrModified: addedModified,
-    };
-  } catch (error) {
-    core.setFailed(error.message);
-  }
-};
-
-main().catch((err) => {
-  core.error(err);
-  core.setFailed(err.message);
-});
-
-module.exports = __webpack_exports__;
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module is referenced by other modules so it can't be inlined
+/******/ 	var __webpack_exports__ = __nccwpck_require__(9407);
+/******/ 	module.exports = __webpack_exports__;
+/******/ 	
 /******/ })()
 ;

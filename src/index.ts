@@ -1,13 +1,10 @@
-const core = require('@actions/core');
-const github = require('@actions/github');
-const { getCoverageReport } = require('./parse');
-const { getCoverageXmlReport } = require('./parseXml');
-const {
-  getSummaryReport,
-  getParsedXml,
-  getNotSuccessTest,
-} = require('./junitXml');
-const { getMultipleReport } = require('./multiFiles');
+import * as core from '@actions/core';
+import * as github from '@actions/github';
+import { getCoverageReport } from './parse';
+import { getCoverageXmlReport } from './parseXml';
+import { getSummaryReport, getParsedXml, getNotSuccessTest } from './junitXml';
+import { getMultipleReport } from './multiFiles';
+import type { Options, ChangedFiles } from './types';
 
 const MAX_COMMENT_LENGTH = 65536;
 const MAX_SUMMARY_LENGTH = 1024 * 1024; // 1MB limit for GitHub step summary
@@ -22,15 +19,14 @@ const FILE_STATUSES = Object.freeze({
  * Resolves a potential tag object SHA to the underlying commit SHA.
  * For annotated tags, GitHub's push event payload.after contains the tag object SHA,
  * not the commit SHA. This function detects tag pushes and resolves them to commits.
- *
- * @param {object} octokit - GitHub API client
- * @param {string} owner - Repository owner
- * @param {string} repo - Repository name
- * @param {string} sha - SHA to resolve (might be tag object or commit)
- * @param {string} ref - Git ref (e.g., refs/tags/v1.0.0 or refs/heads/main)
- * @returns {Promise<string>} - The commit SHA
  */
-const resolveCommitSha = async (octokit, owner, repo, sha, ref) => {
+export const resolveCommitSha = async (
+  octokit: ReturnType<typeof github.getOctokit>,
+  owner: string,
+  repo: string,
+  sha: string,
+  ref: string,
+): Promise<string> => {
   // Check if this is a tag push
   if (ref && ref.startsWith('refs/tags/')) {
     try {
@@ -54,7 +50,7 @@ const resolveCommitSha = async (octokit, owner, repo, sha, ref) => {
       // In this case, the SHA is already a commit SHA
       // prettier-ignore
       core.info(`SHA is not an annotated tag object, using as commit SHA: ${sha}`);
-      core.debug(`Error details: ${error.message}`);
+      core.debug(`Error details: ${(error as Error).message}`);
     }
   }
 
@@ -62,7 +58,7 @@ const resolveCommitSha = async (octokit, owner, repo, sha, ref) => {
   return sha;
 };
 
-const truncateSummary = (content, maxLength) => {
+export const truncateSummary = (content: string, maxLength: number): string => {
   if (content.length <= maxLength) {
     return content;
   }
@@ -86,13 +82,19 @@ const truncateSummary = (content, maxLength) => {
   return truncatedContent + truncationMessage;
 };
 
-const handlePermissionError = (error, context) => {
+const handlePermissionError = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  error: any,
+  context: typeof github.context,
+): void => {
   if (error?.status !== 403) {
     core.setFailed(`Failed to create/update comment: ${error.message}`);
     throw error;
   }
 
-  const isForkPR = context?.payload?.pull_request?.head?.repo?.fork === true;
+  const isForkPR =
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (context?.payload?.pull_request as any)?.head?.repo?.fork === true;
   const lines = ['Permission denied when trying to create/update comment.', ''];
 
   if (isForkPR) {
@@ -142,14 +144,14 @@ const handlePermissionError = (error, context) => {
 };
 
 const createOrEditComment = async (
-  octokit,
-  repo,
-  owner,
-  issue_number,
-  body,
-  WATERMARK,
-  context,
-) => {
+  octokit: ReturnType<typeof github.getOctokit>,
+  repo: string,
+  owner: string,
+  issue_number: number,
+  body: string,
+  WATERMARK: string,
+  context: typeof github.context,
+): Promise<void> => {
   try {
     // Now decide if we should issue a new comment or edit an old one
     const { data: comments } = await octokit.rest.issues.listComments({
@@ -158,7 +160,9 @@ const createOrEditComment = async (
       issue_number,
     });
 
-    const comment = comments.find((c) => c.body.startsWith(WATERMARK));
+    const comment = comments.find((c: { body?: string }) =>
+      c.body?.startsWith(WATERMARK),
+    );
 
     if (comment) {
       core.info('Found previous comment, updating');
@@ -182,7 +186,7 @@ const createOrEditComment = async (
   }
 };
 
-const main = async () => {
+const main = async (): Promise<void> => {
   const token = core.getInput('github-token', { required: true });
   const title = core.getInput('title', { required: false });
   const badgeTitle = core.getInput('badge-title', { required: false });
@@ -227,7 +231,7 @@ const main = async () => {
   const multipleFiles = core.getMultilineInput('multiple-files', {
     required: false,
   });
-  const { context, repository } = github;
+  const { context } = github;
   const { repo, owner } = context.repo;
   const { eventName, payload } = context;
   const serverUrl = context.serverUrl || 'https://github.com';
@@ -239,9 +243,10 @@ const main = async () => {
   const WATERMARK = `<!-- Pytest Coverage Comment: ${context.job} ${watermarkUniqueId}-->\n`;
   let finalHtml = '';
 
-  const options = {
+  const options: Options = {
     token,
-    repository: repository || `${owner}/${repo}`,
+    repository:
+      github.context.payload.repository?.full_name || `${owner}/${repo}`,
     prefix: `${process.env.GITHUB_WORKSPACE}/`,
     pathPrefix,
     covFile,
@@ -272,9 +277,9 @@ const main = async () => {
   const octokit = github.getOctokit(token);
 
   if (eventName === 'pull_request' || eventName === 'pull_request_target') {
-    options.commit = payload.pull_request.head.sha;
-    options.head = payload.pull_request.head.ref;
-    options.base = payload.pull_request.base.ref;
+    options.commit = payload.pull_request!.head.sha;
+    options.head = payload.pull_request!.head.ref;
+    options.base = payload.pull_request!.base.ref;
   } else if (eventName === 'push') {
     // For annotated tags, payload.after contains the tag object SHA, not the commit SHA
     // Resolve it to the actual commit SHA
@@ -282,7 +287,7 @@ const main = async () => {
       octokit,
       owner,
       repo,
-      payload.after,
+      payload.after as string,
       context.ref,
     );
     options.head = context.ref;
@@ -290,8 +295,10 @@ const main = async () => {
     options.commit = context.sha;
     options.head = context.ref;
   } else if (eventName === 'workflow_run') {
-    options.commit = payload.workflow_run.head_sha;
-    options.head = payload.workflow_run.head_branch;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    options.commit = (payload as any).workflow_run.head_sha;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    options.head = (payload as any).workflow_run.head_branch;
   }
 
   if (options.reportOnlyChangedFiles) {
@@ -307,11 +314,23 @@ const main = async () => {
   let report = options.covXmlFile
     ? getCoverageXmlReport(options)
     : getCoverageReport(options);
-  let { coverage, color, html, warnings } = report;
+
+  if (!report) {
+    report = { html: '', coverage: null, color: 'red' };
+  }
+
+  const { coverage, color } = report as {
+    coverage: unknown;
+    color: string;
+    html: string;
+    warnings?: number;
+  };
+  let { html } = report as { html: string };
+  const warnings = (report as { warnings?: number }).warnings;
   const summaryReport = getSummaryReport(options);
 
-  if (summaryReport && summaryReport.html) {
-    core.setOutput('coverageHtml', summaryReport.html);
+  if (summaryReport) {
+    core.setOutput('coverageHtml', summaryReport);
   }
 
   if (html) {
@@ -319,22 +338,26 @@ const main = async () => {
     const output = newOptions.covXmlFile
       ? getCoverageXmlReport(newOptions)
       : getCoverageReport(newOptions);
-    core.setOutput('coverageHtml', output.html);
+    if (output) {
+      core.setOutput('coverageHtml', output.html);
+    }
   }
 
   // set to output junitxml values
   if (summaryReport) {
     const parsedXml = getParsedXml(options);
-    const { errors, failures, skipped, tests, time } = parsedXml;
-    const valuesToExport = { errors, failures, skipped, tests, time };
+    if (parsedXml) {
+      const { errors, failures, skipped, tests, time } = parsedXml;
+      const valuesToExport = { errors, failures, skipped, tests, time };
 
-    Object.entries(valuesToExport).forEach(([key, value]) => {
-      core.info(`${key}: ${value}`);
-      core.setOutput(key, value);
-    });
+      Object.entries(valuesToExport).forEach(([key, value]) => {
+        core.info(`${key}: ${value}`);
+        core.setOutput(key, value);
+      });
 
-    const notSuccessTestInfo = getNotSuccessTest(options);
-    core.setOutput('notSuccessTestInfo', JSON.stringify(notSuccessTestInfo));
+      const notSuccessTestInfo = getNotSuccessTest(options);
+      core.setOutput('notSuccessTestInfo', JSON.stringify(notSuccessTestInfo));
+    }
     core.setOutput('summaryReport', JSON.stringify(summaryReport));
   }
 
@@ -373,7 +396,11 @@ const main = async () => {
     report = options.covXmlFile
       ? getCoverageXmlReport({ ...options, hideReport: true })
       : getCoverageReport({ ...options, hideReport: true });
-    html = report.html;
+
+    if (!report) {
+      report = { html: '', coverage: null, color: 'red' };
+    }
+    html = (report as { html: string }).html;
   }
 
   finalHtml += html;
@@ -396,12 +423,16 @@ const main = async () => {
   }
 
   // support for output for `pytest-xml-coverage-path`
-  if (coverage && coverage.cover) {
+  if (
+    coverage &&
+    typeof coverage === 'object' &&
+    (coverage as { cover?: string }).cover
+  ) {
     core.startGroup(options.covXmlFile);
-    core.info(`coverage: ${coverage.cover}`);
+    core.info(`coverage: ${(coverage as { cover: string }).cover}`);
     core.info(`color: ${color}`);
 
-    core.setOutput('coverage', coverage.cover);
+    core.setOutput('coverage', (coverage as { cover: string }).cover);
     core.setOutput('color', color);
     core.endGroup();
   }
@@ -415,7 +446,7 @@ const main = async () => {
   const issue_number = payload.pull_request
     ? payload.pull_request.number
     : issueNumberInput
-      ? issueNumberInput
+      ? parseInt(issueNumberInput)
       : 0;
 
   if (eventName === 'push') {
@@ -424,7 +455,7 @@ const main = async () => {
       await octokit.rest.repos.createCommitComment({
         repo,
         owner,
-        commit_sha: options.commit,
+        commit_sha: options.commit!,
         body,
       });
     } catch (error) {
@@ -505,7 +536,10 @@ const main = async () => {
 };
 
 // generate object of all files that changed based on commit through Github API
-const getChangedFiles = async (options, pr_number) => {
+const getChangedFiles = async (
+  options: Options,
+  pr_number: string,
+): Promise<ChangedFiles | null> => {
   try {
     const { context } = github;
     const { eventName, payload } = context;
@@ -513,26 +547,26 @@ const getChangedFiles = async (options, pr_number) => {
     const octokit = github.getOctokit(options.token);
 
     // Define the base and head commits to be extracted from the payload
-    let base, head;
+    let base: string, head: string;
 
     switch (eventName) {
       case 'pull_request':
       case 'pull_request_target':
-        base = payload.pull_request.base.sha;
-        head = payload.pull_request.head.sha;
+        base = payload.pull_request!.base.sha;
+        head = payload.pull_request!.head.sha;
         break;
       case 'push':
-        base = payload.before;
+        base = payload.before as string;
         // Use the resolved commit SHA from options instead of payload.after
         // This handles annotated tags correctly
-        head = options.commit || payload.after;
+        head = options.commit || (payload.after as string);
         break;
       case 'workflow_run':
       case 'workflow_dispatch': {
         const { data } = await octokit.rest.pulls.get({
           owner,
           repo,
-          pull_number: pr_number,
+          pull_number: parseInt(pr_number),
         });
 
         base = data.base.label;
@@ -550,7 +584,7 @@ const getChangedFiles = async (options, pr_number) => {
     core.info(`Base commit: ${base}`);
     core.info(`Head commit: ${head}`);
 
-    let response = null;
+    let response;
     // that is first commit, we cannot get diff
     if (base === '0000000000000000000000000000000000000000') {
       response = await octokit.rest.repos.getCommit({
@@ -577,13 +611,13 @@ const getChangedFiles = async (options, pr_number) => {
     }
 
     // Get the changed files from the response payload.
-    const files = response.data.files;
-    const all = [],
-      added = [],
-      modified = [],
-      removed = [],
-      renamed = [],
-      addedModified = [];
+    const files = response.data.files || [];
+    const all: string[] = [],
+      added: string[] = [],
+      modified: string[] = [],
+      removed: string[] = [],
+      renamed: string[] = [],
+      addedModified: string[] = [];
 
     for (const file of files) {
       const { filename: filenameOriginal, status } = file;
@@ -622,19 +656,20 @@ const getChangedFiles = async (options, pr_number) => {
     core.endGroup();
 
     return {
-      all: all,
-      [FILE_STATUSES.ADDED]: added,
-      [FILE_STATUSES.MODIFIED]: modified,
-      [FILE_STATUSES.REMOVED]: removed,
-      [FILE_STATUSES.RENAMED]: renamed,
+      all,
+      added,
+      modified,
+      removed,
+      renamed,
       AddedOrModified: addedModified,
     };
   } catch (error) {
-    core.setFailed(error.message);
+    core.setFailed((error as Error).message);
+    return null;
   }
 };
 
-main().catch((err) => {
+main().catch((err: Error) => {
   core.error(err);
   core.setFailed(err.message);
 });
