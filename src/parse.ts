@@ -258,7 +258,7 @@ export const toHtml = (
   }
 
   const color = getCoverageColor(total.cover);
-  const onlyChnaged = reportOnlyChangedFiles ? '\u2022 ' : '';
+  const onlyChanged = reportOnlyChangedFiles ? '\u2022 ' : '';
   const readmeHref = `${options.repoUrl}/blob/${options.commit}/README.md`;
   const badge = `<img alt="${badgeTitle}" src="https://img.shields.io/badge/${badgeTitle}-${total.cover}25-${color}.svg" />`;
   const badgeWithLink = removeLinkFromBadge
@@ -272,7 +272,7 @@ export const toHtml = (
   const badgeHtml = hideBadge ? '' : badgeContent;
   const reportHtml = hideReport
     ? ''
-    : `<details><summary>${title} ${onlyChnaged}</summary>${table}</details>`;
+    : `<details><summary>${title} ${onlyChanged}</summary>${table}</details>`;
 
   return `${badgeHtml}${reportHtml}`;
 };

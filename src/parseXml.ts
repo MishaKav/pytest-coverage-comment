@@ -108,12 +108,17 @@ const getXmlContent = (data: string): ParsedXml => {
     const parser = new xml2js.Parser();
 
     let parseResult: ParsedXml = null;
-    parser.parseString(data, (_err: Error | null, result: ParsedXml) => {
+    let errorMessage = '';
+    parser.parseString(data, (err: Error | null, result: ParsedXml) => {
+      if (err) {
+        errorMessage = err.message;
+      }
       parseResult = result;
     });
 
     if (!parseResult) {
-      core.warning(`Coverage xml file is not XML or not well-formed`);
+      // prettier-ignore
+      core.warning(`Coverage xml file is not XML or not well-formed${errorMessage ? `: ${errorMessage}` : ''}`);
       return '';
     }
 

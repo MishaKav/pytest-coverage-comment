@@ -44,12 +44,23 @@ const getSummary = (data: string): JUnitSummary | null => {
   const parser = new xml2js.Parser();
 
   let parseResult: ParsedXml = null;
-  parser.parseString(data, (_err: Error | null, result: ParsedXml) => {
+  let errorMessage = '';
+  parser.parseString(data, (err: Error | null, result: ParsedXml) => {
+    if (err) {
+      errorMessage = err.message;
+    }
     parseResult = result;
   });
 
   if (!parseResult) {
-    core.warning(`JUnitXml file is not XML or not well-formed`);
+    // prettier-ignore
+    core.warning(`JUnitXml file is not XML or not well-formed${errorMessage ? `: ${errorMessage}` : ''}`);
+    return null;
+  }
+
+  if (!parseResult.testsuites?.testsuite) {
+    // prettier-ignore
+    core.warning('JUnitXml file does not contain expected testsuites structure');
     return null;
   }
 
@@ -79,12 +90,23 @@ const getTestCases = (data: string): ParsedXml[] | null => {
   const parser = new xml2js.Parser();
 
   let parseResult: ParsedXml = null;
-  parser.parseString(data, (_err: Error | null, result: ParsedXml) => {
+  let errorMessage = '';
+  parser.parseString(data, (err: Error | null, result: ParsedXml) => {
+    if (err) {
+      errorMessage = err.message;
+    }
     parseResult = result;
   });
 
   if (!parseResult) {
-    core.warning(`JUnitXml file is not XML or not well-formed`);
+    // prettier-ignore
+    core.warning(`JUnitXml file is not XML or not well-formed${errorMessage ? `: ${errorMessage}` : ''}`);
+    return null;
+  }
+
+  if (!parseResult.testsuites?.testsuite) {
+    // prettier-ignore
+    core.warning('JUnitXml file does not contain expected testsuites structure');
     return null;
   }
 

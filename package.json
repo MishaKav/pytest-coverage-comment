@@ -18,7 +18,7 @@
     "url": "https://github.com/MishaKav/pytest-coverage-comment/issues"
   },
   "homepage": "https://github.com/MishaKav/pytest-coverage-comment/#readme",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "scripts": {
     "build": "ncc build src/index.ts --license licenses.txt",
     "typecheck": "tsc --noEmit",

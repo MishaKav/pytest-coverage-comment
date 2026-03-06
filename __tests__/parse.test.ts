@@ -53,7 +53,9 @@ describe('isValidCoverageContent', () => {
   });
 
   test('should return true for valid coverage content', () => {
-    const content = getContentFile(path.join(dataPath, 'pytest-coverage_4.txt'));
+    const content = getContentFile(
+      path.join(dataPath, 'pytest-coverage_4.txt'),
+    );
     expect(isValidCoverageContent(content!)).toBe(true);
   });
 
@@ -68,15 +70,18 @@ describe('hasBranchCoverage', () => {
   });
 
   test('should return false for regular coverage data', () => {
-    const content = getContentFile(path.join(dataPath, 'pytest-coverage_4.txt'));
+    const content = getContentFile(
+      path.join(dataPath, 'pytest-coverage_4.txt'),
+    );
     expect(hasBranchCoverage(content!)).toBe(false);
   });
 
   test('should return true for branch coverage data', () => {
-    const content = getContentFile(path.join(dataPath, 'pytest-coverage_12.txt'));
-    if (content && content.includes('Branch')) {
-      expect(hasBranchCoverage(content)).toBe(true);
-    }
+    const content = getContentFile(
+      path.join(dataPath, 'pytest-coverage_11.txt'),
+    );
+    expect(content).not.toBeNull();
+    expect(hasBranchCoverage(content!)).toBe(true);
   });
 });
 
@@ -90,7 +95,9 @@ describe('parseOneLine', () => {
       'functions/example_completed/example_completed.py                64    19    70%   33, 39-45, 48-51, 55-58, 65-70, 91-92';
     const result = parseOneLine(line);
     expect(result).not.toBeNull();
-    expect(result!.name).toBe('functions/example_completed/example_completed.py');
+    expect(result!.name).toBe(
+      'functions/example_completed/example_completed.py',
+    );
     expect(result!.stmts).toBe('64');
     expect(result!.miss).toBe('19');
     expect(result!.cover).toBe('70%');
@@ -117,7 +124,8 @@ describe('parseTotalLine', () => {
   });
 
   test('should parse a total line', () => {
-    const line = 'TOTAL                                                        1055    739    30%';
+    const line =
+      'TOTAL                                                        1055    739    30%';
     const result = parseTotalLine(line);
     expect(result).not.toBeNull();
     expect(result!.name).toBe('TOTAL');
@@ -137,7 +145,9 @@ describe('getActualLines', () => {
   });
 
   test('should extract actual lines from coverage data', () => {
-    const content = getContentFile(path.join(dataPath, 'pytest-coverage_4.txt'));
+    const content = getContentFile(
+      path.join(dataPath, 'pytest-coverage_4.txt'),
+    );
     const lines = getActualLines(content!);
     expect(lines).not.toBeNull();
     expect(lines!.length).toBeGreaterThan(0);
@@ -150,7 +160,9 @@ describe('getTotal', () => {
   });
 
   test('should return total from coverage file', () => {
-    const content = getContentFile(path.join(dataPath, 'pytest-coverage_4.txt'));
+    const content = getContentFile(
+      path.join(dataPath, 'pytest-coverage_4.txt'),
+    );
     const total = getTotal(content);
     expect(total).not.toBeNull();
     expect(total!.name).toBe('TOTAL');
@@ -164,7 +176,9 @@ describe('getWarnings', () => {
   });
 
   test('should return 0 when no warnings present', () => {
-    const content = getContentFile(path.join(dataPath, 'pytest-coverage_4.txt'));
+    const content = getContentFile(
+      path.join(dataPath, 'pytest-coverage_4.txt'),
+    );
     expect(getWarnings(content)).toBe(0);
   });
 });
@@ -250,7 +264,11 @@ describe('toHtml', () => {
     const content = getContentFile(
       path.join(dataPath, 'pytest-coverage_4.txt'),
     );
-    const options = { ...baseOptions, removeLinkFromBadge: true, hideReport: true };
+    const options = {
+      ...baseOptions,
+      removeLinkFromBadge: true,
+      hideReport: true,
+    };
     const html = toHtml(content, options);
     expect(html).toContain('<img');
     // Badge itself should not be wrapped in <a> tag
@@ -310,7 +328,11 @@ describe('toTable', () => {
     const content = getContentFile(
       path.join(dataPath, 'pytest-coverage_4.txt'),
     );
-    const options = { ...baseOptions, removeLinksToFiles: true, removeLinksToLines: true };
+    const options = {
+      ...baseOptions,
+      removeLinksToFiles: true,
+      removeLinksToLines: true,
+    };
     const table = toTable(content, options);
     // With both file and line links removed, no <a href> should exist
     expect(table).not.toContain('<a href=');

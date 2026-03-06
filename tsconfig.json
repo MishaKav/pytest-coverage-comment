@@ -4,7 +4,6 @@
     "module": "commonjs",
     "rootDir": "./src",
     "strict": true,
-    "noImplicitAny": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "noEmit": true

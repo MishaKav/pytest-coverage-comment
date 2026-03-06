@@ -38649,11 +38649,21 @@ const getSummary = (data) => {
     }
     const parser = new xml2js.Parser();
     let parseResult = null;
-    parser.parseString(data, (_err, result) => {
+    let errorMessage = '';
+    parser.parseString(data, (err, result) => {
+        if (err) {
+            errorMessage = err.message;
+        }
         parseResult = result;
     });
     if (!parseResult) {
-        core.warning(`JUnitXml file is not XML or not well-formed`);
+        // prettier-ignore
+        core.warning(`JUnitXml file is not XML or not well-formed${errorMessage ? `: ${errorMessage}` : ''}`);
+        return null;
+    }
+    if (!parseResult.testsuites?.testsuite) {
+        // prettier-ignore
+        core.warning('JUnitXml file does not contain expected testsuites structure');
         return null;
     }
     const summary = {
@@ -38679,11 +38689,21 @@ const getTestCases = (data) => {
     }
     const parser = new xml2js.Parser();
     let parseResult = null;
-    parser.parseString(data, (_err, result) => {
+    let errorMessage = '';
+    parser.parseString(data, (err, result) => {
+        if (err) {
+            errorMessage = err.message;
+        }
         parseResult = result;
     });
     if (!parseResult) {
-        core.warning(`JUnitXml file is not XML or not well-formed`);
+        // prettier-ignore
+        core.warning(`JUnitXml file is not XML or not well-formed${errorMessage ? `: ${errorMessage}` : ''}`);
+        return null;
+    }
+    if (!parseResult.testsuites?.testsuite) {
+        // prettier-ignore
+        core.warning('JUnitXml file does not contain expected testsuites structure');
         return null;
     }
     return parseResult.testsuites.testsuite
@@ -39133,7 +39153,7 @@ const toHtml = (data, options, dataFromXml = null) => {
         return '';
     }
     const color = (0, utils_1.getCoverageColor)(total.cover);
-    const onlyChnaged = reportOnlyChangedFiles ? '\u2022 ' : '';
+    const onlyChanged = reportOnlyChangedFiles ? '\u2022 ' : '';
     const readmeHref = `${options.repoUrl}/blob/${options.commit}/README.md`;
     const badge = `<img alt="${badgeTitle}" src="https://img.shields.io/badge/${badgeTitle}-${total.cover}25-${color}.svg" />`;
     const badgeWithLink = removeLinkFromBadge
@@ -39146,7 +39166,7 @@ const toHtml = (data, options, dataFromXml = null) => {
     const badgeHtml = hideBadge ? '' : badgeContent;
     const reportHtml = hideReport
         ? ''
-        : `<details><summary>${title} ${onlyChnaged}</summary>${table}</details>`;
+        : `<details><summary>${title} ${onlyChanged}</summary>${table}</details>`;
     return `${badgeHtml}${reportHtml}`;
 };
 exports.toHtml = toHtml;
@@ -39393,11 +39413,16 @@ const getXmlContent = (data) => {
         }
         const parser = new xml2js.Parser();
         let parseResult = null;
-        parser.parseString(data, (_err, result) => {
+        let errorMessage = '';
+        parser.parseString(data, (err, result) => {
+            if (err) {
+                errorMessage = err.message;
+            }
             parseResult = result;
         });
         if (!parseResult) {
-            core.warning(`Coverage xml file is not XML or not well-formed`);
+            // prettier-ignore
+            core.warning(`Coverage xml file is not XML or not well-formed${errorMessage ? `: ${errorMessage}` : ''}`);
             return '';
         }
         return parseResult.coverage;

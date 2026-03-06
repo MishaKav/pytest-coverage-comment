@@ -8,6 +8,9 @@ on:
       - 'data/**'
       - 'dist/**'
 
+permissions:
+  contents: read
+
 jobs:
   update-coverage-in-readme:
     name: Update Coverage in README

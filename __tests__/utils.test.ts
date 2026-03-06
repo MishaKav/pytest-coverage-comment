@@ -1,6 +1,11 @@
 import { expect, test, describe, beforeEach } from 'vitest';
 import * as path from 'path';
-import { getPathToFile, getContentFile, getContent, getCoverageColor } from '../src/utils';
+import {
+  getPathToFile,
+  getContentFile,
+  getContent,
+  getCoverageColor,
+} from '../src/utils';
 import { spyCore } from './setup';
 
 describe('getPathToFile', () => {
@@ -14,11 +19,18 @@ describe('getPathToFile', () => {
 
   test('should prepend GITHUB_WORKSPACE for relative path', () => {
     const original = process.env.GITHUB_WORKSPACE;
-    process.env.GITHUB_WORKSPACE = '/home/runner/work/repo';
-    expect(getPathToFile('coverage.txt')).toBe(
-      '/home/runner/work/repo/coverage.txt',
-    );
-    process.env.GITHUB_WORKSPACE = original;
+    try {
+      process.env.GITHUB_WORKSPACE = '/home/runner/work/repo';
+      expect(getPathToFile('coverage.txt')).toBe(
+        '/home/runner/work/repo/coverage.txt',
+      );
+    } finally {
+      if (original === undefined) {
+        delete process.env.GITHUB_WORKSPACE;
+      } else {
+        process.env.GITHUB_WORKSPACE = original;
+      }
+    }
   });
 });
 
@@ -45,7 +57,12 @@ describe('getContentFile', () => {
   });
 
   test('should read existing file successfully', () => {
-    const fixturePath = path.resolve(__dirname, '..', 'data', 'pytest-coverage_4.txt');
+    const fixturePath = path.resolve(
+      __dirname,
+      '..',
+      'data',
+      'pytest-coverage_4.txt',
+    );
     const content = getContentFile(fixturePath);
     expect(content).not.toBeNull();
     expect(content).toContain('TOTAL');
@@ -65,7 +82,12 @@ describe('getContent', () => {
   });
 
   test('should return content for valid absolute path', () => {
-    const fixturePath = path.resolve(__dirname, '..', 'data', 'pytest-coverage_4.txt');
+    const fixturePath = path.resolve(
+      __dirname,
+      '..',
+      'data',
+      'pytest-coverage_4.txt',
+    );
     const content = getContent(fixturePath);
     expect(content).not.toBeNull();
     expect(content).toContain('TOTAL');

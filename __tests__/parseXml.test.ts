@@ -81,10 +81,8 @@ describe('getCoverageXmlReport', () => {
     const result = getCoverageXmlReport(options);
 
     expect(result).not.toBeNull();
-    // Files with 100% coverage should be excluded
-    if (result!.html) {
-      expect(result!.html).not.toContain('line-rate="1"');
-    }
+    // Files with 100% coverage should be excluded from the HTML table
+    expect(result!.html).not.toContain('scrubbing.py');
   });
 
   test('should hide badge when hideBadge is true', () => {
