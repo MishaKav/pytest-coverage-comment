@@ -1,0 +1,29 @@
+CHANGELOG.md
+  361c86b481a7b968 3-13
+.github/workflows/update-main-version.yml
+  361c86b481a7b968 1-26,28-29
+package.json
+  361c86b481a7b968 3
+.github/workflows/publish-immutable-actions.yml
+  361c86b481a7b968 1-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "e64d18074921585f99248fe8a5e0291dd1250034",
+  "prompts": {
+    "361c86b481a7b968": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d8aa82f-e473-42b6-aa9f-7940db2deb2a",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Misha Kav <misha.kav@gmail.com>",
+      "messages": [],
+      "total_additions": 64,
+      "total_deletions": 9,
+      "accepted_lines": 56,
+      "overriden_lines": 0
+    }
+  }
+}
