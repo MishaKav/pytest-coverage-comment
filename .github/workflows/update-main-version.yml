@@ -1,5 +1,5 @@
 name: Update Main Version
-run-name: Move ${{ github.event.inputs.major_version }} to ${{ github.event.inputs.target }}
+run-name: Move ${{ inputs.major_version }} to ${{ inputs.target }}
 
 on:
   workflow_dispatch:
@@ -22,8 +22,14 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
       - name: Tag new target
-        run: git tag -f ${{ github.event.inputs.major_version }} ${{ github.event.inputs.target }}
+        env:
+          MAJOR_VERSION: ${{ inputs.major_version }}
+          TARGET: ${{ inputs.target }}
+        run: git tag -f "$MAJOR_VERSION" "$TARGET"
 
       - name: Push new tag
-        run: git push origin ${{ github.event.inputs.major_version }} --force
+        env:
+          MAJOR_VERSION: ${{ inputs.major_version }}
+        run: git push origin "$MAJOR_VERSION" --force
