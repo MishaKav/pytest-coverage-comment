@@ -1,0 +1,35 @@
+name: Update Main Version
+run-name: Move ${{ inputs.major_version }} to ${{ inputs.target }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: The tag or reference to use
+        required: true
+      major_version:
+        type: choice
+        description: The major version to update
+        options:
+          - v1
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Tag new target
+        env:
+          MAJOR_VERSION: ${{ inputs.major_version }}
+          TARGET: ${{ inputs.target }}
+        run: git tag -f "$MAJOR_VERSION" "$TARGET"
+
+      - name: Push new tag
+        env:
+          MAJOR_VERSION: ${{ inputs.major_version }}
+        run: git push origin "$MAJOR_VERSION" --force

@@ -1,5 +1,16 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.7.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.7.0)
+
+**Release Date:** 2026-03-13
+
+#### Changes
+
+- enable immutable releases for supply chain security (#256)
+- bump `flatted` from 3.3.3 to 3.4.1 to fix security vulnerability
+
+**Note:** No changes to action inputs, outputs, or behavior. This improves release security following [GitHub's immutable releases](https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases) feature.
+
 ## [Pytest Coverage Comment 1.6.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.6.0)
 
 **Release Date:** 2026-03-06

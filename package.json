@@ -1,6 +1,6 @@
 {
   "name": "pytest-coverage-comment",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "Comments a pull request with the pytest code coverage badge, full report and tests summary",
   "author": "Misha Kav",
   "license": "MIT",
@@ -29,7 +29,6 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "bump-version": "npm version patch",
-    "update-v1-tag": "git tag v1 -f && git push origin v1 -f",
     "all": "npm run typecheck && npm run lint && npm run format && npm run test && npm run build"
   },
   "dependencies": {
