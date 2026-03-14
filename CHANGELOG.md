@@ -1,5 +1,14 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.7.1](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.7.1)
+
+**Release Date:** 2026-03-14
+
+#### Changes
+
+- fix 5 security vulnerabilities in `undici` (6.23.0 → 6.24.1) (#260)
+- bump dev dependencies
+
 ## [Pytest Coverage Comment 1.7.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.7.0)
 
 **Release Date:** 2026-03-13
