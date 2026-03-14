@@ -15,18 +15,20 @@ updates:
       npm-production:
         dependency-type: production
         update-types:
+          - minor
           - patch
     ignore:
-      - dependency-name: 'eslint'
+      # v3+ is pure ESM — incompatible with @vercel/ncc's CJS bundling
+      - dependency-name: '@actions/core'
+        update-types:
+          - version-update:semver-major
+      # v9+ is pure ESM — incompatible with @vercel/ncc's CJS bundling
       - dependency-name: '@actions/github'
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
       day: saturday
-    groups:
-      actions-minor:
-        update-types:
-          - minor
-          - patch
