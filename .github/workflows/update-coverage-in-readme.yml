@@ -76,7 +76,7 @@ jobs:
 
       - name: Create the badge
         if: github.ref == 'refs/heads/main'
-        uses: schneegans/dynamic-badges-action@v1.7.0
+        uses: schneegans/dynamic-badges-action@v1.8.0
         with:
           auth: ${{ secrets.JEST_COVERAGE_COMMENT }}
           gistID: 5e90d640f8c212ab7bbac38f72323f80
