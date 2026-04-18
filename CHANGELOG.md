@@ -1,5 +1,13 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.7.2](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.7.2)
+
+**Release Date:** 2026-04-18
+
+#### Changes
+
+- bump dev dependencies: `typescript` 6.0.3, `vitest` 4.1.4, `eslint` 10.2.1, `typescript-eslint` 8.58.2
+
 ## [Pytest Coverage Comment 1.7.1](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.7.1)
 
 **Release Date:** 2026-03-14
