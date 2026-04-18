@@ -3733,8 +3733,11 @@ function copyFile(srcFile, destFile, force) {
 /***/ 2560:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
-;(function (sax) { // wrapper for non-node envs
-  sax.parser = function (strict, opt) { return new SAXParser(strict, opt) }
+;(function (sax) {
+  // wrapper for non-node envs
+  sax.parser = function (strict, opt) {
+    return new SAXParser(strict, opt)
+  }
   sax.SAXParser = SAXParser
   sax.SAXStream = SAXStream
   sax.createStream = createStream
@@ -3751,9 +3754,18 @@ function copyFile(srcFile, destFile, force) {
   sax.MAX_BUFFER_LENGTH = 64 * 1024
 
   var buffers = [
-    'comment', 'sgmlDecl', 'textNode', 'tagName', 'doctype',
-    'procInstName', 'procInstBody', 'entity', 'attribName',
-    'attribValue', 'cdata', 'script'
+    'comment',
+    'sgmlDecl',
+    'textNode',
+    'tagName',
+    'doctype',
+    'procInstName',
+    'procInstBody',
+    'entity',
+    'attribName',
+    'attribValue',
+    'cdata',
+    'script',
   ]
 
   sax.EVENTS = [
@@ -3774,10 +3786,10 @@ function copyFile(srcFile, destFile, force) {
     'ready',
     'script',
     'opennamespace',
-    'closenamespace'
+    'closenamespace',
   ]
 
-  function SAXParser (strict, opt) {
+  function SAXParser(strict, opt) {
     if (!(this instanceof SAXParser)) {
       return new SAXParser(strict, opt)
     }
@@ -3786,9 +3798,13 @@ function copyFile(srcFile, destFile, force) {
     clearBuffers(parser)
     parser.q = parser.c = ''
     parser.bufferCheckPosition = sax.MAX_BUFFER_LENGTH
+    parser.encoding = null;
     parser.opt = opt || {}
     parser.opt.lowercase = parser.opt.lowercase || parser.opt.lowercasetags
     parser.looseCase = parser.opt.lowercase ? 'toLowerCase' : 'toUpperCase'
+    parser.opt.maxEntityCount = parser.opt.maxEntityCount || 512
+    parser.opt.maxEntityDepth = parser.opt.maxEntityDepth || 4
+    parser.entityCount = parser.entityDepth = 0
     parser.tags = []
     parser.closed = parser.closedRoot = parser.sawRoot = false
     parser.tag = parser.error = null
@@ -3796,7 +3812,10 @@ function copyFile(srcFile, destFile, force) {
     parser.noscript = !!(strict || parser.opt.noscript)
     parser.state = S.BEGIN
     parser.strictEntities = parser.opt.strictEntities
-    parser.ENTITIES = parser.strictEntities ? Object.create(sax.XML_ENTITIES) : Object.create(sax.ENTITIES)
+    parser.ENTITIES =
+      parser.strictEntities ?
+        Object.create(sax.XML_ENTITIES)
+      : Object.create(sax.ENTITIES)
     parser.attribList = []
 
     // namespaces form a prototype chain.
@@ -3804,6 +3823,12 @@ function copyFile(srcFile, destFile, force) {
     // which protos to its parent tag.
     if (parser.opt.xmlns) {
       parser.ns = Object.create(rootNS)
+    }
+
+    // disallow unquoted attribute values if not otherwise configured
+    // and strict mode is true
+    if (parser.opt.unquotedAttributeValues === undefined) {
+      parser.opt.unquotedAttributeValues = !strict
     }
 
     // mostly just for error reporting
@@ -3816,7 +3841,7 @@ function copyFile(srcFile, destFile, force) {
 
   if (!Object.create) {
     Object.create = function (o) {
-      function F () {}
+      function F() {}
       F.prototype = o
       var newf = new F()
       return newf
@@ -3831,7 +3856,7 @@ function copyFile(srcFile, destFile, force) {
     }
   }
 
-  function checkBufferLength (parser) {
+  function checkBufferLength(parser) {
     var maxAllowed = Math.max(sax.MAX_BUFFER_LENGTH, 10)
     var maxActual = 0
     for (var i = 0, l = buffers.length; i < l; i++) {
@@ -3867,13 +3892,13 @@ function copyFile(srcFile, destFile, force) {
     parser.bufferCheckPosition = m + parser.position
   }
 
-  function clearBuffers (parser) {
+  function clearBuffers(parser) {
     for (var i = 0, l = buffers.length; i < l; i++) {
       parser[buffers[i]] = ''
     }
   }
 
-  function flushBuffers (parser) {
+  function flushBuffers(parser) {
     closeText(parser)
     if (parser.cdata !== '') {
       emitNode(parser, 'oncdata', parser.cdata)
@@ -3886,11 +3911,20 @@ function copyFile(srcFile, destFile, force) {
   }
 
   SAXParser.prototype = {
-    end: function () { end(this) },
+    end: function () {
+      end(this)
+    },
     write: write,
-    resume: function () { this.error = null; return this },
-    close: function () { return this.write(null) },
-    flush: function () { flushBuffers(this) }
+    resume: function () {
+      this.error = null
+      return this
+    },
+    close: function () {
+      return this.write(null)
+    },
+    flush: function () {
+      flushBuffers(this)
+    },
   }
 
   var Stream
@@ -3899,16 +3933,50 @@ function copyFile(srcFile, destFile, force) {
   } catch (ex) {
     Stream = function () {}
   }
+  if (!Stream) Stream = function () {}
 
   var streamWraps = sax.EVENTS.filter(function (ev) {
     return ev !== 'error' && ev !== 'end'
   })
 
-  function createStream (strict, opt) {
+  function createStream(strict, opt) {
     return new SAXStream(strict, opt)
   }
 
-  function SAXStream (strict, opt) {
+  function determineBufferEncoding(data, isEnd) {
+    // BOM-based detection is the most reliable signal when present.
+    if (data.length >= 2) {
+      if (data[0] === 0xff && data[1] === 0xfe) {
+        return 'utf-16le'
+      }
+
+      if (data[0] === 0xfe && data[1] === 0xff) {
+        return 'utf-16be'
+      }
+    }
+
+    if (data.length >= 3 && data[0] === 0xef && data[1] === 0xbb && data[2] === 0xbf) {
+      return 'utf8'
+    }
+
+    if (data.length >= 4) {
+      // XML documents without a BOM still start with "<?xml", which is enough
+      // to distinguish UTF-16LE/BE from UTF-8 by looking at the zero bytes.
+      if (data[0] === 0x3c && data[1] === 0x00 && data[2] === 0x3f && data[3] === 0x00) {
+        return 'utf-16le'
+      }
+
+      if (data[0] === 0x00 && data[1] === 0x3c && data[2] === 0x00 && data[3] === 0x3f) {
+        return 'utf-16be'
+      }
+
+      return 'utf8'
+    }
+
+    return isEnd ? 'utf8' : null
+  }
+
+  function SAXStream(strict, opt) {
     if (!(this instanceof SAXStream)) {
       return new SAXStream(strict, opt)
     }
@@ -3934,7 +4002,7 @@ function copyFile(srcFile, destFile, force) {
     }
 
     this._decoder = null
-
+    this._decoderBuffer = null
     streamWraps.forEach(function (ev) {
       Object.defineProperty(me, 'on' + ev, {
         get: function () {
@@ -3949,26 +4017,58 @@ function copyFile(srcFile, destFile, force) {
           me.on(ev, h)
         },
         enumerable: true,
-        configurable: false
+        configurable: false,
       })
     })
   }
 
   SAXStream.prototype = Object.create(Stream.prototype, {
     constructor: {
-      value: SAXStream
-    }
+      value: SAXStream,
+    },
   })
 
-  SAXStream.prototype.write = function (data) {
-    if (typeof Buffer === 'function' &&
-      typeof Buffer.isBuffer === 'function' &&
-      Buffer.isBuffer(data)) {
-      if (!this._decoder) {
-        var SD = (__nccwpck_require__(3193).StringDecoder)
-        this._decoder = new SD('utf8')
+  SAXStream.prototype._decodeBuffer = function (data, isEnd) {
+    if (this._decoderBuffer) {
+      // Keep incomplete leading bytes until we have enough data to infer the
+      // stream encoding, then decode the buffered prefix together with the next chunk.
+      data = Buffer.concat([this._decoderBuffer, data])
+      this._decoderBuffer = null
+    }
+
+    if (!this._decoder) {
+      var encoding = determineBufferEncoding(data, isEnd)
+      if (!encoding) {
+        // A very short first chunk may not contain enough bytes to detect the
+        // encoding yet, so defer decoding until the next write/end call.
+        this._decoderBuffer = data
+        return ''
       }
-      data = this._decoder.write(data)
+
+      // Store the detected transport encoding so strict mode can compare it
+      // with the optional encoding declared in the XML prolog later on.
+      this._parser.encoding = encoding
+      this._decoder = new TextDecoder(encoding)
+    }
+
+    return this._decoder.decode(data, { stream: !isEnd })
+  }
+
+  SAXStream.prototype.write = function (data) {
+    if (
+      typeof Buffer === 'function' &&
+      typeof Buffer.isBuffer === 'function' &&
+      Buffer.isBuffer(data)
+    ) {
+      data = this._decodeBuffer(data, false)
+    } else if (this._decoderBuffer) {
+      // Flush any buffered binary prefix before handling a string chunk.
+      // This only matters if the caller mixes Buffer and string writes (used in test).
+      var remaining = this._decodeBuffer(Buffer.alloc(0), true)
+      if (remaining) {
+        this._parser.write(remaining)
+        this.emit('data', remaining)
+      }
     }
 
     this._parser.write(data.toString())
@@ -3980,6 +4080,20 @@ function copyFile(srcFile, destFile, force) {
     if (chunk && chunk.length) {
       this.write(chunk)
     }
+    // Flush any remaining decoded data from the TextDecoder
+    if (this._decoderBuffer) {
+      var finalChunk = this._decodeBuffer(Buffer.alloc(0), true)
+      if (finalChunk) {
+        this._parser.write(finalChunk)
+        this.emit('data', finalChunk)
+      }
+    } else if (this._decoder) {
+      var remaining = this._decoder.decode()
+      if (remaining) {
+        this._parser.write(remaining)
+        this.emit('data', remaining)
+      }
+    }
     this._parser.end()
     return true
   }
@@ -3988,7 +4102,10 @@ function copyFile(srcFile, destFile, force) {
     var me = this
     if (!me._parser['on' + ev] && streamWraps.indexOf(ev) !== -1) {
       me._parser['on' + ev] = function () {
-        var args = arguments.length === 1 ? [arguments[0]] : Array.apply(null, arguments)
+        var args =
+          arguments.length === 1 ?
+            [arguments[0]]
+          : Array.apply(null, arguments)
         args.splice(0, 0, ev)
         me.emit.apply(me, args)
       }
@@ -4011,30 +4128,34 @@ function copyFile(srcFile, destFile, force) {
   // without a significant breaking change to either this  parser, or the
   // JavaScript language.  Implementation of an emoji-capable xml parser
   // is left as an exercise for the reader.
-  var nameStart = /[:_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD]/
+  var nameStart =
+    /[:_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD]/
 
-  var nameBody = /[:_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\u00B7\u0300-\u036F\u203F-\u2040.\d-]/
+  var nameBody =
+    /[:_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\u00B7\u0300-\u036F\u203F-\u2040.\d-]/
 
-  var entityStart = /[#:_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD]/
-  var entityBody = /[#:_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\u00B7\u0300-\u036F\u203F-\u2040.\d-]/
+  var entityStart =
+    /[#:_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD]/
+  var entityBody =
+    /[#:_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\u00B7\u0300-\u036F\u203F-\u2040.\d-]/
 
-  function isWhitespace (c) {
+  function isWhitespace(c) {
     return c === ' ' || c === '\n' || c === '\r' || c === '\t'
   }
 
-  function isQuote (c) {
-    return c === '"' || c === '\''
+  function isQuote(c) {
+    return c === '"' || c === "'"
   }
 
-  function isAttribEnd (c) {
+  function isAttribEnd(c) {
     return c === '>' || isWhitespace(c)
   }
 
-  function isMatch (regex, c) {
+  function isMatch(regex, c) {
     return regex.test(c)
   }
 
-  function notMatch (regex, c) {
+  function notMatch(regex, c) {
     return !isMatch(regex, c)
   }
 
@@ -4075,271 +4196,271 @@ function copyFile(srcFile, destFile, force) {
     CLOSE_TAG: S++, // </a
     CLOSE_TAG_SAW_WHITE: S++, // </a   >
     SCRIPT: S++, // <script> ...
-    SCRIPT_ENDING: S++ // <script> ... <
+    SCRIPT_ENDING: S++, // <script> ... <
   }
 
   sax.XML_ENTITIES = {
-    'amp': '&',
-    'gt': '>',
-    'lt': '<',
-    'quot': '"',
-    'apos': "'"
+    amp: '&',
+    gt: '>',
+    lt: '<',
+    quot: '"',
+    apos: "'",
   }
 
   sax.ENTITIES = {
-    'amp': '&',
-    'gt': '>',
-    'lt': '<',
-    'quot': '"',
-    'apos': "'",
-    'AElig': 198,
-    'Aacute': 193,
-    'Acirc': 194,
-    'Agrave': 192,
-    'Aring': 197,
-    'Atilde': 195,
-    'Auml': 196,
-    'Ccedil': 199,
-    'ETH': 208,
-    'Eacute': 201,
-    'Ecirc': 202,
-    'Egrave': 200,
-    'Euml': 203,
-    'Iacute': 205,
-    'Icirc': 206,
-    'Igrave': 204,
-    'Iuml': 207,
-    'Ntilde': 209,
-    'Oacute': 211,
-    'Ocirc': 212,
-    'Ograve': 210,
-    'Oslash': 216,
-    'Otilde': 213,
-    'Ouml': 214,
-    'THORN': 222,
-    'Uacute': 218,
-    'Ucirc': 219,
-    'Ugrave': 217,
-    'Uuml': 220,
-    'Yacute': 221,
-    'aacute': 225,
-    'acirc': 226,
-    'aelig': 230,
-    'agrave': 224,
-    'aring': 229,
-    'atilde': 227,
-    'auml': 228,
-    'ccedil': 231,
-    'eacute': 233,
-    'ecirc': 234,
-    'egrave': 232,
-    'eth': 240,
-    'euml': 235,
-    'iacute': 237,
-    'icirc': 238,
-    'igrave': 236,
-    'iuml': 239,
-    'ntilde': 241,
-    'oacute': 243,
-    'ocirc': 244,
-    'ograve': 242,
-    'oslash': 248,
-    'otilde': 245,
-    'ouml': 246,
-    'szlig': 223,
-    'thorn': 254,
-    'uacute': 250,
-    'ucirc': 251,
-    'ugrave': 249,
-    'uuml': 252,
-    'yacute': 253,
-    'yuml': 255,
-    'copy': 169,
-    'reg': 174,
-    'nbsp': 160,
-    'iexcl': 161,
-    'cent': 162,
-    'pound': 163,
-    'curren': 164,
-    'yen': 165,
-    'brvbar': 166,
-    'sect': 167,
-    'uml': 168,
-    'ordf': 170,
-    'laquo': 171,
-    'not': 172,
-    'shy': 173,
-    'macr': 175,
-    'deg': 176,
-    'plusmn': 177,
-    'sup1': 185,
-    'sup2': 178,
-    'sup3': 179,
-    'acute': 180,
-    'micro': 181,
-    'para': 182,
-    'middot': 183,
-    'cedil': 184,
-    'ordm': 186,
-    'raquo': 187,
-    'frac14': 188,
-    'frac12': 189,
-    'frac34': 190,
-    'iquest': 191,
-    'times': 215,
-    'divide': 247,
-    'OElig': 338,
-    'oelig': 339,
-    'Scaron': 352,
-    'scaron': 353,
-    'Yuml': 376,
-    'fnof': 402,
-    'circ': 710,
-    'tilde': 732,
-    'Alpha': 913,
-    'Beta': 914,
-    'Gamma': 915,
-    'Delta': 916,
-    'Epsilon': 917,
-    'Zeta': 918,
-    'Eta': 919,
-    'Theta': 920,
-    'Iota': 921,
-    'Kappa': 922,
-    'Lambda': 923,
-    'Mu': 924,
-    'Nu': 925,
-    'Xi': 926,
-    'Omicron': 927,
-    'Pi': 928,
-    'Rho': 929,
-    'Sigma': 931,
-    'Tau': 932,
-    'Upsilon': 933,
-    'Phi': 934,
-    'Chi': 935,
-    'Psi': 936,
-    'Omega': 937,
-    'alpha': 945,
-    'beta': 946,
-    'gamma': 947,
-    'delta': 948,
-    'epsilon': 949,
-    'zeta': 950,
-    'eta': 951,
-    'theta': 952,
-    'iota': 953,
-    'kappa': 954,
-    'lambda': 955,
-    'mu': 956,
-    'nu': 957,
-    'xi': 958,
-    'omicron': 959,
-    'pi': 960,
-    'rho': 961,
-    'sigmaf': 962,
-    'sigma': 963,
-    'tau': 964,
-    'upsilon': 965,
-    'phi': 966,
-    'chi': 967,
-    'psi': 968,
-    'omega': 969,
-    'thetasym': 977,
-    'upsih': 978,
-    'piv': 982,
-    'ensp': 8194,
-    'emsp': 8195,
-    'thinsp': 8201,
-    'zwnj': 8204,
-    'zwj': 8205,
-    'lrm': 8206,
-    'rlm': 8207,
-    'ndash': 8211,
-    'mdash': 8212,
-    'lsquo': 8216,
-    'rsquo': 8217,
-    'sbquo': 8218,
-    'ldquo': 8220,
-    'rdquo': 8221,
-    'bdquo': 8222,
-    'dagger': 8224,
-    'Dagger': 8225,
-    'bull': 8226,
-    'hellip': 8230,
-    'permil': 8240,
-    'prime': 8242,
-    'Prime': 8243,
-    'lsaquo': 8249,
-    'rsaquo': 8250,
-    'oline': 8254,
-    'frasl': 8260,
-    'euro': 8364,
-    'image': 8465,
-    'weierp': 8472,
-    'real': 8476,
-    'trade': 8482,
-    'alefsym': 8501,
-    'larr': 8592,
-    'uarr': 8593,
-    'rarr': 8594,
-    'darr': 8595,
-    'harr': 8596,
-    'crarr': 8629,
-    'lArr': 8656,
-    'uArr': 8657,
-    'rArr': 8658,
-    'dArr': 8659,
-    'hArr': 8660,
-    'forall': 8704,
-    'part': 8706,
-    'exist': 8707,
-    'empty': 8709,
-    'nabla': 8711,
-    'isin': 8712,
-    'notin': 8713,
-    'ni': 8715,
-    'prod': 8719,
-    'sum': 8721,
-    'minus': 8722,
-    'lowast': 8727,
-    'radic': 8730,
-    'prop': 8733,
-    'infin': 8734,
-    'ang': 8736,
-    'and': 8743,
-    'or': 8744,
-    'cap': 8745,
-    'cup': 8746,
-    'int': 8747,
-    'there4': 8756,
-    'sim': 8764,
-    'cong': 8773,
-    'asymp': 8776,
-    'ne': 8800,
-    'equiv': 8801,
-    'le': 8804,
-    'ge': 8805,
-    'sub': 8834,
-    'sup': 8835,
-    'nsub': 8836,
-    'sube': 8838,
-    'supe': 8839,
-    'oplus': 8853,
-    'otimes': 8855,
-    'perp': 8869,
-    'sdot': 8901,
-    'lceil': 8968,
-    'rceil': 8969,
-    'lfloor': 8970,
-    'rfloor': 8971,
-    'lang': 9001,
-    'rang': 9002,
-    'loz': 9674,
-    'spades': 9824,
-    'clubs': 9827,
-    'hearts': 9829,
-    'diams': 9830
+    amp: '&',
+    gt: '>',
+    lt: '<',
+    quot: '"',
+    apos: "'",
+    AElig: 198,
+    Aacute: 193,
+    Acirc: 194,
+    Agrave: 192,
+    Aring: 197,
+    Atilde: 195,
+    Auml: 196,
+    Ccedil: 199,
+    ETH: 208,
+    Eacute: 201,
+    Ecirc: 202,
+    Egrave: 200,
+    Euml: 203,
+    Iacute: 205,
+    Icirc: 206,
+    Igrave: 204,
+    Iuml: 207,
+    Ntilde: 209,
+    Oacute: 211,
+    Ocirc: 212,
+    Ograve: 210,
+    Oslash: 216,
+    Otilde: 213,
+    Ouml: 214,
+    THORN: 222,
+    Uacute: 218,
+    Ucirc: 219,
+    Ugrave: 217,
+    Uuml: 220,
+    Yacute: 221,
+    aacute: 225,
+    acirc: 226,
+    aelig: 230,
+    agrave: 224,
+    aring: 229,
+    atilde: 227,
+    auml: 228,
+    ccedil: 231,
+    eacute: 233,
+    ecirc: 234,
+    egrave: 232,
+    eth: 240,
+    euml: 235,
+    iacute: 237,
+    icirc: 238,
+    igrave: 236,
+    iuml: 239,
+    ntilde: 241,
+    oacute: 243,
+    ocirc: 244,
+    ograve: 242,
+    oslash: 248,
+    otilde: 245,
+    ouml: 246,
+    szlig: 223,
+    thorn: 254,
+    uacute: 250,
+    ucirc: 251,
+    ugrave: 249,
+    uuml: 252,
+    yacute: 253,
+    yuml: 255,
+    copy: 169,
+    reg: 174,
+    nbsp: 160,
+    iexcl: 161,
+    cent: 162,
+    pound: 163,
+    curren: 164,
+    yen: 165,
+    brvbar: 166,
+    sect: 167,
+    uml: 168,
+    ordf: 170,
+    laquo: 171,
+    not: 172,
+    shy: 173,
+    macr: 175,
+    deg: 176,
+    plusmn: 177,
+    sup1: 185,
+    sup2: 178,
+    sup3: 179,
+    acute: 180,
+    micro: 181,
+    para: 182,
+    middot: 183,
+    cedil: 184,
+    ordm: 186,
+    raquo: 187,
+    frac14: 188,
+    frac12: 189,
+    frac34: 190,
+    iquest: 191,
+    times: 215,
+    divide: 247,
+    OElig: 338,
+    oelig: 339,
+    Scaron: 352,
+    scaron: 353,
+    Yuml: 376,
+    fnof: 402,
+    circ: 710,
+    tilde: 732,
+    Alpha: 913,
+    Beta: 914,
+    Gamma: 915,
+    Delta: 916,
+    Epsilon: 917,
+    Zeta: 918,
+    Eta: 919,
+    Theta: 920,
+    Iota: 921,
+    Kappa: 922,
+    Lambda: 923,
+    Mu: 924,
+    Nu: 925,
+    Xi: 926,
+    Omicron: 927,
+    Pi: 928,
+    Rho: 929,
+    Sigma: 931,
+    Tau: 932,
+    Upsilon: 933,
+    Phi: 934,
+    Chi: 935,
+    Psi: 936,
+    Omega: 937,
+    alpha: 945,
+    beta: 946,
+    gamma: 947,
+    delta: 948,
+    epsilon: 949,
+    zeta: 950,
+    eta: 951,
+    theta: 952,
+    iota: 953,
+    kappa: 954,
+    lambda: 955,
+    mu: 956,
+    nu: 957,
+    xi: 958,
+    omicron: 959,
+    pi: 960,
+    rho: 961,
+    sigmaf: 962,
+    sigma: 963,
+    tau: 964,
+    upsilon: 965,
+    phi: 966,
+    chi: 967,
+    psi: 968,
+    omega: 969,
+    thetasym: 977,
+    upsih: 978,
+    piv: 982,
+    ensp: 8194,
+    emsp: 8195,
+    thinsp: 8201,
+    zwnj: 8204,
+    zwj: 8205,
+    lrm: 8206,
+    rlm: 8207,
+    ndash: 8211,
+    mdash: 8212,
+    lsquo: 8216,
+    rsquo: 8217,
+    sbquo: 8218,
+    ldquo: 8220,
+    rdquo: 8221,
+    bdquo: 8222,
+    dagger: 8224,
+    Dagger: 8225,
+    bull: 8226,
+    hellip: 8230,
+    permil: 8240,
+    prime: 8242,
+    Prime: 8243,
+    lsaquo: 8249,
+    rsaquo: 8250,
+    oline: 8254,
+    frasl: 8260,
+    euro: 8364,
+    image: 8465,
+    weierp: 8472,
+    real: 8476,
+    trade: 8482,
+    alefsym: 8501,
+    larr: 8592,
+    uarr: 8593,
+    rarr: 8594,
+    darr: 8595,
+    harr: 8596,
+    crarr: 8629,
+    lArr: 8656,
+    uArr: 8657,
+    rArr: 8658,
+    dArr: 8659,
+    hArr: 8660,
+    forall: 8704,
+    part: 8706,
+    exist: 8707,
+    empty: 8709,
+    nabla: 8711,
+    isin: 8712,
+    notin: 8713,
+    ni: 8715,
+    prod: 8719,
+    sum: 8721,
+    minus: 8722,
+    lowast: 8727,
+    radic: 8730,
+    prop: 8733,
+    infin: 8734,
+    ang: 8736,
+    and: 8743,
+    or: 8744,
+    cap: 8745,
+    cup: 8746,
+    int: 8747,
+    there4: 8756,
+    sim: 8764,
+    cong: 8773,
+    asymp: 8776,
+    ne: 8800,
+    equiv: 8801,
+    le: 8804,
+    ge: 8805,
+    sub: 8834,
+    sup: 8835,
+    nsub: 8836,
+    sube: 8838,
+    supe: 8839,
+    oplus: 8853,
+    otimes: 8855,
+    perp: 8869,
+    sdot: 8901,
+    lceil: 8968,
+    rceil: 8969,
+    lfloor: 8970,
+    rfloor: 8971,
+    lang: 9001,
+    rang: 9002,
+    loz: 9674,
+    spades: 9824,
+    clubs: 9827,
+    hearts: 9829,
+    diams: 9830,
   }
 
   Object.keys(sax.ENTITIES).forEach(function (key) {
@@ -4355,33 +4476,90 @@ function copyFile(srcFile, destFile, force) {
   // shorthand
   S = sax.STATE
 
-  function emit (parser, event, data) {
+  function emit(parser, event, data) {
     parser[event] && parser[event](data)
   }
 
-  function emitNode (parser, nodeType, data) {
+  function getDeclaredEncoding(body) {
+    var match = body && body.match(/(?:^|\s)encoding\s*=\s*(['"])([^'"]+)\1/i)
+    return match ? match[2] : null
+  }
+
+  function normalizeEncodingName(encoding) {
+    if (!encoding) {
+      return null
+    }
+
+    return encoding.toLowerCase().replace(/[^a-z0-9]/g, '')
+  }
+
+  function encodingsMatch(detectedEncoding, declaredEncoding) {
+    const detected = normalizeEncodingName(detectedEncoding)
+    const declared = normalizeEncodingName(declaredEncoding)
+
+    if (!detected || !declared) {
+      return true
+    }
+
+    if (declared === 'utf16') {
+      return detected === 'utf16le' || detected === 'utf16be'
+    }
+
+    return detected === declared
+  }
+
+  function validateXmlDeclarationEncoding(parser, data) {
+    if (
+      !parser.strict ||
+      !parser.encoding ||
+      !data ||
+      data.name !== 'xml'
+    ) {
+      return
+    }
+
+    var declaredEncoding = getDeclaredEncoding(data.body)
+    if (
+      declaredEncoding &&
+      !encodingsMatch(parser.encoding, declaredEncoding)
+    ) {
+      strictFail(
+        parser,
+        'XML declaration encoding ' +
+          declaredEncoding +
+          ' does not match detected stream encoding ' +
+          parser.encoding.toUpperCase()
+      )
+    }
+  }
+
+  function emitNode(parser, nodeType, data) {
     if (parser.textNode) closeText(parser)
     emit(parser, nodeType, data)
   }
 
-  function closeText (parser) {
+  function closeText(parser) {
     parser.textNode = textopts(parser.opt, parser.textNode)
     if (parser.textNode) emit(parser, 'ontext', parser.textNode)
     parser.textNode = ''
   }
 
-  function textopts (opt, text) {
+  function textopts(opt, text) {
     if (opt.trim) text = text.trim()
     if (opt.normalize) text = text.replace(/\s+/g, ' ')
     return text
   }
 
-  function error (parser, er) {
+  function error(parser, er) {
     closeText(parser)
     if (parser.trackPosition) {
-      er += '\nLine: ' + parser.line +
-        '\nColumn: ' + parser.column +
-        '\nChar: ' + parser.c
+      er +=
+        '\nLine: ' +
+        parser.line +
+        '\nColumn: ' +
+        parser.column +
+        '\nChar: ' +
+        parser.c
     }
     er = new Error(er)
     parser.error = er
@@ -4389,11 +4567,14 @@ function copyFile(srcFile, destFile, force) {
     return parser
   }
 
-  function end (parser) {
-    if (parser.sawRoot && !parser.closedRoot) strictFail(parser, 'Unclosed root tag')
-    if ((parser.state !== S.BEGIN) &&
-      (parser.state !== S.BEGIN_WHITESPACE) &&
-      (parser.state !== S.TEXT)) {
+  function end(parser) {
+    if (parser.sawRoot && !parser.closedRoot)
+      strictFail(parser, 'Unclosed root tag')
+    if (
+      parser.state !== S.BEGIN &&
+      parser.state !== S.BEGIN_WHITESPACE &&
+      parser.state !== S.TEXT
+    ) {
       error(parser, 'Unexpected end')
     }
     closeText(parser)
@@ -4404,7 +4585,7 @@ function copyFile(srcFile, destFile, force) {
     return parser
   }
 
-  function strictFail (parser, message) {
+  function strictFail(parser, message) {
     if (typeof parser !== 'object' || !(parser instanceof SAXParser)) {
       throw new Error('bad call to strictFail')
     }
@@ -4413,10 +4594,10 @@ function copyFile(srcFile, destFile, force) {
     }
   }
 
-  function newTag (parser) {
+  function newTag(parser) {
     if (!parser.strict) parser.tagName = parser.tagName[parser.looseCase]()
     var parent = parser.tags[parser.tags.length - 1] || parser
-    var tag = parser.tag = { name: parser.tagName, attributes: {} }
+    var tag = (parser.tag = { name: parser.tagName, attributes: {} })
 
     // will be overridden if tag contails an xmlns="foo" or xmlns:foo="bar"
     if (parser.opt.xmlns) {
@@ -4426,9 +4607,9 @@ function copyFile(srcFile, destFile, force) {
     emitNode(parser, 'onopentagstart', tag)
   }
 
-  function qname (name, attribute) {
+  function qname(name, attribute) {
     var i = name.indexOf(':')
-    var qualName = i < 0 ? [ '', name ] : name.split(':')
+    var qualName = i < 0 ? ['', name] : name.split(':')
     var prefix = qualName[0]
     var local = qualName[1]
 
@@ -4441,13 +4622,15 @@ function copyFile(srcFile, destFile, force) {
     return { prefix: prefix, local: local }
   }
 
-  function attrib (parser) {
+  function attrib(parser) {
     if (!parser.strict) {
       parser.attribName = parser.attribName[parser.looseCase]()
     }
 
-    if (parser.attribList.indexOf(parser.attribName) !== -1 ||
-      parser.tag.attributes.hasOwnProperty(parser.attribName)) {
+    if (
+      parser.attribList.indexOf(parser.attribName) !== -1 ||
+      parser.tag.attributes.hasOwnProperty(parser.attribName)
+    ) {
       parser.attribName = parser.attribValue = ''
       return
     }
@@ -4460,13 +4643,26 @@ function copyFile(srcFile, destFile, force) {
       if (prefix === 'xmlns') {
         // namespace binding attribute. push the binding into scope
         if (local === 'xml' && parser.attribValue !== XML_NAMESPACE) {
-          strictFail(parser,
-            'xml: prefix must be bound to ' + XML_NAMESPACE + '\n' +
-            'Actual: ' + parser.attribValue)
-        } else if (local === 'xmlns' && parser.attribValue !== XMLNS_NAMESPACE) {
-          strictFail(parser,
-            'xmlns: prefix must be bound to ' + XMLNS_NAMESPACE + '\n' +
-            'Actual: ' + parser.attribValue)
+          strictFail(
+            parser,
+            'xml: prefix must be bound to ' +
+              XML_NAMESPACE +
+              '\n' +
+              'Actual: ' +
+              parser.attribValue
+          )
+        } else if (
+          local === 'xmlns' &&
+          parser.attribValue !== XMLNS_NAMESPACE
+        ) {
+          strictFail(
+            parser,
+            'xmlns: prefix must be bound to ' +
+              XMLNS_NAMESPACE +
+              '\n' +
+              'Actual: ' +
+              parser.attribValue
+          )
         } else {
           var tag = parser.tag
           var parent = parser.tags[parser.tags.length - 1] || parser
@@ -4486,14 +4682,14 @@ function copyFile(srcFile, destFile, force) {
       parser.tag.attributes[parser.attribName] = parser.attribValue
       emitNode(parser, 'onattribute', {
         name: parser.attribName,
-        value: parser.attribValue
+        value: parser.attribValue,
       })
     }
 
     parser.attribName = parser.attribValue = ''
   }
 
-  function openTag (parser, selfClosing) {
+  function openTag(parser, selfClosing) {
     if (parser.opt.xmlns) {
       // emit namespace binding events
       var tag = parser.tag
@@ -4505,8 +4701,10 @@ function copyFile(srcFile, destFile, force) {
       tag.uri = tag.ns[qn.prefix] || ''
 
       if (tag.prefix && !tag.uri) {
-        strictFail(parser, 'Unbound namespace prefix: ' +
-          JSON.stringify(parser.tagName))
+        strictFail(
+          parser,
+          'Unbound namespace prefix: ' + JSON.stringify(parser.tagName)
+        )
         tag.uri = qn.prefix
       }
 
@@ -4515,7 +4713,7 @@ function copyFile(srcFile, destFile, force) {
         Object.keys(tag.ns).forEach(function (p) {
           emitNode(parser, 'onopennamespace', {
             prefix: p,
-            uri: tag.ns[p]
+            uri: tag.ns[p],
           })
         })
       }
@@ -4530,20 +4728,22 @@ function copyFile(srcFile, destFile, force) {
         var qualName = qname(name, true)
         var prefix = qualName.prefix
         var local = qualName.local
-        var uri = prefix === '' ? '' : (tag.ns[prefix] || '')
+        var uri = prefix === '' ? '' : tag.ns[prefix] || ''
         var a = {
           name: name,
           value: value,
           prefix: prefix,
           local: local,
-          uri: uri
+          uri: uri,
         }
 
         // if there's any attributes with an undefined namespace,
         // then fail on them now.
         if (prefix && prefix !== 'xmlns' && !uri) {
-          strictFail(parser, 'Unbound namespace prefix: ' +
-            JSON.stringify(prefix))
+          strictFail(
+            parser,
+            'Unbound namespace prefix: ' + JSON.stringify(prefix)
+          )
           a.uri = prefix
         }
         parser.tag.attributes[name] = a
@@ -4572,7 +4772,7 @@ function copyFile(srcFile, destFile, force) {
     parser.attribList.length = 0
   }
 
-  function closeTag (parser) {
+  function closeTag(parser) {
     if (!parser.tagName) {
       strictFail(parser, 'Weird empty close tag.')
       parser.textNode += '</>'
@@ -4619,7 +4819,7 @@ function copyFile(srcFile, destFile, force) {
     parser.tagName = tagName
     var s = parser.tags.length
     while (s-- > t) {
-      var tag = parser.tag = parser.tags.pop()
+      var tag = (parser.tag = parser.tags.pop())
       parser.tagName = parser.tag.name
       emitNode(parser, 'onclosetag', parser.tagName)
 
@@ -4643,7 +4843,7 @@ function copyFile(srcFile, destFile, force) {
     parser.state = S.TEXT
   }
 
-  function parseEntity (parser) {
+  function parseEntity(parser) {
     var entity = parser.entity
     var entityLC = entity.toLowerCase()
     var num
@@ -4668,7 +4868,12 @@ function copyFile(srcFile, destFile, force) {
       }
     }
     entity = entity.replace(/^0+/, '')
-    if (isNaN(num) || numStr.toLowerCase() !== entity) {
+    if (
+      isNaN(num) ||
+      numStr.toLowerCase() !== entity ||
+      num < 0 ||
+      num > 0x10ffff
+    ) {
       strictFail(parser, 'Invalid character entity')
       return '&' + parser.entity + ';'
     }
@@ -4676,7 +4881,7 @@ function copyFile(srcFile, destFile, force) {
     return String.fromCodePoint(num)
   }
 
-  function beginWhiteSpace (parser, c) {
+  function beginWhiteSpace(parser, c) {
     if (c === '<') {
       parser.state = S.OPEN_WAKA
       parser.startTagPosition = parser.position
@@ -4689,7 +4894,7 @@ function copyFile(srcFile, destFile, force) {
     }
   }
 
-  function charAt (chunk, i) {
+  function charAt(chunk, i) {
     var result = ''
     if (i < chunk.length) {
       result = chunk.charAt(i)
@@ -4697,14 +4902,16 @@ function copyFile(srcFile, destFile, force) {
     return result
   }
 
-  function write (chunk) {
+  function write(chunk) {
     var parser = this
     if (this.error) {
       throw this.error
     }
     if (parser.closed) {
-      return error(parser,
-        'Cannot write after close. Assign an onready handler.')
+      return error(
+        parser,
+        'Cannot write after close. Assign an onready handler.'
+      )
     }
     if (chunk === null) {
       return end(parser)
@@ -4762,11 +4969,17 @@ function copyFile(srcFile, destFile, force) {
             }
             parser.textNode += chunk.substring(starti, i - 1)
           }
-          if (c === '<' && !(parser.sawRoot && parser.closedRoot && !parser.strict)) {
+          if (
+            c === '<' &&
+            !(parser.sawRoot && parser.closedRoot && !parser.strict)
+          ) {
             parser.state = S.OPEN_WAKA
             parser.startTagPosition = parser.position
           } else {
-            if (!isWhitespace(c) && (!parser.sawRoot || parser.closedRoot)) {
+            if (
+              !isWhitespace(c) &&
+              (!parser.sawRoot || parser.closedRoot)
+            ) {
               strictFail(parser, 'Text data outside of root node.')
             }
             if (c === '&') {
@@ -4824,20 +5037,33 @@ function copyFile(srcFile, destFile, force) {
           continue
 
         case S.SGML_DECL:
-          if ((parser.sgmlDecl + c).toUpperCase() === CDATA) {
+          if (parser.sgmlDecl + c === '--') {
+            parser.state = S.COMMENT
+            parser.comment = ''
+            parser.sgmlDecl = ''
+            continue
+          }
+
+          if (
+            parser.doctype &&
+            parser.doctype !== true &&
+            parser.sgmlDecl
+          ) {
+            parser.state = S.DOCTYPE_DTD
+            parser.doctype += '<!' + parser.sgmlDecl + c
+            parser.sgmlDecl = ''
+          } else if ((parser.sgmlDecl + c).toUpperCase() === CDATA) {
             emitNode(parser, 'onopencdata')
             parser.state = S.CDATA
             parser.sgmlDecl = ''
             parser.cdata = ''
-          } else if (parser.sgmlDecl + c === '--') {
-            parser.state = S.COMMENT
-            parser.comment = ''
-            parser.sgmlDecl = ''
           } else if ((parser.sgmlDecl + c).toUpperCase() === DOCTYPE) {
             parser.state = S.DOCTYPE
             if (parser.doctype || parser.sawRoot) {
-              strictFail(parser,
-                'Inappropriately located doctype declaration')
+              strictFail(
+                parser,
+                'Inappropriately located doctype declaration'
+              )
             }
             parser.doctype = ''
             parser.sgmlDecl = ''
@@ -4886,12 +5112,18 @@ function copyFile(srcFile, destFile, force) {
           continue
 
         case S.DOCTYPE_DTD:
-          parser.doctype += c
           if (c === ']') {
+            parser.doctype += c
             parser.state = S.DOCTYPE
+          } else if (c === '<') {
+            parser.state = S.OPEN_WAKA
+            parser.startTagPosition = parser.position
           } else if (isQuote(c)) {
+            parser.doctype += c
             parser.state = S.DOCTYPE_DTD_QUOTED
             parser.q = c
+          } else {
+            parser.doctype += c
           }
           continue
 
@@ -4932,16 +5164,30 @@ function copyFile(srcFile, destFile, force) {
             // which is a comment of " blah -- bloo "
             parser.comment += '--' + c
             parser.state = S.COMMENT
+          } else if (parser.doctype && parser.doctype !== true) {
+            parser.state = S.DOCTYPE_DTD
           } else {
             parser.state = S.TEXT
           }
           continue
 
         case S.CDATA:
+          var starti = i - 1
+          while (c && c !== ']') {
+            c = charAt(chunk, i++)
+            if (c && parser.trackPosition) {
+              parser.position++
+              if (c === '\n') {
+                parser.line++
+                parser.column = 0
+              } else {
+                parser.column++
+              }
+            }
+          }
+          parser.cdata += chunk.substring(starti, i - 1)
           if (c === ']') {
             parser.state = S.CDATA_ENDING
-          } else {
-            parser.cdata += c
           }
           continue
 
@@ -4992,10 +5238,12 @@ function copyFile(srcFile, destFile, force) {
 
         case S.PROC_INST_ENDING:
           if (c === '>') {
-            emitNode(parser, 'onprocessinginstruction', {
+            const procInstEndData = {
               name: parser.procInstName,
-              body: parser.procInstBody
-            })
+              body: parser.procInstBody,
+            }
+            validateXmlDeclarationEncoding(parser, procInstEndData)
+            emitNode(parser, 'onprocessinginstruction', procInstEndData)
             parser.procInstName = parser.procInstBody = ''
             parser.state = S.TEXT
           } else {
@@ -5027,7 +5275,10 @@ function copyFile(srcFile, destFile, force) {
             openTag(parser, true)
             closeTag(parser)
           } else {
-            strictFail(parser, 'Forward-slash in opening tag not followed by >')
+            strictFail(
+              parser,
+              'Forward-slash in opening tag not followed by >'
+            )
             parser.state = S.ATTRIB
           }
           continue
@@ -5077,7 +5328,7 @@ function copyFile(srcFile, destFile, force) {
             parser.attribValue = ''
             emitNode(parser, 'onattribute', {
               name: parser.attribName,
-              value: ''
+              value: '',
             })
             parser.attribName = ''
             if (c === '>') {
@@ -5099,7 +5350,9 @@ function copyFile(srcFile, destFile, force) {
             parser.q = c
             parser.state = S.ATTRIB_VALUE_QUOTED
           } else {
-            strictFail(parser, 'Unquoted attribute value')
+            if (!parser.opt.unquotedAttributeValues) {
+              error(parser, 'Unquoted attribute value')
+            }
             parser.state = S.ATTRIB_VALUE_UNQUOTED
             parser.attribValue = c
           }
@@ -5172,7 +5425,7 @@ function copyFile(srcFile, destFile, force) {
           } else if (isMatch(nameBody, c)) {
             parser.tagName += c
           } else if (parser.script) {
-            parser.script += '</' + parser.tagName
+            parser.script += '</' + parser.tagName + c
             parser.tagName = ''
             parser.state = S.SCRIPT
           } else {
@@ -5217,10 +5470,37 @@ function copyFile(srcFile, destFile, force) {
           }
 
           if (c === ';') {
-            parser[buffer] += parseEntity(parser)
-            parser.entity = ''
-            parser.state = returnState
-          } else if (isMatch(parser.entity.length ? entityBody : entityStart, c)) {
+            var parsedEntity = parseEntity(parser)
+            if (
+              parser.opt.unparsedEntities &&
+              !Object.values(sax.XML_ENTITIES).includes(parsedEntity)
+            ) {
+              if ((parser.entityCount += 1) > parser.opt.maxEntityCount) {
+                error(
+                  parser,
+                  'Parsed entity count exceeds max entity count'
+                )
+              }
+
+              if ((parser.entityDepth += 1) > parser.opt.maxEntityDepth) {
+                error(
+                  parser,
+                  'Parsed entity depth exceeds max entity depth'
+                )
+              }
+
+              parser.entity = ''
+              parser.state = returnState
+              parser.write(parsedEntity)
+              parser.entityDepth -= 1
+            } else {
+              parser[buffer] += parsedEntity
+              parser.entity = ''
+              parser.state = returnState
+            }
+          } else if (
+            isMatch(parser.entity.length ? entityBody : entityStart, c)
+          ) {
             parser.entity += c
           } else {
             strictFail(parser, 'Invalid character in entity name')
@@ -5231,8 +5511,9 @@ function copyFile(srcFile, destFile, force) {
 
           continue
 
-        default:
+        default: /* istanbul ignore next */ {
           throw new Error(parser, 'Unknown state: ' + parser.state)
+        }
       }
     } // while
 
@@ -5245,7 +5526,7 @@ function copyFile(srcFile, destFile, force) {
   /*! http://mths.be/fromcodepoint v0.1.0 by @mathias */
   /* istanbul ignore next */
   if (!String.fromCodePoint) {
-    (function () {
+    ;(function () {
       var stringFromCharCode = String.fromCharCode
       var floor = Math.floor
       var fromCodePoint = function () {
@@ -5264,18 +5545,20 @@ function copyFile(srcFile, destFile, force) {
           if (
             !isFinite(codePoint) || // `NaN`, `+Infinity`, or `-Infinity`
             codePoint < 0 || // not a valid Unicode code point
-            codePoint > 0x10FFFF || // not a valid Unicode code point
+            codePoint > 0x10ffff || // not a valid Unicode code point
             floor(codePoint) !== codePoint // not an integer
           ) {
             throw RangeError('Invalid code point: ' + codePoint)
           }
-          if (codePoint <= 0xFFFF) { // BMP code point
+          if (codePoint <= 0xffff) {
+            // BMP code point
             codeUnits.push(codePoint)
-          } else { // Astral code point; split in surrogate halves
+          } else {
+            // Astral code point; split in surrogate halves
             // http://mathiasbynens.be/notes/javascript-encoding#surrogate-formulae
             codePoint -= 0x10000
-            highSurrogate = (codePoint >> 10) + 0xD800
-            lowSurrogate = (codePoint % 0x400) + 0xDC00
+            highSurrogate = (codePoint >> 10) + 0xd800
+            lowSurrogate = (codePoint % 0x400) + 0xdc00
             codeUnits.push(highSurrogate, lowSurrogate)
           }
           if (index + 1 === length || codeUnits.length > MAX_SIZE) {
@@ -5290,14 +5573,14 @@ function copyFile(srcFile, destFile, force) {
         Object.defineProperty(String, 'fromCodePoint', {
           value: fromCodePoint,
           configurable: true,
-          writable: true
+          writable: true,
         })
       } else {
         String.fromCodePoint = fromCodePoint
       }
-    }())
+    })()
   }
-})( false ? 0 : exports)
+})( false ? (0) : exports)
 
 
 /***/ }),
@@ -9693,7 +9976,6 @@ function defaultFactory (origin, opts) {
 
 class Agent extends DispatcherBase {
   constructor ({ factory = defaultFactory, maxRedirections = 0, connect, ...options } = {}) {
-    super()
 
     if (typeof factory !== 'function') {
       throw new InvalidArgumentError('factory must be a function.')
@@ -9706,6 +9988,8 @@ class Agent extends DispatcherBase {
     if (!Number.isInteger(maxRedirections) || maxRedirections < 0) {
       throw new InvalidArgumentError('maxRedirections must be a positive number')
     }
+
+    super(options)
 
     if (connect && typeof connect !== 'function') {
       connect = { ...connect }
@@ -12259,9 +12543,10 @@ class Client extends DispatcherBase {
     autoSelectFamilyAttemptTimeout,
     // h2
     maxConcurrentStreams,
-    allowH2
+    allowH2,
+    webSocket
   } = {}) {
-    super()
+    super({ webSocket })
 
     if (keepAlive !== undefined) {
       throw new InvalidArgumentError('unsupported keepAlive, use pipelining=0 instead')
@@ -12794,15 +13079,23 @@ const { kDestroy, kClose, kClosed, kDestroyed, kDispatch, kInterceptors } = __nc
 const kOnDestroyed = Symbol('onDestroyed')
 const kOnClosed = Symbol('onClosed')
 const kInterceptedDispatch = Symbol('Intercepted Dispatch')
+const kWebSocketOptions = Symbol('webSocketOptions')
 
 class DispatcherBase extends Dispatcher {
-  constructor () {
+  constructor (opts) {
     super()
 
     this[kDestroyed] = false
     this[kOnDestroyed] = null
     this[kClosed] = false
     this[kOnClosed] = []
+    this[kWebSocketOptions] = opts?.webSocket ?? {}
+  }
+
+  get webSocketOptions () {
+    return {
+      maxPayloadSize: this[kWebSocketOptions].maxPayloadSize ?? 128 * 1024 * 1024
+    }
   }
 
   get destroyed () {
@@ -13366,8 +13659,8 @@ const kRemoveClient = Symbol('remove client')
 const kStats = Symbol('stats')
 
 class PoolBase extends DispatcherBase {
-  constructor () {
-    super()
+  constructor (opts) {
+    super(opts)
 
     this[kQueue] = new FixedQueue()
     this[kClients] = []
@@ -13627,8 +13920,6 @@ class Pool extends PoolBase {
     allowH2,
     ...options
   } = {}) {
-    super()
-
     if (connections != null && (!Number.isFinite(connections) || connections < 0)) {
       throw new InvalidArgumentError('invalid connections')
     }
@@ -13652,6 +13943,8 @@ class Pool extends PoolBase {
         ...connect
       })
     }
+
+    super(options)
 
     this[kInterceptors] = options.interceptors?.Pool && Array.isArray(options.interceptors.Pool)
       ? options.interceptors.Pool
@@ -31468,40 +31761,35 @@ const tail = Buffer.from([0x00, 0x00, 0xff, 0xff])
 const kBuffer = Symbol('kBuffer')
 const kLength = Symbol('kLength')
 
-// Default maximum decompressed message size: 4 MB
-const kDefaultMaxDecompressedSize = 4 * 1024 * 1024
-
 class PerMessageDeflate {
   /** @type {import('node:zlib').InflateRaw} */
   #inflate
 
   #options = {}
 
-  /** @type {boolean} */
-  #aborted = false
-
-  /** @type {Function|null} */
-  #currentCallback = null
+  #maxPayloadSize = 0
 
   /**
    * @param {Map<string, string>} extensions
    */
-  constructor (extensions) {
+  constructor (extensions, options) {
     this.#options.serverNoContextTakeover = extensions.has('server_no_context_takeover')
     this.#options.serverMaxWindowBits = extensions.get('server_max_window_bits')
+
+    this.#maxPayloadSize = options.maxPayloadSize
   }
 
+  /**
+   * Decompress a compressed payload.
+   * @param {Buffer} chunk Compressed data
+   * @param {boolean} fin Final fragment flag
+   * @param {Function} callback Callback function
+   */
   decompress (chunk, fin, callback) {
     // An endpoint uses the following algorithm to decompress a message.
     // 1.  Append 4 octets of 0x00 0x00 0xff 0xff to the tail end of the
     //     payload of the message.
     // 2.  Decompress the resulting data using DEFLATE.
-
-    if (this.#aborted) {
-      callback(new MessageSizeExceededError())
-      return
-    }
-
     if (!this.#inflate) {
       let windowBits = Z_DEFAULT_WINDOWBITS
 
@@ -31524,23 +31812,12 @@ class PerMessageDeflate {
       this.#inflate[kLength] = 0
 
       this.#inflate.on('data', (data) => {
-        if (this.#aborted) {
-          return
-        }
-
         this.#inflate[kLength] += data.length
 
-        if (this.#inflate[kLength] > kDefaultMaxDecompressedSize) {
-          this.#aborted = true
+        if (this.#maxPayloadSize > 0 && this.#inflate[kLength] > this.#maxPayloadSize) {
+          callback(new MessageSizeExceededError())
           this.#inflate.removeAllListeners()
-          this.#inflate.destroy()
           this.#inflate = null
-
-          if (this.#currentCallback) {
-            const cb = this.#currentCallback
-            this.#currentCallback = null
-            cb(new MessageSizeExceededError())
-          }
           return
         }
 
@@ -31553,14 +31830,13 @@ class PerMessageDeflate {
       })
     }
 
-    this.#currentCallback = callback
     this.#inflate.write(chunk)
     if (fin) {
       this.#inflate.write(tail)
     }
 
     this.#inflate.flush(() => {
-      if (this.#aborted || !this.#inflate) {
+      if (!this.#inflate) {
         return
       }
 
@@ -31568,7 +31844,6 @@ class PerMessageDeflate {
 
       this.#inflate[kBuffer].length = 0
       this.#inflate[kLength] = 0
-      this.#currentCallback = null
 
       callback(null, full)
     })
@@ -31604,6 +31879,7 @@ const {
 const { WebsocketFrameSend } = __nccwpck_require__(3264)
 const { closeWebSocketConnection } = __nccwpck_require__(6897)
 const { PerMessageDeflate } = __nccwpck_require__(9469)
+const { MessageSizeExceededError } = __nccwpck_require__(8707)
 
 // This code was influenced by ws released under the MIT license.
 // Copyright (c) 2011 Einar Otto Stangvik <einaros@gmail.com>
@@ -31612,6 +31888,7 @@ const { PerMessageDeflate } = __nccwpck_require__(9469)
 
 class ByteParser extends Writable {
   #buffers = []
+  #fragmentsBytes = 0
   #byteOffset = 0
   #loop = false
 
@@ -31623,18 +31900,23 @@ class ByteParser extends Writable {
   /** @type {Map<string, PerMessageDeflate>} */
   #extensions
 
+  /** @type {number} */
+  #maxPayloadSize
+
   /**
    * @param {import('./websocket').WebSocket} ws
    * @param {Map<string, string>|null} extensions
+   * @param {{ maxPayloadSize?: number }} [options]
    */
-  constructor (ws, extensions) {
+  constructor (ws, extensions, options = {}) {
     super()
 
     this.ws = ws
     this.#extensions = extensions == null ? new Map() : extensions
+    this.#maxPayloadSize = options.maxPayloadSize ?? 0
 
     if (this.#extensions.has('permessage-deflate')) {
-      this.#extensions.set('permessage-deflate', new PerMessageDeflate(extensions))
+      this.#extensions.set('permessage-deflate', new PerMessageDeflate(extensions, options))
     }
   }
 
@@ -31648,6 +31930,19 @@ class ByteParser extends Writable {
     this.#loop = true
 
     this.run(callback)
+  }
+
+  #validatePayloadLength () {
+    if (
+      this.#maxPayloadSize > 0 &&
+      !isControlFrame(this.#info.opcode) &&
+      this.#info.payloadLength > this.#maxPayloadSize
+    ) {
+      failWebsocketConnection(this.ws, 'Payload size exceeds maximum allowed size')
+      return false
+    }
+
+    return true
   }
 
   /**
@@ -31738,6 +32033,10 @@ class ByteParser extends Writable {
         if (payloadLength <= 125) {
           this.#info.payloadLength = payloadLength
           this.#state = parserStates.READ_DATA
+
+          if (!this.#validatePayloadLength()) {
+            return
+          }
         } else if (payloadLength === 126) {
           this.#state = parserStates.PAYLOADLENGTH_16
         } else if (payloadLength === 127) {
@@ -31762,6 +32061,10 @@ class ByteParser extends Writable {
 
         this.#info.payloadLength = buffer.readUInt16BE(0)
         this.#state = parserStates.READ_DATA
+
+        if (!this.#validatePayloadLength()) {
+          return
+        }
       } else if (this.#state === parserStates.PAYLOADLENGTH_64) {
         if (this.#byteOffset < 8) {
           return callback()
@@ -31784,6 +32087,10 @@ class ByteParser extends Writable {
 
         this.#info.payloadLength = lower
         this.#state = parserStates.READ_DATA
+
+        if (!this.#validatePayloadLength()) {
+          return
+        }
       } else if (this.#state === parserStates.READ_DATA) {
         if (this.#byteOffset < this.#info.payloadLength) {
           return callback()
@@ -31796,42 +32103,53 @@ class ByteParser extends Writable {
           this.#state = parserStates.INFO
         } else {
           if (!this.#info.compressed) {
-            this.#fragments.push(body)
+            this.writeFragments(body)
+
+            if (this.#maxPayloadSize > 0 && this.#fragmentsBytes > this.#maxPayloadSize) {
+              failWebsocketConnection(this.ws, new MessageSizeExceededError().message)
+              return
+            }
 
             // If the frame is not fragmented, a message has been received.
             // If the frame is fragmented, it will terminate with a fin bit set
             // and an opcode of 0 (continuation), therefore we handle that when
             // parsing continuation frames, not here.
             if (!this.#info.fragmented && this.#info.fin) {
-              const fullMessage = Buffer.concat(this.#fragments)
-              websocketMessageReceived(this.ws, this.#info.binaryType, fullMessage)
-              this.#fragments.length = 0
+              websocketMessageReceived(this.ws, this.#info.binaryType, this.consumeFragments())
             }
 
             this.#state = parserStates.INFO
           } else {
-            this.#extensions.get('permessage-deflate').decompress(body, this.#info.fin, (error, data) => {
-              if (error) {
-                failWebsocketConnection(this.ws, error.message)
-                return
-              }
+            this.#extensions.get('permessage-deflate').decompress(
+              body,
+              this.#info.fin,
+              (error, data) => {
+                if (error) {
+                  failWebsocketConnection(this.ws, error.message)
+                  return
+                }
 
-              this.#fragments.push(data)
+                this.writeFragments(data)
 
-              if (!this.#info.fin) {
-                this.#state = parserStates.INFO
+                if (this.#maxPayloadSize > 0 && this.#fragmentsBytes > this.#maxPayloadSize) {
+                  failWebsocketConnection(this.ws, new MessageSizeExceededError().message)
+                  return
+                }
+
+                if (!this.#info.fin) {
+                  this.#state = parserStates.INFO
+                  this.#loop = true
+                  this.run(callback)
+                  return
+                }
+
+                websocketMessageReceived(this.ws, this.#info.binaryType, this.consumeFragments())
+
                 this.#loop = true
+                this.#state = parserStates.INFO
                 this.run(callback)
-                return
               }
-
-              websocketMessageReceived(this.ws, this.#info.binaryType, Buffer.concat(this.#fragments))
-
-              this.#loop = true
-              this.#state = parserStates.INFO
-              this.#fragments.length = 0
-              this.run(callback)
-            })
+            )
 
             this.#loop = false
             break
@@ -31881,6 +32199,26 @@ class ByteParser extends Writable {
     this.#byteOffset -= n
 
     return buffer
+  }
+
+  writeFragments (fragment) {
+    this.#fragmentsBytes += fragment.length
+    this.#fragments.push(fragment)
+  }
+
+  consumeFragments () {
+    const fragments = this.#fragments
+
+    if (fragments.length === 1) {
+      this.#fragmentsBytes = 0
+      return fragments.shift()
+    }
+
+    const output = Buffer.concat(fragments, this.#fragmentsBytes)
+    this.#fragments = []
+    this.#fragmentsBytes = 0
+
+    return output
   }
 
   parseCloseBody (data) {
@@ -32918,7 +33256,11 @@ class WebSocket extends EventTarget {
     // once this happens, the connection is open
     this[kResponse] = response
 
-    const parser = new ByteParser(this, parsedExtensions)
+    const maxPayloadSize = this[kController]?.dispatcher?.webSocketOptions?.maxPayloadSize
+
+    const parser = new ByteParser(this, parsedExtensions, {
+      maxPayloadSize
+    })
     parser.on('drain', onParserDrain)
     parser.on('error', onParserError.bind(this))
 
@@ -40712,14 +41054,38 @@ var endpoint = withDefaults(null, DEFAULTS);
 // EXTERNAL MODULE: ./node_modules/fast-content-type-parse/index.js
 var fast_content_type_parse = __nccwpck_require__(1120);
 ;// CONCATENATED MODULE: ./node_modules/json-with-bigint/json-with-bigint.js
+const intRegex = /^-?\d+$/;
 const noiseValue = /^-?\d+n+$/; // Noise - strings that match the custom format before being converted to it
 const originalStringify = JSON.stringify;
 const originalParse = JSON.parse;
+const customFormat = /^-?\d+n$/;
 
-/*
-  Function to serialize value to a JSON string.
-  Converts BigInt values to a custom format (strings with digits and "n" at the end) and then converts them to proper big integers in a JSON string.
-*/
+const bigIntsStringify = /([\[:])?"(-?\d+)n"($|([\\n]|\s)*(\s|[\\n])*[,\}\]])/g;
+const noiseStringify =
+  /([\[:])?("-?\d+n+)n("$|"([\\n]|\s)*(\s|[\\n])*[,\}\]])/g;
+
+/**
+ * @typedef {(this: any, key: string | number | undefined, value: any) => any} Replacer
+ * @typedef {(key: string | number | undefined, value: any, context?: { source: string }) => any} Reviver
+ */
+
+/**
+ * Converts a JavaScript value to a JSON string.
+ *
+ * Supports serialization of BigInt values using two strategies:
+ * 1. Custom format "123n" → "123" (universal fallback)
+ * 2. Native JSON.rawJSON() (Node.js 22+, fastest) when available
+ *
+ * All other values are serialized exactly like native JSON.stringify().
+ *
+ * @param {*} value The value to convert to a JSON string.
+ * @param {Replacer | Array<string | number> | null} [replacer]
+ *   A function that alters the behavior of the stringification process,
+ *   or an array of strings/numbers to indicate properties to exclude.
+ * @param {string | number} [space]
+ *   A string or number to specify indentation or pretty-printing.
+ * @returns {string} The JSON string representation.
+ */
 const JSONStringify = (value, replacer, space) => {
   if ("rawJSON" in JSON) {
     return originalStringify(
@@ -40733,19 +41099,16 @@ const JSONStringify = (value, replacer, space) => {
 
         return value;
       },
-      space
+      space,
     );
   }
 
   if (!value) return originalStringify(value, replacer, space);
 
-  const bigInts = /([\[:])?"(-?\d+)n"($|([\\n]|\s)*(\s|[\\n])*[,\}\]])/g;
-  const noise = /([\[:])?("-?\d+n+)n("$|"([\\n]|\s)*(\s|[\\n])*[,\}\]])/g;
   const convertedToCustomJSON = originalStringify(
     value,
     (key, value) => {
-      const isNoise =
-        typeof value === "string" && Boolean(value.match(noiseValue));
+      const isNoise = typeof value === "string" && noiseValue.test(value);
 
       if (isNoise) return value.toString() + "n"; // Mark noise values with additional "n" to offset the deletion of one "n" during the processing
 
@@ -40757,33 +41120,89 @@ const JSONStringify = (value, replacer, space) => {
 
       return value;
     },
-    space
+    space,
   );
-  const processedJSON = convertedToCustomJSON.replace(bigInts, "$1$2$3"); // Delete one "n" off the end of every BigInt value
-  const denoisedJSON = processedJSON.replace(noise, "$1$2$3"); // Remove one "n" off the end of every noisy string
+  const processedJSON = convertedToCustomJSON.replace(
+    bigIntsStringify,
+    "$1$2$3",
+  ); // Delete one "n" off the end of every BigInt value
+  const denoisedJSON = processedJSON.replace(noiseStringify, "$1$2$3"); // Remove one "n" off the end of every noisy string
 
   return denoisedJSON;
 };
 
-/*
-  Function to check if the JSON.parse's context.source feature is supported.
-*/
-const isContextSourceSupported = () =>
-  JSON.parse("1", (_, __, context) => !!context && context.source === "1");
+const featureCache = new Map();
 
-/*
-  Faster (2x) and simpler function to parse JSON.
-  Based on JSON.parse's context.source feature, which is not universally available now.
-  Does not support the legacy custom format, used in the first version of this library.
-*/
+/**
+ * Detects if the current JSON.parse implementation supports the context.source feature.
+ *
+ * Uses toString() fingerprinting to cache results and automatically detect runtime
+ * replacements of JSON.parse (polyfills, mocks, etc.).
+ *
+ * @returns {boolean} true if context.source is supported, false otherwise.
+ */
+const isContextSourceSupported = () => {
+  const parseFingerprint = JSON.parse.toString();
+
+  if (featureCache.has(parseFingerprint)) {
+    return featureCache.get(parseFingerprint);
+  }
+
+  try {
+    const result = JSON.parse(
+      "1",
+      (_, __, context) => !!context?.source && context.source === "1",
+    );
+    featureCache.set(parseFingerprint, result);
+
+    return result;
+  } catch {
+    featureCache.set(parseFingerprint, false);
+
+    return false;
+  }
+};
+
+/**
+ * Reviver function that converts custom-format BigInt strings back to BigInt values.
+ * Also handles "noise" strings that accidentally match the BigInt format.
+ *
+ * @param {string | number | undefined} key The object key.
+ * @param {*} value The value being parsed.
+ * @param {object} [context] Parse context (if supported by JSON.parse).
+ * @param {Reviver} [userReviver] User's custom reviver function.
+ * @returns {any} The transformed value.
+ */
+const convertMarkedBigIntsReviver = (key, value, context, userReviver) => {
+  const isCustomFormatBigInt =
+    typeof value === "string" && customFormat.test(value);
+  if (isCustomFormatBigInt) return BigInt(value.slice(0, -1));
+
+  const isNoiseValue = typeof value === "string" && noiseValue.test(value);
+  if (isNoiseValue) return value.slice(0, -1);
+
+  if (typeof userReviver !== "function") return value;
+
+  return userReviver(key, value, context);
+};
+
+/**
+ * Fast JSON.parse implementation (~2x faster than classic fallback).
+ * Uses JSON.parse's context.source feature to detect integers and convert
+ * large numbers directly to BigInt without string manipulation.
+ *
+ * Does not support legacy custom format from v1 of this library.
+ *
+ * @param {string} text JSON string to parse.
+ * @param {Reviver} [reviver] Transform function to apply to each value.
+ * @returns {any} Parsed JavaScript value.
+ */
 const JSONParseV2 = (text, reviver) => {
-  const intRegex = /^-?\d+$/;
-
   return JSON.parse(text, (key, value, context) => {
     const isBigNumber =
       typeof value === "number" &&
       (value > Number.MAX_SAFE_INTEGER || value < Number.MIN_SAFE_INTEGER);
-    const isInt = intRegex.test(context.source);
+    const isInt = context && intRegex.test(context.source);
     const isBigInt = isBigNumber && isInt;
 
     if (isBigInt) return BigInt(context.source);
@@ -40794,29 +41213,40 @@ const JSONParseV2 = (text, reviver) => {
   });
 };
 
-/*
-  Function to parse JSON.
-  If JSON has number values greater than Number.MAX_SAFE_INTEGER, we convert those values to a custom format, then parse them to BigInt values.
-  Other types of values are not affected and parsed as native JSON.parse() would parse them.
-*/
+const MAX_INT = Number.MAX_SAFE_INTEGER.toString();
+const MAX_DIGITS = MAX_INT.length;
+const stringsOrLargeNumbers =
+  /"(?:\\.|[^"])*"|-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?/g;
+const noiseValueWithQuotes = /^"-?\d+n+"$/; // Noise - strings that match the custom format before being converted to it
+
+/**
+ * Converts a JSON string into a JavaScript value.
+ *
+ * Supports parsing of large integers using two strategies:
+ * 1. Classic fallback: Marks large numbers with "123n" format, then converts to BigInt
+ * 2. Fast path (JSONParseV2): Uses context.source feature (~2x faster) when available
+ *
+ * All other JSON values are parsed exactly like native JSON.parse().
+ *
+ * @param {string} text A valid JSON string.
+ * @param {Reviver} [reviver]
+ *   A function that transforms the results. This function is called for each member
+ *   of the object. If a member contains nested objects, the nested objects are
+ *   transformed before the parent object is.
+ * @returns {any} The parsed JavaScript value.
+ * @throws {SyntaxError} If text is not valid JSON.
+ */
 const JSONParse = (text, reviver) => {
   if (!text) return originalParse(text, reviver);
 
   if (isContextSourceSupported()) return JSONParseV2(text, reviver); // Shortcut to a faster (2x) and simpler version
-
-  const MAX_INT = Number.MAX_SAFE_INTEGER.toString();
-  const MAX_DIGITS = MAX_INT.length;
-  const stringsOrLargeNumbers =
-    /"(?:\\.|[^"])*"|-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?/g;
-  const noiseValueWithQuotes = /^"-?\d+n+"$/; // Noise - strings that match the custom format before being converted to it
-  const customFormat = /^-?\d+n$/;
 
   // Find and mark big numbers with "n"
   const serializedData = text.replace(
     stringsOrLargeNumbers,
     (text, digits, fractional, exponential) => {
       const isString = text[0] === '"';
-      const isNoise = isString && Boolean(text.match(noiseValueWithQuotes));
+      const isNoise = isString && noiseValueWithQuotes.test(text);
 
       if (isNoise) return text.substring(0, text.length - 1) + 'n"'; // Mark noise values with additional "n" to offset the deletion of one "n" during the processing
 
@@ -40830,27 +41260,15 @@ const JSONParse = (text, reviver) => {
         return text;
 
       return '"' + text + 'n"';
-    }
+    },
   );
 
-  // Convert marked big numbers to BigInt
-  return originalParse(serializedData, (key, value, context) => {
-    const isCustomFormatBigInt =
-      typeof value === "string" && Boolean(value.match(customFormat));
-
-    if (isCustomFormatBigInt)
-      return BigInt(value.substring(0, value.length - 1));
-
-    const isNoiseValue =
-      typeof value === "string" && Boolean(value.match(noiseValue));
-
-    if (isNoiseValue) return value.substring(0, value.length - 1); // Remove one "n" off the end of the noisy string
-
-    if (typeof reviver !== "function") return value;
-
-    return reviver(key, value, context);
-  });
+  return originalParse(serializedData, (key, value, context) =>
+    convertMarkedBigIntsReviver(key, value, context, reviver),
+  );
 };
+
+
 
 ;// CONCATENATED MODULE: ./node_modules/@octokit/request-error/dist-src/index.js
 class RequestError extends Error {
