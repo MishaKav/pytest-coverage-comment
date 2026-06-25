@@ -39942,13 +39942,13 @@ const parseLines = (lines) => {
             // not in missingLines but shows up in missing-branches.
             // Record its partial branches separately to
             // surface them as `line->target` entries like `coverage report --show-missing` shows.
+            // coverage.py already writes "exit" in the XML for a branch that leaves
+            // the function/module, so the target is used verbatim.
             if (hits !== '0' && missingBranches) {
                 missingBranches.split(',').forEach((target) => {
-                    // coverage.py uses a non-positive destination to mark a branch that
-                    // exits the function/module; render those as `line->exit`.
                     partialBranches.push({
                         line: parseInt(lineNumber),
-                        target: parseInt(target) <= 0 ? 'exit' : target,
+                        target: target == 'exit' ? 'exit' : parseInt(target),
                     });
                 });
             }
