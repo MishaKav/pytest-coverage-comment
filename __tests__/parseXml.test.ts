@@ -84,6 +84,16 @@ describe('getCoverageXmlReport', () => {
     expect(result!.html).toContain('>63->66</a>');
   });
 
+  test('should combine partial branches and show exit in arrows', () => {
+    const covXmlFile = path.join(dataPath, 'coverage_3.xml');
+    const options = { ...baseOptions, covXmlFile };
+    const result = getCoverageXmlReport(options);
+
+    expect(result).not.toBeNull();
+    expect(result!.html).toContain('>16->18</a>');
+    expect(result!.html).toContain('>24->exit</a>');
+  });
+
   test('should skip covered files when xmlSkipCovered is true', () => {
     const covXmlFile = path.join(dataPath, 'coverage_1.xml');
     const options = { ...baseOptions, covXmlFile, xmlSkipCovered: true };

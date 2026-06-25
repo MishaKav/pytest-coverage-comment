@@ -39695,9 +39695,18 @@ const toMissingTd = (item, options) => {
     }
     return item.missing
         .map((range) => {
+        const relative = item.name;
+        // Partial branch, e.g. `158->182` or `158->exit`: link to the source
+        // line and keep the arrow text as-is.
+        if (range.includes('->')) {
+            const [start] = range.split('->');
+            const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}#L${start}`;
+            return options.removeLinksToLines
+                ? range
+                : `<a href="${href}">${range}</a>`;
+        }
         const [start, end = start] = range.split('-');
         const fragment = start === end ? `L${start}` : `L${start}-L${end}`;
-        const relative = item.name;
         const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}#${fragment}`;
         const text = start === end ? start : `${start}&ndash;${end}`;
         return options.removeLinksToLines
@@ -39912,11 +39921,12 @@ const parseLines = (lines) => {
     }
     let stmts = 0;
     const missingLines = [];
+    const partialBranches = [];
     let branchTotal = 0;
     let branchMissing = 0;
     lines[0].line.forEach((line) => {
         stmts++;
-        const { hits, number: lineNumber, branch, 'condition-coverage': condCoverage, } = line['$'];
+        const { hits, number: lineNumber, branch, 'condition-coverage': condCoverage, 'missing-branches': missingBranches, } = line['$'];
         if (hits === '0') {
             missingLines.push(parseInt(lineNumber));
         }
@@ -39928,6 +39938,20 @@ const parseLines = (lines) => {
                 branchTotal += total;
                 branchMissing += total - covered;
             }
+            // A line that was executed (hits > 0) but has uncovered branch arcs is
+            // not in missingLines but shows up in missing-branches.
+            // Record its partial branches separately to
+            // surface them as `line->target` entries like `coverage report --show-missing` shows.
+            if (hits !== '0' && missingBranches) {
+                missingBranches.split(',').forEach((target) => {
+                    // coverage.py uses a non-positive destination to mark a branch that
+                    // exits the function/module; render those as `line->exit`.
+                    partialBranches.push({
+                        line: parseInt(lineNumber),
+                        target: parseInt(target) <= 0 ? 'exit' : target,
+                    });
+                });
+            }
         }
     });
     const missing = missingLines.reduce((arr, val, i, a) => {
@@ -39936,15 +39960,20 @@ const parseLines = (lines) => {
         arr[arr.length - 1].push(val);
         return arr;
     }, []);
-    const missingText = [];
+    // Merge missing-line ranges and partial-branch arrows into a single list
+    // ordered by line number, matching the order of `coverage report -m`.
+    const missingEntries = [];
     missing.forEach((m) => {
-        if (m.length === 1) {
-            missingText.push(`${m[0]}`);
-        }
-        else {
-            missingText.push(`${m[0]}-${m[m.length - 1]}`);
-        }
+        missingEntries.push({
+            sort: m[0],
+            text: m.length === 1 ? `${m[0]}` : `${m[0]}-${m[m.length - 1]}`,
+        });
     });
+    partialBranches.forEach(({ line, target }) => {
+        missingEntries.push({ sort: line, text: `${line}->${target}` });
+    });
+    missingEntries.sort((a, b) => a.sort - b.sort);
+    const missingText = missingEntries.map((e) => e.text);
     return {
         stmts: stmts.toString(),
         missing: missingText,
