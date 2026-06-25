@@ -250,8 +250,8 @@ const parseLines = (lines: ParsedXml): ParsedLines => {
       if (hits !== '0' && missingBranches) {
         missingBranches.split(',').forEach((target: string) => {
           partialBranches.push({
-            line: parseInt(lineNumber),
-            target: target == 'exit' ? 'exit' : parseInt(target),
+            line: parseInt(lineNumber, 10),
+            target: target === 'exit' ? 'exit' : parseInt(target, 10),
           });
         });
       }
