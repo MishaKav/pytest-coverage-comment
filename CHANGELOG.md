@@ -1,10 +1,21 @@
 # Changelog of the Pytest Coverage Comment
 
-## Unreleased
+## [Pytest Coverage Comment 1.8.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.8.0)
+
+**Release Date:** 2026-06-27
 
 #### Changes
 
-- show partially-covered branches as `line->target` arrows in the `Missing` column when parsing XML coverage (`pytest-xml-coverage-path`), matching the output of `coverage report --show-missing`
+- show partially-covered branches as `line->target` arrows in the `Missing` column when parsing XML coverage (`pytest-xml-coverage-path`), matching the output of `coverage report --show-missing` (#274), thanks to [@mschoettle](https://github.com/mschoettle) for contribution
+
+## [Pytest Coverage Comment 1.7.3](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.7.3)
+
+**Release Date:** 2026-06-27
+
+#### Changes
+
+- bump `@vercel/ncc` 0.38.4 → 0.44.0 (Node 24/26 + TypeScript 6 support)
+- bump dev dependencies: `@types/node` 26.0.1, `vitest` 4.1.9, `eslint` 10.6.0, `typescript-eslint` 8.62.0, `prettier` 3.8.5
 
 ## [Pytest Coverage Comment 1.7.2](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.7.2)
 
