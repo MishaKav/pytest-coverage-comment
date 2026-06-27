@@ -415,9 +415,20 @@ const toMissingTd = (item: CoverageLine, options: Options): string => {
 
   return item.missing
     .map((range) => {
+      const relative = item.name;
+
+      // Partial branch, e.g. `158->182` or `158->exit`: link to the source
+      // line and keep the arrow text as-is.
+      if (range.includes('->')) {
+        const [start] = range.split('->');
+        const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}#L${start}`;
+        return options.removeLinksToLines
+          ? range
+          : `<a href="${href}">${range}</a>`;
+      }
+
       const [start, end = start] = range.split('-');
       const fragment = start === end ? `L${start}` : `L${start}-L${end}`;
-      const relative = item.name;
       const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}#${fragment}`;
       const text = start === end ? start : `${start}&ndash;${end}`;
 
