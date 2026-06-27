@@ -1,0 +1,30 @@
+package.json
+  h_ea310c8a42b3f0 41,44-46,48-49
+  s_f408a63bb0ee42::t_3b2733c3a7cc30 43
+dist/index.js
+  s_f408a63bb0ee42::t_e26e8ac74a2463 10366-10368,10591-10601,10608-10655,10683-10687,10791-10795,10969,11028-11030,11041-11045,11064-11067,11077-11078,11081,11144,11182-11206,11221-11246,11340,13213,19152-19167,31994-31998,32018-32020,32027,32034,32058,32060,32225-32227,32230,32249-32250,32254-32256,32259,32329-32336,32339,33392-33394,33397
+CHANGELOG.md
+  s_f408a63bb0ee42::t_c1c8834436a84f 3-8,11
+  s_f408a63bb0ee42::t_02053c0dfdefbb 9-10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "83e2d61542d71c02bbb95dca711a500e088430c5",
+  "prompts": {},
+  "humans": {
+    "h_ea310c8a42b3f0": {
+      "author": "Misha Kav <misha.kav@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_f408a63bb0ee42": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6972a1dd-386c-4f84-b9b7-00f3eab27495",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Misha Kav <misha.kav@gmail.com>"
+    }
+  }
+}
