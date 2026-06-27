@@ -1,5 +1,13 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.8.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.8.0)
+
+**Release Date:** 2026-06-27
+
+#### Changes
+
+- show partially-covered branches as `line->target` arrows in the `Missing` column when parsing XML coverage (`pytest-xml-coverage-path`), matching the output of `coverage report --show-missing` (#274), thanks to [@mschoettle](https://github.com/mschoettle) for contribution
+
 ## [Pytest Coverage Comment 1.7.3](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.7.3)
 
 **Release Date:** 2026-06-27
