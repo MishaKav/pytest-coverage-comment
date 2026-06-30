@@ -38607,7 +38607,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.truncateSummary = exports.resolveCommitSha = void 0;
+exports.getCommentWatermarks = exports.truncateSummary = exports.resolveCommitSha = void 0;
 const core = __importStar(__nccwpck_require__(7484));
 const github = __importStar(__nccwpck_require__(3228));
 const parse_1 = __nccwpck_require__(2828);
@@ -38698,7 +38698,23 @@ error, context) => {
     core.setFailed(lines.join('\n'));
     throw error;
 };
-const createOrEditComment = async (octokit, repo, owner, issue_number, body, WATERMARK, context) => {
+const getCommentWatermarks = (context, uniqueIdForComment) => {
+    const watermarkUniqueId = uniqueIdForComment
+        ? `| ${uniqueIdForComment} `
+        : '';
+    const jobPart = context.job ? `${context.job} ` : '';
+    const workflowPart = context.workflow ? `${context.workflow} ` : '';
+    const watermarkWithWorkflow = `<!-- Pytest Coverage Comment: ${workflowPart}${jobPart}${watermarkUniqueId}-->\n`;
+    if (!context.workflow) {
+        return [watermarkWithWorkflow];
+    }
+    const legacyWatermark = `<!-- Pytest Coverage Comment: ${jobPart}${watermarkUniqueId}-->\n`;
+    return legacyWatermark === watermarkWithWorkflow
+        ? [watermarkWithWorkflow]
+        : [watermarkWithWorkflow, legacyWatermark];
+};
+exports.getCommentWatermarks = getCommentWatermarks;
+const createOrEditComment = async (octokit, repo, owner, issue_number, body, watermarks, context) => {
     try {
         // Now decide if we should issue a new comment or edit an old one
         const { data: comments } = await octokit.rest.issues.listComments({
@@ -38706,7 +38722,7 @@ const createOrEditComment = async (octokit, repo, owner, issue_number, body, WAT
             owner,
             issue_number,
         });
-        const comment = comments.find((c) => c.body?.startsWith(WATERMARK));
+        const comment = comments.find((c) => watermarks.some((watermark) => c.body?.startsWith(watermark)));
         if (comment) {
             core.info('Found previous comment, updating');
             await octokit.rest.issues.updateComment({
@@ -38777,10 +38793,7 @@ const main = async () => {
     const { eventName, payload } = context;
     const serverUrl = context.serverUrl || 'https://github.com';
     core.info(`Uses Github URL: ${serverUrl}`);
-    const watermarkUniqueId = uniqueIdForComment
-        ? `| ${uniqueIdForComment} `
-        : '';
-    const WATERMARK = `<!-- Pytest Coverage Comment: ${context.job} ${watermarkUniqueId}-->\n`;
+    const [WATERMARK, ...additionalWatermarks] = (0, exports.getCommentWatermarks)(context, uniqueIdForComment);
     let finalHtml = '';
     const options = {
         token,
@@ -38980,7 +38993,7 @@ const main = async () => {
             }
         }
         else {
-            await createOrEditComment(octokit, repo, owner, issue_number, body, WATERMARK, context);
+            await createOrEditComment(octokit, repo, owner, issue_number, body, [WATERMARK, ...additionalWatermarks], context);
         }
     }
     else if (eventName === 'workflow_dispatch' ||
@@ -39011,7 +39024,7 @@ const main = async () => {
                 }
             }
             else {
-                await createOrEditComment(octokit, repo, owner, issue_number, body, WATERMARK, context);
+                await createOrEditComment(octokit, repo, owner, issue_number, body, [WATERMARK, ...additionalWatermarks], context);
             }
         }
     }
