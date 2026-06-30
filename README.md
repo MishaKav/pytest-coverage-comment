@@ -278,6 +278,8 @@ This creates a consolidated table showing all coverage reports:
 
 <img alt="Multiple Files Mode Example" src="https://user-images.githubusercontent.com/289035/122121939-ddd0c500-ce34-11eb-8546-89a8a769e065.png">
 
+When using **separate workflows** in a monorepo, comments are tracked per workflow + job automatically, so each workflow keeps its own coverage comment. Use `unique-id-for-comment` only when you need multiple comments from the same workflow job (for example matrix builds).
+
 </details>
 
 ### Clean Summary Without Emojis

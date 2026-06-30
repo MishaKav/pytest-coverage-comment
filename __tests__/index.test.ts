@@ -14,12 +14,43 @@ vi.mock('@actions/github', () => ({
   getOctokit: vi.fn(),
 }));
 
-import { truncateSummary } from '../src/index';
+import { truncateSummary, getCommentWatermarks } from '../src/index';
 
 describe('truncateSummary', () => {
   test('should return content as-is when under limit', () => {
     const content = 'Short content';
     expect(truncateSummary(content, 1000)).toBe(content);
+  });
+
+  describe('getCommentWatermarks', () => {
+    test('should include workflow and keep legacy fallback for compatibility', () => {
+      const watermarks = getCommentWatermarks(
+        { workflow: 'workflow_A', job: 'coverage' },
+        '',
+      );
+      expect(watermarks).toEqual([
+        '<!-- Pytest Coverage Comment: workflow_A coverage -->\n',
+        '<!-- Pytest Coverage Comment: coverage -->\n',
+      ]);
+    });
+
+    test('should include unique id in both workflow and legacy watermarks', () => {
+      const watermarks = getCommentWatermarks(
+        { workflow: 'workflow_A', job: 'coverage' },
+        '3.12-linux',
+      );
+      expect(watermarks).toEqual([
+        '<!-- Pytest Coverage Comment: workflow_A coverage | 3.12-linux -->\n',
+        '<!-- Pytest Coverage Comment: coverage | 3.12-linux -->\n',
+      ]);
+    });
+
+    test('should return single watermark when workflow is unavailable', () => {
+      const watermarks = getCommentWatermarks({ job: 'coverage' }, '');
+      expect(watermarks).toEqual([
+        '<!-- Pytest Coverage Comment: coverage -->\n',
+      ]);
+    });
   });
 
   test('should truncate content that exceeds limit', () => {

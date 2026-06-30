@@ -143,13 +143,34 @@ const handlePermissionError = (
   throw error;
 };
 
+export const getCommentWatermarks = (
+  context: Pick<typeof github.context, 'workflow' | 'job'>,
+  uniqueIdForComment: string,
+): string[] => {
+  const watermarkUniqueId = uniqueIdForComment
+    ? `| ${uniqueIdForComment} `
+    : '';
+  const jobPart = context.job ? `${context.job} ` : '';
+  const workflowPart = context.workflow ? `${context.workflow} ` : '';
+  const watermarkWithWorkflow = `<!-- Pytest Coverage Comment: ${workflowPart}${jobPart}${watermarkUniqueId}-->\n`;
+
+  if (!context.workflow) {
+    return [watermarkWithWorkflow];
+  }
+
+  const legacyWatermark = `<!-- Pytest Coverage Comment: ${jobPart}${watermarkUniqueId}-->\n`;
+  return legacyWatermark === watermarkWithWorkflow
+    ? [watermarkWithWorkflow]
+    : [watermarkWithWorkflow, legacyWatermark];
+};
+
 const createOrEditComment = async (
   octokit: ReturnType<typeof github.getOctokit>,
   repo: string,
   owner: string,
   issue_number: number,
   body: string,
-  WATERMARK: string,
+  watermarks: string[],
   context: typeof github.context,
 ): Promise<void> => {
   try {
@@ -161,7 +182,7 @@ const createOrEditComment = async (
     });
 
     const comment = comments.find((c: { body?: string }) =>
-      c.body?.startsWith(WATERMARK),
+      watermarks.some((watermark) => c.body?.startsWith(watermark)),
     );
 
     if (comment) {
@@ -237,10 +258,10 @@ const main = async (): Promise<void> => {
   const serverUrl = context.serverUrl || 'https://github.com';
 
   core.info(`Uses Github URL: ${serverUrl}`);
-  const watermarkUniqueId = uniqueIdForComment
-    ? `| ${uniqueIdForComment} `
-    : '';
-  const WATERMARK = `<!-- Pytest Coverage Comment: ${context.job} ${watermarkUniqueId}-->\n`;
+  const [WATERMARK, ...additionalWatermarks] = getCommentWatermarks(
+    context,
+    uniqueIdForComment,
+  );
   let finalHtml = '';
 
   const options: Options = {
@@ -485,7 +506,7 @@ const main = async (): Promise<void> => {
         owner,
         issue_number,
         body,
-        WATERMARK,
+        [WATERMARK, ...additionalWatermarks],
         context,
       );
     }
@@ -522,7 +543,7 @@ const main = async (): Promise<void> => {
           owner,
           issue_number,
           body,
-          WATERMARK,
+          [WATERMARK, ...additionalWatermarks],
           context,
         );
       }
