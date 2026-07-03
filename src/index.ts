@@ -2,6 +2,7 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { getCoverageReport } from './parse';
 import { getCoverageXmlReport } from './parseXml';
+import { getCoverageJsonReport } from './parseJson';
 import { getSummaryReport, getParsedXml, getNotSuccessTest } from './junitXml';
 import { getMultipleReport } from './multiFiles';
 import type { Options, ChangedFiles } from './types';
@@ -225,6 +226,7 @@ const main = async (): Promise<void> => {
   const covXmlFile = core.getInput('pytest-xml-coverage-path', {
     required: false,
   });
+  const covJsonFile = core.getInput('pytest-json-path', { required: false });
   const pathPrefix = core.getInput('coverage-path-prefix', { required: false });
   const xmlFile = core.getInput('junitxml-path', { required: false });
   const xmlTitle = core.getInput('junitxml-title', { required: false });
@@ -251,6 +253,7 @@ const main = async (): Promise<void> => {
     pathPrefix,
     covFile,
     covXmlFile,
+    covJsonFile,
     xmlFile,
     title,
     badgeTitle,
@@ -313,7 +316,9 @@ const main = async (): Promise<void> => {
 
   let report = options.covXmlFile
     ? getCoverageXmlReport(options)
-    : getCoverageReport(options);
+    : options.covJsonFile
+      ? getCoverageJsonReport(options)
+      : getCoverageReport(options);
 
   if (!report) {
     report = { html: '', coverage: null, color: 'red' };
@@ -337,6 +342,8 @@ const main = async (): Promise<void> => {
     const newOptions = { ...options, commit: defaultBranch };
     const output = newOptions.covXmlFile
       ? getCoverageXmlReport(newOptions)
+      : newOptions.covJsonFile
+        ? getCoverageJsonReport(newOptions)
       : getCoverageReport(newOptions);
     if (output) {
       core.setOutput('coverageHtml', output.html);
@@ -395,6 +402,8 @@ const main = async (): Promise<void> => {
     core.warning(warningsArr.join('\n'));
     report = options.covXmlFile
       ? getCoverageXmlReport({ ...options, hideReport: true })
+      : options.covJsonFile
+        ? getCoverageJsonReport({ ...options, hideReport: true })
       : getCoverageReport({ ...options, hideReport: true });
 
     if (!report) {
@@ -422,13 +431,13 @@ const main = async (): Promise<void> => {
     core.endGroup();
   }
 
-  // support for output for `pytest-xml-coverage-path`
+  // support for output for object-based coverage providers (XML/JSON)
   if (
     coverage &&
     typeof coverage === 'object' &&
     (coverage as { cover?: string }).cover
   ) {
-    core.startGroup(options.covXmlFile);
+    core.startGroup(options.covXmlFile || options.covJsonFile || '');
     core.info(`coverage: ${(coverage as { cover: string }).cover}`);
     core.info(`color: ${color}`);
 

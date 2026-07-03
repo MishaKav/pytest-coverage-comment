@@ -108,6 +108,19 @@ describe('getMultipleReport', () => {
     expect(result).toContain('img.shields.io/badge');
   });
 
+  test('should generate report with JSON coverage files', () => {
+    const options = {
+      ...baseOptions,
+      multipleFiles: [
+        `JSON Title, ${abs('coverage_4.json')}`,
+      ],
+    };
+    const result = getMultipleReport(options);
+    expect(result).toContain('| Title | Coverage |');
+    expect(result).toContain('JSON Title');
+    expect(result).toContain('img.shields.io/badge');
+  });
+
   test('should include JUnit data when xmlFile is provided', () => {
     const options = {
       ...baseOptions,

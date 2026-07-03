@@ -38612,6 +38612,7 @@ const core = __importStar(__nccwpck_require__(7484));
 const github = __importStar(__nccwpck_require__(3228));
 const parse_1 = __nccwpck_require__(2828);
 const parseXml_1 = __nccwpck_require__(1775);
+const parseJson_1 = __nccwpck_require__(7258);
 const junitXml_1 = __nccwpck_require__(5394);
 const multiFiles_1 = __nccwpck_require__(6211);
 const MAX_COMMENT_LENGTH = 65536;
@@ -38766,6 +38767,7 @@ const main = async () => {
     const covXmlFile = core.getInput('pytest-xml-coverage-path', {
         required: false,
     });
+    const covJsonFile = core.getInput('pytest-json-path', { required: false });
     const pathPrefix = core.getInput('coverage-path-prefix', { required: false });
     const xmlFile = core.getInput('junitxml-path', { required: false });
     const xmlTitle = core.getInput('junitxml-title', { required: false });
@@ -38789,6 +38791,7 @@ const main = async () => {
         pathPrefix,
         covFile,
         covXmlFile,
+        covJsonFile,
         xmlFile,
         title,
         badgeTitle,
@@ -38842,7 +38845,9 @@ const main = async () => {
     }
     let report = options.covXmlFile
         ? (0, parseXml_1.getCoverageXmlReport)(options)
-        : (0, parse_1.getCoverageReport)(options);
+        : options.covJsonFile
+            ? (0, parseJson_1.getCoverageJsonReport)(options)
+            : (0, parse_1.getCoverageReport)(options);
     if (!report) {
         report = { html: '', coverage: null, color: 'red' };
     }
@@ -38857,7 +38862,9 @@ const main = async () => {
         const newOptions = { ...options, commit: defaultBranch };
         const output = newOptions.covXmlFile
             ? (0, parseXml_1.getCoverageXmlReport)(newOptions)
-            : (0, parse_1.getCoverageReport)(newOptions);
+            : newOptions.covJsonFile
+                ? (0, parseJson_1.getCoverageJsonReport)(newOptions)
+                : (0, parse_1.getCoverageReport)(newOptions);
         if (output) {
             core.setOutput('coverageHtml', output.html);
         }
@@ -38906,7 +38913,9 @@ const main = async () => {
         core.warning(warningsArr.join('\n'));
         report = options.covXmlFile
             ? (0, parseXml_1.getCoverageXmlReport)({ ...options, hideReport: true })
-            : (0, parse_1.getCoverageReport)({ ...options, hideReport: true });
+            : options.covJsonFile
+                ? (0, parseJson_1.getCoverageJsonReport)({ ...options, hideReport: true })
+                : (0, parse_1.getCoverageReport)({ ...options, hideReport: true });
         if (!report) {
             report = { html: '', coverage: null, color: 'red' };
         }
@@ -38928,11 +38937,11 @@ const main = async () => {
         core.setOutput('warnings', warnings);
         core.endGroup();
     }
-    // support for output for `pytest-xml-coverage-path`
+    // support for output for object-based coverage providers (XML/JSON)
     if (coverage &&
         typeof coverage === 'object' &&
         coverage.cover) {
-        core.startGroup(options.covXmlFile);
+        core.startGroup(options.covXmlFile || options.covJsonFile || '');
         core.info(`coverage: ${coverage.cover}`);
         core.info(`color: ${color}`);
         core.setOutput('coverage', coverage.cover);
@@ -39378,6 +39387,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.exportedForTesting = exports.getMultipleReport = void 0;
 const parse_1 = __nccwpck_require__(2828);
 const parseXml_1 = __nccwpck_require__(1775);
+const parseJson_1 = __nccwpck_require__(7258);
 const junitXml_1 = __nccwpck_require__(5394);
 const core = __importStar(__nccwpck_require__(7484));
 // parse oneline from multiple files to object
@@ -39393,14 +39403,16 @@ const parseLine = (line) => {
     };
 };
 // make internal options
-// covFile and covXmlFile are mutually exclusive — detected by .xml extension
+// covFile, covXmlFile and covJsonFile are mutually exclusive by extension
 const getOptions = (options, line) => {
-    const isXmlCoverage = line.covFile && line.covFile.toLowerCase().endsWith('.xml');
+    const isXmlCoverage = line.covFile.toLowerCase().endsWith('.xml');
+    const isJsonCoverage = line.covFile.toLowerCase().endsWith('.json');
     return {
         ...options,
         title: line.title,
-        covFile: isXmlCoverage ? '' : line.covFile,
+        covFile: isXmlCoverage || isJsonCoverage ? '' : line.covFile,
         covXmlFile: isXmlCoverage ? line.covFile : '',
+        covJsonFile: isJsonCoverage ? line.covFile : '',
         hideReport: true,
         xmlFile: line.xmlFile,
         xmlTitle: '',
@@ -39425,30 +39437,40 @@ const getMultipleReport = (options) => {
             const internalOptions = getOptions(options, l);
             const report = internalOptions.covXmlFile
                 ? (0, parseXml_1.getCoverageXmlReport)(internalOptions)
-                : (0, parse_1.getCoverageReport)(internalOptions);
+                : internalOptions.covJsonFile
+                    ? (0, parseJson_1.getCoverageJsonReport)(internalOptions)
+                    : (0, parse_1.getCoverageReport)(internalOptions);
             const summary = (0, junitXml_1.getParsedXml)(internalOptions);
             if (report && report.html) {
                 table += `| ${l.title} | ${report.html}`;
                 if (i === 0) {
-                    core.startGroup(internalOptions.covXmlFile || internalOptions.covFile);
+                    core.startGroup(internalOptions.covXmlFile ||
+                        internalOptions.covJsonFile ||
+                        internalOptions.covFile);
                     const coverageValue = internalOptions.covXmlFile
                         ? report.coverage?.cover || ''
-                        : report.coverage;
+                        : internalOptions.covJsonFile
+                            ? report.coverage?.cover || ''
+                            : report.coverage;
                     core.info(`coverage: ${coverageValue}`);
                     core.info(`color: ${report.color}`);
                     if (!internalOptions.covXmlFile) {
-                        core.info(`warnings: ${report.warnings}`);
+                        if (!internalOptions.covJsonFile) {
+                            core.info(`warnings: ${report.warnings}`);
+                        }
                     }
                     core.endGroup();
                     core.setOutput('coverage', coverageValue);
                     core.setOutput('color', report.color);
-                    if (!internalOptions.covXmlFile) {
+                    if (!internalOptions.covXmlFile && !internalOptions.covJsonFile) {
                         core.setOutput('warnings', report.warnings);
                     }
                     const newOptions = { ...internalOptions, commit: defaultBranch };
                     const output = newOptions.covXmlFile
                         ? (0, parseXml_1.getCoverageXmlReport)(newOptions)
-                        : (0, parse_1.getCoverageReport)(newOptions);
+                        : newOptions.covJsonFile
+                            ? (0, parseJson_1.getCoverageJsonReport)(newOptions)
+                            : (0, parse_1.getCoverageReport)(newOptions);
                     if (output) {
                         core.setOutput('coverageHtml', output.html);
                     }
@@ -39560,8 +39582,8 @@ const hasBranchCoverage = (data) => {
 };
 // return full html coverage report and coverage percentage
 const getCoverageReport = (options) => {
-    const { covFile, covXmlFile } = options;
-    if (!covXmlFile) {
+    const { covFile, covXmlFile, covJsonFile } = options;
+    if (!covXmlFile && !covJsonFile) {
         try {
             const covFilePath = (0, utils_1.getPathToFile)(covFile);
             const content = (0, utils_1.getContentFile)(covFilePath);
@@ -39862,6 +39884,159 @@ exports.exportedForTesting = {
     parse,
     toTable,
 };
+
+
+/***/ }),
+
+/***/ 7258:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getCoverageJsonReport = void 0;
+const core = __importStar(__nccwpck_require__(7484));
+const utils_1 = __nccwpck_require__(1798);
+const utils_2 = __nccwpck_require__(1798);
+const parse_1 = __nccwpck_require__(2828);
+const isValidCoverageContent = (data) => {
+    if (!data || !data.files || !Object.keys(data.files).length || !data.totals) {
+        return false;
+    }
+    return true;
+};
+const toPercent = (value) => {
+    if (value === undefined || value === null || value === '') {
+        return '0';
+    }
+    const str = String(value);
+    return str.endsWith('%') ? str : `${str}%`;
+};
+const toBranchTarget = (target) => target < 0 ? 'exit' : `${target}`;
+const toMissingLinesText = (missingLines = [], missingBranches = []) => {
+    const missing = [...missingLines].sort((a, b) => a - b);
+    const ranges = missing.reduce((arr, val, i) => {
+        if (!i || val !== missing[i - 1] + 1) {
+            arr.push([]);
+        }
+        arr[arr.length - 1].push(val);
+        return arr;
+    }, []);
+    const missingEntries = [];
+    ranges.forEach((range) => {
+        missingEntries.push({
+            sort: range[0],
+            text: range.length === 1
+                ? `${range[0]}`
+                : `${range[0]}-${range[range.length - 1]}`,
+        });
+    });
+    missingBranches.forEach(([start, target]) => {
+        missingEntries.push({
+            sort: start,
+            text: `${start}->${toBranchTarget(target)}`,
+        });
+    });
+    missingEntries.sort((a, b) => a.sort - b.sort);
+    return missingEntries.map((entry) => entry.text);
+};
+const toCoverageLine = (name, data) => {
+    const summary = data.summary || {};
+    const missing = toMissingLinesText(data.missing_lines, data.missing_branches);
+    const result = {
+        name,
+        stmts: `${summary.num_statements || 0}`,
+        miss: `${summary.missing_lines || 0}`,
+        cover: toPercent(summary.percent_covered_display),
+        missing,
+    };
+    if ((summary.num_branches || 0) > 0) {
+        result.branch = `${summary.num_branches || 0}`;
+        result.brpart = `${summary.missing_branches || 0}`;
+    }
+    return result;
+};
+const getTotalCoverage = (totals) => ({
+    name: 'TOTAL',
+    stmts: totals?.num_statements || 0,
+    miss: totals?.missing_lines || 0,
+    cover: toPercent(totals?.percent_covered_display),
+    ...((totals?.num_branches || 0) > 0
+        ? {
+            branch: `${totals?.num_branches || 0}`,
+            brpart: `${totals?.missing_branches || 0}`,
+        }
+        : {}),
+});
+const getParsedJson = (options) => {
+    const content = (0, utils_1.getContent)(options.covJsonFile || '');
+    if (!content) {
+        return null;
+    }
+    try {
+        return JSON.parse(content);
+    }
+    catch (error) {
+        core.warning(`Coverage json file is not JSON or not well-formed: ${error.message}`);
+        return null;
+    }
+};
+const getCoverageJsonReport = (options) => {
+    const parsedJson = getParsedJson(options);
+    if (!parsedJson) {
+        return null;
+    }
+    const isValid = isValidCoverageContent(parsedJson);
+    if (!isValid) {
+        core.error(`Error: coverage file "${options.covJsonFile}" has bad format or wrong data`);
+        return null;
+    }
+    const coverage = getTotalCoverage(parsedJson.totals);
+    const coverageObj = Object.entries(parsedJson.files || {})
+        .map(([name, file]) => toCoverageLine(name, file))
+        .filter((line) => options.xmlSkipCovered ? line.cover !== '100%' && line.cover !== '100.0%' : true);
+    const dataFromJson = {
+        coverage: coverageObj,
+        total: coverage,
+    };
+    const html = (0, parse_1.toHtml)(null, options, dataFromJson);
+    const color = (0, utils_2.getCoverageColor)(coverage.cover);
+    return { html, coverage, color };
+};
+exports.getCoverageJsonReport = getCoverageJsonReport;
 
 
 /***/ }),

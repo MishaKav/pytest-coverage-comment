@@ -36,9 +36,9 @@ const hasBranchCoverage = (data: string): boolean => {
 
 // return full html coverage report and coverage percentage
 export const getCoverageReport = (options: Options): CoverageReport => {
-  const { covFile, covXmlFile } = options;
+  const { covFile, covXmlFile, covJsonFile } = options;
 
-  if (!covXmlFile) {
+  if (!covXmlFile && !covJsonFile) {
     try {
       const covFilePath = getPathToFile(covFile);
       const content = getContentFile(covFilePath);

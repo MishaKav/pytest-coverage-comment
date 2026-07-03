@@ -1,0 +1,57 @@
+{
+  "meta": {
+    "version": "7.8.0",
+    "branch_coverage": true,
+    "show_contexts": false
+  },
+  "files": {
+    "src/a.py": {
+      "executed_lines": [1, 2, 5],
+      "summary": {
+        "covered_lines": 3,
+        "num_statements": 5,
+        "percent_covered": 60,
+        "percent_covered_display": "60",
+        "missing_lines": 2,
+        "excluded_lines": 0,
+        "num_branches": 2,
+        "num_partial_branches": 1,
+        "covered_branches": 1,
+        "missing_branches": 1
+      },
+      "missing_lines": [3, 4],
+      "excluded_lines": [],
+      "executed_branches": [[2, 5]],
+      "missing_branches": [[2, -1]]
+    },
+    "src/b.py": {
+      "executed_lines": [10, 11],
+      "summary": {
+        "covered_lines": 2,
+        "num_statements": 2,
+        "percent_covered": 100,
+        "percent_covered_display": "100",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "num_branches": 0,
+        "num_partial_branches": 0,
+        "covered_branches": 0,
+        "missing_branches": 0
+      },
+      "missing_lines": [],
+      "excluded_lines": []
+    }
+  },
+  "totals": {
+    "covered_lines": 5,
+    "num_statements": 7,
+    "percent_covered": 71.42,
+    "percent_covered_display": "71",
+    "missing_lines": 2,
+    "excluded_lines": 0,
+    "num_branches": 2,
+    "num_partial_branches": 1,
+    "covered_branches": 1,
+    "missing_branches": 1
+  }
+}

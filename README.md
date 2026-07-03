@@ -33,6 +33,7 @@ A GitHub Action that adds pytest coverage reports as comments to your pull reque
   - [📚 Usage Examples](#-usage-examples)
     - [Basic Usage](#basic-usage)
     - [Coverage from XML](#coverage-from-xml)
+    - [Coverage from JSON](#coverage-from-json)
     - [Monorepo Support](#monorepo-support)
     - [Docker Workflows](#docker-workflows)
     - [Matrix Builds](#matrix-builds)
@@ -151,6 +152,7 @@ jobs:
 | `github-token`             | ✓        | `${{github.token}}`     | GitHub token for API access to create/update comments                                  |
 | `pytest-coverage-path`     |          | `./pytest-coverage.txt` | Path to pytest text coverage output (from `--cov-report=term-missing`)                 |
 | `pytest-xml-coverage-path` |          |                         | Path to XML coverage report (from `--cov-report=xml:coverage.xml`)                     |
+| `pytest-json-path`         |          |                         | Path to JSON coverage report (from `coverage json`)                                     |
 | `junitxml-path`            |          |                         | Path to JUnit XML file for test statistics (passed/failed/skipped)                     |
 | `issue-number`             |          |                         | Pull request number to comment on (required for workflow_dispatch/workflow_run events) |
 
@@ -246,6 +248,25 @@ jobs:
   uses: MishaKav/pytest-coverage-comment@v1
   with:
     pytest-xml-coverage-path: ./coverage.xml
+    junitxml-path: ./pytest.xml
+```
+
+</details>
+
+### Coverage from JSON
+
+<details>
+<summary>Using coverage.json output</summary>
+
+```yaml
+- name: Generate JSON coverage
+  run: |
+    coverage json -o coverage.json
+
+- name: Coverage comment
+  uses: MishaKav/pytest-coverage-comment@v1
+  with:
+    pytest-json-path: ./coverage.json
     junitxml-path: ./pytest.xml
 ```
 

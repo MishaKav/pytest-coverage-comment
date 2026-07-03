@@ -200,6 +200,17 @@ describe('getCoverageReport', () => {
     });
   });
 
+  test('should return default when covJsonFile is set', () => {
+    const options = { ...baseOptions, covJsonFile: 'some.json' };
+    const result = getCoverageReport(options);
+    expect(result).toEqual({
+      html: '',
+      coverage: '0',
+      color: 'red',
+      warnings: 0,
+    });
+  });
+
   test('should return default for empty covFile', () => {
     const result = getCoverageReport(baseOptions);
     expect(result.html).toBe('');
