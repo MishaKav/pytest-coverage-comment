@@ -22,17 +22,44 @@ const getParsedXml = (options: Options): ParsedXml => {
   return null;
 };
 
+// Combine statement and branch coverage into a single percentage, the same
+// way coverage.py's own `coverage report` does:
+// (executed statements + executed branches) / (total statements + total branches).
+// Cobertura tracks `line-rate` and `branch-rate` independently, so a file
+// with every statement executed but a partially-covered branch reports
+// line-rate="1" even though `coverage report` shows less than 100%.
+const computeCoverPercent = (
+  coveredStmts: number,
+  totalStmts: number,
+  coveredBranches: number,
+  totalBranches: number,
+): number => {
+  const numerator = coveredStmts + coveredBranches;
+  const denominator = totalStmts + totalBranches;
+
+  return denominator > 0 ? (numerator / denominator) * 100 : 100;
+};
+
 const getTotalCoverage = (parsedXml: ParsedXml): TotalLine | null => {
   if (!parsedXml) {
     return null;
   }
 
   const coverage = parsedXml['$'];
-  const cover = parseInt(String(parseFloat(coverage['line-rate']) * 100));
   const linesValid = parseInt(coverage['lines-valid']);
   const linesCovered = parseInt(coverage['lines-covered']);
   const branchesValid = parseInt(coverage['branches-valid']) || 0;
   const branchesCovered = parseInt(coverage['branches-covered']) || 0;
+  const cover = parseInt(
+    String(
+      computeCoverPercent(
+        linesCovered,
+        linesValid,
+        branchesCovered,
+        branchesValid,
+      ),
+    ),
+  );
 
   const result: TotalLine = {
     name: 'TOTAL',
@@ -169,16 +196,23 @@ const parseClass = (
     branchTotal,
     branchMissing,
   } = parseLines(classObj.lines);
-  const { filename: name, 'line-rate': lineRate } = classObj['$'];
-  const isFullCoverage = lineRate === '1';
+  const { filename: name } = classObj['$'];
+
+  const stmtsTotal = parseInt(stmts, 10);
+  const stmtsMissing = parseInt(miss, 10);
+  const isFullCoverage = stmtsMissing === 0 && branchMissing === 0;
 
   if (xmlSkipCovered && isFullCoverage) {
     return null;
   }
 
-  const cover = isFullCoverage
-    ? '100%'
-    : `${parseInt(String(parseFloat(lineRate) * 100))}%`;
+  const coverPercent = computeCoverPercent(
+    stmtsTotal - stmtsMissing,
+    stmtsTotal,
+    branchTotal - branchMissing,
+    branchTotal,
+  );
+  const cover = isFullCoverage ? '100%' : `${parseInt(String(coverPercent))}%`;
 
   const result: CoverageLine = { name, stmts, miss, cover, missing };
 
