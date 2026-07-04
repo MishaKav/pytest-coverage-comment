@@ -42,11 +42,7 @@ export interface ChangedFiles {
 }
 
 export type CoverageColor =
-  | 'red'
-  | 'orange'
-  | 'yellow'
-  | 'green'
-  | 'brightgreen';
+  'red' | 'orange' | 'yellow' | 'green' | 'brightgreen';
 
 export interface CoverageLine {
   name: string;
