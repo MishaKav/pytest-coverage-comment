@@ -1,0 +1,23 @@
+__tests__/parse.test.ts
+  s_cdfd0e91d167b8::t_5a53f7722bf5cd 263-273
+dist/index.js
+  s_cdfd0e91d167b8::t_59ccd12dacd61f 39730-39733
+src/parse.ts
+  s_cdfd0e91d167b8::t_3b17cc40292c15 271-274
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0f65f1a1b9667587dceeb6103c49ee116a8a9374",
+  "prompts": {},
+  "sessions": {
+    "s_cdfd0e91d167b8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9f23dd95-f1b0-4554-8ed8-abff72898a5b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Misha Kav <misha.kav@gmail.com>"
+    }
+  }
+}
