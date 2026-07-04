@@ -260,6 +260,17 @@ describe('toHtml', () => {
     expect(html).toContain('(');
   });
 
+  test('text badge fraction stays statement-only for text reports with branches', () => {
+    // In coverage.py text reports BrPart is partial branches, not missing
+    // arcs, so the fraction must not use branch counts (TOTAL: 1345 1002 386 1 22%).
+    const content = getContentFile(
+      path.join(dataPath, 'pytest-coverage_6.txt'),
+    );
+    const options = { ...baseOptions, textInsteadBadge: true };
+    const html = toHtml(content, options);
+    expect(html).toContain('22% (343/1345)');
+  });
+
   test('should remove link from badge when removeLinkFromBadge is true', () => {
     const content = getContentFile(
       path.join(dataPath, 'pytest-coverage_4.txt'),
