@@ -1,0 +1,49 @@
+package.json
+  s_cdfd0e91d167b8::t_8ddda4d1fb515e 3
+dist/index.js
+  s_cdfd0e91d167b8::t_898cf3914b8c13 39730,39935,39939,39942
+  s_cdfd0e91d167b8::t_f5102efc822f6d 39728-39729,39731-39735,39936-39938,39943-39954,39964-39969,40003
+  s_cdfd0e91d167b8::t_01ee6e62a41bc9 40079-40081
+CHANGELOG.md
+  s_cdfd0e91d167b8::t_b75606962f03d7 7-9
+  s_cdfd0e91d167b8::t_efe94f62a1ddb4 3
+  s_cdfd0e91d167b8::t_b7601737b19721 5
+src/parseXml.ts
+  s_cdfd0e91d167b8::t_cf88ab83a8decb 40,45
+  h_ea310c8a42b3f0 54,58,62,242-244
+  s_cdfd0e91d167b8::t_f1e7bd2304ab90 49
+  s_cdfd0e91d167b8::t_03c8774fe11643 76,85-89
+  s_cdfd0e91d167b8::t_2da682e99d6231 41-44,50-53,55-57,59-61,63
+  s_cdfd0e91d167b8::t_bdde5437ffd488 77-81
+  s_cdfd0e91d167b8::t_48e117e7dbde7b 135
+  s_cdfd0e91d167b8::t_9872b1461c5261 64-65
+  s_cdfd0e91d167b8::t_c6d68de0bc3a14 90
+__tests__/parseXml.test.ts
+  s_cdfd0e91d167b8::t_ea962dd5502109 100-109
+src/parse.ts
+  s_cdfd0e91d167b8::t_0bdaac62e5b419 267-270,272-276
+  s_cdfd0e91d167b8::t_7c5502d572ed67 271
+package-lock.json
+  s_cdfd0e91d167b8::t_3bf23776576358 3,9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e6b549a23e75622621c32d7250d475a194639691",
+  "prompts": {},
+  "humans": {
+    "h_ea310c8a42b3f0": {
+      "author": "Misha Kav <misha.kav@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_cdfd0e91d167b8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9f23dd95-f1b0-4554-8ed8-abff72898a5b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Misha Kav <misha.kav@gmail.com>"
+    }
+  }
+}
