@@ -22,17 +22,71 @@ const getParsedXml = (options: Options): ParsedXml => {
   return null;
 };
 
+// Combine statement and branch coverage into a single percentage, the same
+// way coverage.py's own `coverage report` does:
+// (executed statements + executed branches) / (total statements + total branches).
+// Cobertura tracks `line-rate` and `branch-rate` independently, so a file
+// with every statement executed but a partially-covered branch reports
+// line-rate="1" even though `coverage report` shows less than 100%.
+const computeCoverPercent = (
+  coveredStmts: number,
+  totalStmts: number,
+  coveredBranches: number,
+  totalBranches: number,
+): number => {
+  const numerator = coveredStmts + coveredBranches;
+  const denominator = totalStmts + totalBranches;
+
+  // reject malformed (NaN) counts instead of reporting 100%
+  if (!Number.isFinite(numerator) || !Number.isFinite(denominator)) {
+    return NaN;
+  }
+
+  // empty file (no stmts/branches) counts as fully covered, like coverage.py
+  return denominator > 0 ? (numerator / denominator) * 100 : 100;
+};
+
+// round like `coverage report`, but never round up to 100 or down to 0
+const formatCoverPercent = (percent: number): number => {
+  if (!Number.isFinite(percent)) {
+    return NaN;
+  }
+
+  if (percent > 99 && percent < 100) {
+    return 99;
+  }
+
+  if (percent > 0 && percent < 1) {
+    return 1;
+  }
+
+  return Math.round(percent);
+};
+
 const getTotalCoverage = (parsedXml: ParsedXml): TotalLine | null => {
   if (!parsedXml) {
     return null;
   }
 
   const coverage = parsedXml['$'];
-  const cover = parseInt(String(parseFloat(coverage['line-rate']) * 100));
   const linesValid = parseInt(coverage['lines-valid']);
   const linesCovered = parseInt(coverage['lines-covered']);
   const branchesValid = parseInt(coverage['branches-valid']) || 0;
   const branchesCovered = parseInt(coverage['branches-covered']) || 0;
+  const cover = formatCoverPercent(
+    computeCoverPercent(
+      linesCovered,
+      linesValid,
+      branchesCovered,
+      branchesValid,
+    ),
+  );
+
+  if (!Number.isFinite(cover)) {
+    // prettier-ignore
+    core.warning(`Coverage xml file is missing valid total coverage attributes`);
+    return null;
+  }
 
   const result: TotalLine = {
     name: 'TOTAL',
@@ -78,7 +132,7 @@ export const getCoverageXmlReport = (
       core.error(`Error: coverage file "${options.covXmlFile}" has bad format or wrong data`);
     }
 
-    if (parsedXml && isValid) {
+    if (parsedXml && isValid && coverage) {
       const coverageObj = coverageXmlToFiles(parsedXml, options.xmlSkipCovered);
       const dataFromXml: DataFromXml = {
         coverage: coverageObj,
@@ -169,16 +223,25 @@ const parseClass = (
     branchTotal,
     branchMissing,
   } = parseLines(classObj.lines);
-  const { filename: name, 'line-rate': lineRate } = classObj['$'];
-  const isFullCoverage = lineRate === '1';
+  const { filename: name } = classObj['$'];
+
+  const stmtsTotal = parseInt(stmts, 10);
+  const stmtsMissing = parseInt(miss, 10);
+  const isFullCoverage = stmtsMissing === 0 && branchMissing === 0;
 
   if (xmlSkipCovered && isFullCoverage) {
     return null;
   }
 
+  const coverPercent = computeCoverPercent(
+    stmtsTotal - stmtsMissing,
+    stmtsTotal,
+    branchTotal - branchMissing,
+    branchTotal,
+  );
   const cover = isFullCoverage
     ? '100%'
-    : `${parseInt(String(parseFloat(lineRate) * 100))}%`;
+    : `${formatCoverPercent(coverPercent)}%`;
 
   const result: CoverageLine = { name, stmts, miss, cover, missing };
 
