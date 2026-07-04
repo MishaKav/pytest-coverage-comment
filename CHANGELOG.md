@@ -1,10 +1,12 @@
 # Changelog of the Pytest Coverage Comment
 
-## Unreleased
+## [Pytest Coverage Comment 1.9.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.9.0)
 
-### Fixes
+**Release Date:** 2026-07-04
 
-- Show the correct Coverage percentage when using branch coverage to match what `coverage report` shows
+#### Changes
+
+- fix the Coverage percentage when branch coverage is enabled — it now combines statement and branch coverage and rounds the same way `coverage report` does, instead of showing `100%` when branches are only partially covered (#284), thanks to [@mschoettle](https://github.com/mschoettle) for contribution
 
 ## [Pytest Coverage Comment 1.8.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.8.0)
 

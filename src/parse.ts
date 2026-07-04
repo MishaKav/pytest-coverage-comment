@@ -264,10 +264,16 @@ export const toHtml = (
   const badgeWithLink = removeLinkFromBadge
     ? badge
     : `<a href="${readmeHref}">${badge}</a>`;
-  const covered =
-    (typeof total.stmts === 'number' ? total.stmts : parseInt(total.stmts)) -
-    (typeof total.miss === 'number' ? total.miss : parseInt(total.miss));
-  const textBadge = `${total.cover} (${covered}/${total.stmts})`;
+  const stmts =
+    typeof total.stmts === 'number' ? total.stmts : parseInt(total.stmts);
+  const miss =
+    typeof total.miss === 'number' ? total.miss : parseInt(total.miss);
+  // include branches so the fraction matches the branch-aware %
+  const branch = total.branch ? parseInt(total.branch) : 0;
+  const brpart = total.brpart ? parseInt(total.brpart) : 0;
+  const covered = stmts - miss + (branch - brpart);
+  const totalCount = stmts + branch;
+  const textBadge = `${total.cover} (${covered}/${totalCount})`;
   const badgeContent = textInsteadBadge ? textBadge : badgeWithLink;
   const badgeHtml = hideBadge ? '' : badgeContent;
   const reportHtml = hideReport

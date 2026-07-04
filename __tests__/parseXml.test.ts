@@ -94,8 +94,17 @@ describe('getCoverageXmlReport', () => {
     // are uncovered, so `coverage report` shows 83%, not 100%. The file row
     // and the TOTAL row should match that, the same as `coverage report`.
     expect(result!.coverage!.cover).toBe('83%');
-    expect(result!.html).not.toContain('100%');
     expect(result!.html).toContain('<td>83%</td>');
+  });
+
+  test('text badge fraction includes branches, matching the branch-aware percentage', () => {
+    const covXmlFile = path.join(dataPath, 'coverage_3.xml');
+    const options = { ...baseOptions, covXmlFile, textInsteadBadge: true };
+    const result = getCoverageXmlReport(options);
+
+    expect(result).not.toBeNull();
+    // 8/8 statements + 2/4 branches covered => 10/12, not the statement-only 8/8.
+    expect(result!.html).toContain('83% (10/12)');
   });
 
   test('should combine partial branches and show exit in arrows', () => {

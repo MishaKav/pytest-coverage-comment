@@ -39725,9 +39725,14 @@ const toHtml = (data, options, dataFromXml = null) => {
     const badgeWithLink = removeLinkFromBadge
         ? badge
         : `<a href="${readmeHref}">${badge}</a>`;
-    const covered = (typeof total.stmts === 'number' ? total.stmts : parseInt(total.stmts)) -
-        (typeof total.miss === 'number' ? total.miss : parseInt(total.miss));
-    const textBadge = `${total.cover} (${covered}/${total.stmts})`;
+    const stmts = typeof total.stmts === 'number' ? total.stmts : parseInt(total.stmts);
+    const miss = typeof total.miss === 'number' ? total.miss : parseInt(total.miss);
+    // include branches so the fraction matches the branch-aware %
+    const branch = total.branch ? parseInt(total.branch) : 0;
+    const brpart = total.brpart ? parseInt(total.brpart) : 0;
+    const covered = stmts - miss + (branch - brpart);
+    const totalCount = stmts + branch;
+    const textBadge = `${total.cover} (${covered}/${totalCount})`;
     const badgeContent = textInsteadBadge ? textBadge : badgeWithLink;
     const badgeHtml = hideBadge ? '' : badgeContent;
     const reportHtml = hideReport
@@ -39927,7 +39932,25 @@ const getParsedXml = (options) => {
 const computeCoverPercent = (coveredStmts, totalStmts, coveredBranches, totalBranches) => {
     const numerator = coveredStmts + coveredBranches;
     const denominator = totalStmts + totalBranches;
+    // reject malformed (NaN) counts instead of reporting 100%
+    if (!Number.isFinite(numerator) || !Number.isFinite(denominator)) {
+        return NaN;
+    }
+    // empty file (no stmts/branches) counts as fully covered, like coverage.py
     return denominator > 0 ? (numerator / denominator) * 100 : 100;
+};
+// round like `coverage report`, but never round up to 100 or down to 0
+const formatCoverPercent = (percent) => {
+    if (!Number.isFinite(percent)) {
+        return NaN;
+    }
+    if (percent > 99 && percent < 100) {
+        return 99;
+    }
+    if (percent > 0 && percent < 1) {
+        return 1;
+    }
+    return Math.round(percent);
 };
 const getTotalCoverage = (parsedXml) => {
     if (!parsedXml) {
@@ -39938,7 +39961,12 @@ const getTotalCoverage = (parsedXml) => {
     const linesCovered = parseInt(coverage['lines-covered']);
     const branchesValid = parseInt(coverage['branches-valid']) || 0;
     const branchesCovered = parseInt(coverage['branches-covered']) || 0;
-    const cover = parseInt(String(computeCoverPercent(linesCovered, linesValid, branchesCovered, branchesValid)));
+    const cover = formatCoverPercent(computeCoverPercent(linesCovered, linesValid, branchesCovered, branchesValid));
+    if (!Number.isFinite(cover)) {
+        // prettier-ignore
+        core.warning(`Coverage xml file is missing valid total coverage attributes`);
+        return null;
+    }
     const result = {
         name: 'TOTAL',
         stmts: linesValid,
@@ -39972,7 +40000,7 @@ const getCoverageXmlReport = (options) => {
             // prettier-ignore
             core.error(`Error: coverage file "${options.covXmlFile}" has bad format or wrong data`);
         }
-        if (parsedXml && isValid) {
+        if (parsedXml && isValid && coverage) {
             const coverageObj = coverageXmlToFiles(parsedXml, options.xmlSkipCovered);
             const dataFromXml = {
                 coverage: coverageObj,
@@ -40048,7 +40076,9 @@ const parseClass = (classObj, xmlSkipCovered) => {
         return null;
     }
     const coverPercent = computeCoverPercent(stmtsTotal - stmtsMissing, stmtsTotal, branchTotal - branchMissing, branchTotal);
-    const cover = isFullCoverage ? '100%' : `${parseInt(String(coverPercent))}%`;
+    const cover = isFullCoverage
+        ? '100%'
+        : `${formatCoverPercent(coverPercent)}%`;
     const result = { name, stmts, miss, cover, missing };
     if (branchTotal > 0) {
         result.branch = branchTotal.toString();
