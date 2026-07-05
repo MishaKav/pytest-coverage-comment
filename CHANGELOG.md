@@ -1,5 +1,13 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.10.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.10.0)
+
+**Release Date:** 2026-07-05
+
+#### Changes
+
+- add support for parsing the JSON coverage report from `coverage json` via the new `pytest-json-coverage-path` input, including branch coverage and partial-branch arrows (`line->target`, `line->exit`) that match `coverage report -m` (#286)
+
 ## [Pytest Coverage Comment 1.9.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.9.0)
 
 **Release Date:** 2026-07-04
