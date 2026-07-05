@@ -2,6 +2,7 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { getCoverageReport } from './parse';
 import { getCoverageXmlReport } from './parseXml';
+import { getCoverageJsonReport } from './parseJson';
 import { getSummaryReport, getParsedXml, getNotSuccessTest } from './junitXml';
 import { getMultipleReport } from './multiFiles';
 import type { Options, ChangedFiles } from './types';
@@ -225,6 +226,9 @@ const main = async (): Promise<void> => {
   const covXmlFile = core.getInput('pytest-xml-coverage-path', {
     required: false,
   });
+  const covJsonFile = core.getInput('pytest-json-coverage-path', {
+    required: false,
+  });
   const pathPrefix = core.getInput('coverage-path-prefix', { required: false });
   const xmlFile = core.getInput('junitxml-path', { required: false });
   const xmlTitle = core.getInput('junitxml-title', { required: false });
@@ -251,6 +255,7 @@ const main = async (): Promise<void> => {
     pathPrefix,
     covFile,
     covXmlFile,
+    covJsonFile,
     xmlFile,
     title,
     badgeTitle,
@@ -311,9 +316,14 @@ const main = async (): Promise<void> => {
     }
   }
 
-  let report = options.covXmlFile
-    ? getCoverageXmlReport(options)
-    : getCoverageReport(options);
+  let report;
+  if (options.covJsonFile) {
+    report = getCoverageJsonReport(options);
+  } else if (options.covXmlFile) {
+    report = getCoverageXmlReport(options);
+  } else {
+    report = getCoverageReport(options);
+  }
 
   if (!report) {
     report = { html: '', coverage: null, color: 'red' };
@@ -335,9 +345,14 @@ const main = async (): Promise<void> => {
 
   if (html) {
     const newOptions = { ...options, commit: defaultBranch };
-    const output = newOptions.covXmlFile
-      ? getCoverageXmlReport(newOptions)
-      : getCoverageReport(newOptions);
+    let output;
+    if (newOptions.covJsonFile) {
+      output = getCoverageJsonReport(newOptions);
+    } else if (newOptions.covXmlFile) {
+      output = getCoverageXmlReport(newOptions);
+    } else {
+      output = getCoverageReport(newOptions);
+    }
     if (output) {
       core.setOutput('coverageHtml', output.html);
     }
@@ -393,9 +408,13 @@ const main = async (): Promise<void> => {
       warningsArr.push('- Add "remove-links-to-lines: true" to remove line number links');
     }
     core.warning(warningsArr.join('\n'));
-    report = options.covXmlFile
-      ? getCoverageXmlReport({ ...options, hideReport: true })
-      : getCoverageReport({ ...options, hideReport: true });
+    if (options.covJsonFile) {
+      report = getCoverageJsonReport({ ...options, hideReport: true });
+    } else if (options.covXmlFile) {
+      report = getCoverageXmlReport({ ...options, hideReport: true });
+    } else {
+      report = getCoverageReport({ ...options, hideReport: true });
+    }
 
     if (!report) {
       report = { html: '', coverage: null, color: 'red' };

@@ -47,7 +47,7 @@ const computeCoverPercent = (
 };
 
 // round like `coverage report`, but never round up to 100 or down to 0
-const formatCoverPercent = (percent: number): number => {
+export const formatCoverPercent = (percent: number): number => {
   if (!Number.isFinite(percent)) {
     return NaN;
   }

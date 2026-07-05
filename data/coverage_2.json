@@ -1,0 +1,76 @@
+{
+  "meta": {
+    "format": 3,
+    "version": "7.15.0",
+    "branch_coverage": true,
+    "show_contexts": false
+  },
+  "files": {
+    "src/app.py": {
+      "executed_lines": [1, 2, 3, 7, 8, 9, 10, 11, 13],
+      "summary": {
+        "covered_lines": 9,
+        "num_statements": 11,
+        "percent_covered": 82.35294117647058,
+        "percent_covered_display": "82",
+        "missing_lines": 2,
+        "excluded_lines": 0,
+        "num_branches": 6,
+        "num_partial_branches": 1,
+        "covered_branches": 5,
+        "missing_branches": 1
+      },
+      "missing_lines": [5, 14],
+      "excluded_lines": [],
+      "missing_branches": [[2, 5]]
+    },
+    "src/utils.py": {
+      "executed_lines": [1, 2, 3],
+      "summary": {
+        "covered_lines": 3,
+        "num_statements": 3,
+        "percent_covered": 80.0,
+        "percent_covered_display": "80",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "num_branches": 2,
+        "num_partial_branches": 1,
+        "covered_branches": 1,
+        "missing_branches": 1
+      },
+      "missing_lines": [],
+      "excluded_lines": [],
+      "missing_branches": [[2, -1]]
+    },
+    "src/normal.py": {
+      "executed_lines": [1, 2, 3, 4],
+      "summary": {
+        "covered_lines": 4,
+        "num_statements": 4,
+        "percent_covered": 83.33333333333333,
+        "percent_covered_display": "83",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "num_branches": 2,
+        "num_partial_branches": 1,
+        "covered_branches": 1,
+        "missing_branches": 1
+      },
+      "missing_lines": [],
+      "excluded_lines": [],
+      "missing_branches": [[2, 4]]
+    }
+  },
+  "totals": {
+    "covered_lines": 16,
+    "num_statements": 18,
+    "percent_covered": 82.14285714285714,
+    "percent_covered_display": "82",
+    "missing_lines": 2,
+    "excluded_lines": 0,
+    "num_branches": 10,
+    "num_partial_branches": 3,
+    "covered_branches": 7,
+    "missing_branches": 3
+  }
+}

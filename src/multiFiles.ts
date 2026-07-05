@@ -1,5 +1,6 @@
 import { getCoverageReport } from './parse';
 import { getCoverageXmlReport } from './parseXml';
+import { getCoverageJsonReport } from './parseJson';
 import { getParsedXml } from './junitXml';
 import * as core from '@actions/core';
 import type { Options, MultipleFileLine } from './types';
@@ -20,15 +21,18 @@ const parseLine = (line: string): MultipleFileLine | null => {
 };
 
 // make internal options
-// covFile and covXmlFile are mutually exclusive — detected by .xml extension
+// covFile, covXmlFile and covJsonFile are mutually exclusive — detected by extension
 const getOptions = (options: Options, line: MultipleFileLine): Options => {
   const isXmlCoverage =
     line.covFile && line.covFile.toLowerCase().endsWith('.xml');
+  const isJsonCoverage =
+    line.covFile && line.covFile.toLowerCase().endsWith('.json');
   return {
     ...options,
     title: line.title,
-    covFile: isXmlCoverage ? '' : line.covFile,
+    covFile: isXmlCoverage || isJsonCoverage ? '' : line.covFile,
     covXmlFile: isXmlCoverage ? line.covFile : '',
+    covJsonFile: isJsonCoverage ? line.covFile : '',
     hideReport: true,
     xmlFile: line.xmlFile,
     xmlTitle: '',
@@ -54,9 +58,14 @@ export const getMultipleReport = (options: Options): string => {
 
     lineReports.forEach((l, i) => {
       const internalOptions = getOptions(options, l);
-      const report = internalOptions.covXmlFile
-        ? getCoverageXmlReport(internalOptions)
-        : getCoverageReport(internalOptions);
+      let report;
+      if (internalOptions.covJsonFile) {
+        report = getCoverageJsonReport(internalOptions);
+      } else if (internalOptions.covXmlFile) {
+        report = getCoverageXmlReport(internalOptions);
+      } else {
+        report = getCoverageReport(internalOptions);
+      }
       const summary = getParsedXml(internalOptions);
 
       if (report && report.html) {
@@ -64,14 +73,17 @@ export const getMultipleReport = (options: Options): string => {
 
         if (i === 0) {
           core.startGroup(
-            internalOptions.covXmlFile || internalOptions.covFile,
+            internalOptions.covXmlFile ||
+              internalOptions.covJsonFile ||
+              internalOptions.covFile,
           );
-          const coverageValue = internalOptions.covXmlFile
-            ? (report.coverage as { cover?: string } | null)?.cover || ''
-            : (report as { coverage: string }).coverage;
+          const coverageValue =
+            internalOptions.covXmlFile || internalOptions.covJsonFile
+              ? (report.coverage as { cover?: string } | null)?.cover || ''
+              : (report as { coverage: string }).coverage;
           core.info(`coverage: ${coverageValue}`);
           core.info(`color: ${report.color}`);
-          if (!internalOptions.covXmlFile) {
+          if (!internalOptions.covXmlFile && !internalOptions.covJsonFile) {
             core.info(
               `warnings: ${(report as { warnings?: number }).warnings}`,
             );
@@ -80,7 +92,7 @@ export const getMultipleReport = (options: Options): string => {
 
           core.setOutput('coverage', coverageValue);
           core.setOutput('color', report.color);
-          if (!internalOptions.covXmlFile) {
+          if (!internalOptions.covXmlFile && !internalOptions.covJsonFile) {
             core.setOutput(
               'warnings',
               (report as { warnings?: number }).warnings,
@@ -88,9 +100,14 @@ export const getMultipleReport = (options: Options): string => {
           }
 
           const newOptions = { ...internalOptions, commit: defaultBranch };
-          const output = newOptions.covXmlFile
-            ? getCoverageXmlReport(newOptions)
-            : getCoverageReport(newOptions);
+          let output;
+          if (newOptions.covJsonFile) {
+            output = getCoverageJsonReport(newOptions);
+          } else if (newOptions.covXmlFile) {
+            output = getCoverageXmlReport(newOptions);
+          } else {
+            output = getCoverageReport(newOptions);
+          }
           if (output) {
             core.setOutput('coverageHtml', output.html);
           }

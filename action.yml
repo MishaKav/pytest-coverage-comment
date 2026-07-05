@@ -26,6 +26,11 @@ inputs:
     default: ''
     required: false
 
+  pytest-json-coverage-path:
+    description: 'Path to JSON coverage report (from coverage json)'
+    default: ''
+    required: false
+
   coverage-path-prefix:
     description: 'Prefix to add to file paths in coverage report links'
     default: ''
@@ -95,7 +100,7 @@ inputs:
     description: >
       Generate single comment with multiple coverage reports (useful for monorepos).
       Format: One report per line as "Title, coverage-path, junit-path".
-      Coverage path can be TXT (from --cov-report=term-missing) or XML (from --cov-report=xml).
+      Coverage path can be TXT (from --cov-report=term-missing), XML (from --cov-report=xml), or JSON (from coverage json).
       Examples: "Backend API, ./backend/coverage.txt, ./backend/junit.xml"
       "Frontend Tests, ./frontend/coverage.xml, ./frontend/junit.xml"
     default: ''
