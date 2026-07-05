@@ -4,6 +4,7 @@ import { getCoverageReport } from './parse';
 import { getSummaryReport, getParsedXml, getNotSuccessTest } from './junitXml';
 import { getMultipleReport } from './multiFiles';
 import { getCoverageXmlReport } from './parseXml';
+import { getCoverageJsonReport } from './parseJson';
 import type { Options } from './types';
 
 /*
@@ -34,6 +35,7 @@ const main = async (): Promise<void> => {
   const covFile = './../data/pytest-coverage_4.txt';
   const xmlFile = './../data/pytest_1.xml';
   const covXmlFile = './../data/coverage_1.xml'; // use coverage_2.xml for branch coverage
+  const covJsonFile = ''; // e.g. './../data/coverage_2.json' to test json parsing
   const prefix = path.dirname(path.dirname(path.resolve(covFile))) + '/';
   const multipleFiles = [
     `My Title 1, ${getPathToFile(covFile)}, ${getPathToFile(xmlFile)}`,
@@ -53,6 +55,7 @@ const main = async (): Promise<void> => {
     covFile: getPathToFile(covFile)!,
     xmlFile: getPathToFile(xmlFile)!,
     covXmlFile: getPathToFile(covXmlFile)!,
+    covJsonFile: getPathToFile(covJsonFile)!,
     defaultBranch: 'main',
     head: 'feat/test',
     base: 'main',
@@ -80,9 +83,14 @@ const main = async (): Promise<void> => {
     },
   };
 
-  const report = options.covXmlFile
-    ? getCoverageXmlReport(options)
-    : getCoverageReport(options);
+  let report;
+  if (options.covJsonFile) {
+    report = getCoverageJsonReport(options);
+  } else if (options.covXmlFile) {
+    report = getCoverageXmlReport(options);
+  } else {
+    report = getCoverageReport(options);
+  }
 
   const html = report ? report.html : '';
 

@@ -5,6 +5,7 @@ export interface Options {
   pathPrefix: string;
   covFile: string;
   covXmlFile: string;
+  covJsonFile: string;
   xmlFile: string;
   title: string;
   badgeTitle: string;

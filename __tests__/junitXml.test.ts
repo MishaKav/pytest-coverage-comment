@@ -21,6 +21,7 @@ const baseOptions: Options = {
   pathPrefix: '',
   covFile: '',
   covXmlFile: '',
+  covJsonFile: '',
   xmlFile: '',
   title: 'Coverage Report',
   badgeTitle: 'Coverage',

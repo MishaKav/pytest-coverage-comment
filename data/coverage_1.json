@@ -1,0 +1,44 @@
+{
+  "meta": {
+    "format": 3,
+    "version": "7.15.0",
+    "branch_coverage": false,
+    "show_contexts": false
+  },
+  "files": {
+    "src/foo.py": {
+      "executed_lines": [1, 2, 3, 4, 6, 7, 8, 9],
+      "summary": {
+        "covered_lines": 8,
+        "num_statements": 10,
+        "percent_covered": 80.0,
+        "percent_covered_display": "80",
+        "missing_lines": 2,
+        "excluded_lines": 0
+      },
+      "missing_lines": [5, 12],
+      "excluded_lines": []
+    },
+    "src/bar.py": {
+      "executed_lines": [1, 2, 3, 4, 5, 6],
+      "summary": {
+        "covered_lines": 6,
+        "num_statements": 6,
+        "percent_covered": 100.0,
+        "percent_covered_display": "100",
+        "missing_lines": 0,
+        "excluded_lines": 0
+      },
+      "missing_lines": [],
+      "excluded_lines": []
+    }
+  },
+  "totals": {
+    "covered_lines": 14,
+    "num_statements": 16,
+    "percent_covered": 87.5,
+    "percent_covered_display": "88",
+    "missing_lines": 2,
+    "excluded_lines": 0
+  }
+}
