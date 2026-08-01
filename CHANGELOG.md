@@ -1,5 +1,15 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.10.1](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.10.1)
+
+**Release Date:** 2026-08-01
+
+#### Changes
+
+- bump dev dependencies: `@types/node` 26.1.2, `@vitest/coverage-v8` 4.1.10, `vitest` 4.1.10, `eslint` 10.8.0, `typescript-eslint` 8.65.0, `prettier` 3.9.6 (#290)
+- bump `brace-expansion` from 5.0.6 to 5.0.8 (#287)
+- bump `schneegans/dynamic-badges-action` from 1.8.0 to 1.9.0 in workflows (#289)
+
 ## [Pytest Coverage Comment 1.10.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.10.0)
 
 **Release Date:** 2026-07-05
