@@ -416,7 +416,10 @@ const main = async (): Promise<void> => {
 
   if (
     !options.hideReport &&
-    html.length + summaryReport.length + failedTestsHtml.length >
+    html.length +
+      summaryReport.length +
+      failedTestsHtml.length +
+      multipleFilesHtml.length >
       MAX_COMMENT_LENGTH &&
     eventName != 'workflow_dispatch' &&
     eventName != 'workflow_run'
@@ -442,7 +445,10 @@ const main = async (): Promise<void> => {
       warningsArr.push('- Add "remove-links-to-lines: true" to remove line number links');
     }
 
-    if (options.showFailedTests && failedTestsHtml) {
+    if (
+      options.showFailedTests &&
+      (failedTestsHtml || multipleFilesHtml.includes('Failed Tests'))
+    ) {
       // prettier-ignore
       warningsArr.push('- Reduce "max-failed-tests" to show fewer failed tests in report');
     }
