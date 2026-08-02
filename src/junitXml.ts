@@ -311,9 +311,12 @@ const getTestLocation = (
     }
   }
 
-  const testFrame = frames.find((frame) => TEST_FILE_REGEX.test(frame.file));
+  // pytest prints frames outermost first, so the last test-file frame
+  // (and the last frame overall) is the closest to the raised error
+  const testFrame = [...frames]
+    .reverse()
+    .find((frame) => TEST_FILE_REGEX.test(frame.file));
 
-  // pytest prints frames outermost first, the last one raised the error
   return testFrame ?? frames[frames.length - 1] ?? {};
 };
 

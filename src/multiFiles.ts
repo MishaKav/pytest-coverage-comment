@@ -154,22 +154,26 @@ export const getMultipleReport = (
         table += '\n';
       }
 
-      if (options.showFailedTests && l.xmlFile) {
-        const failedTests = getFailedTests(internalOptions);
-
-        if (failedTests.length) {
-          if (remainingFailedTests > 0) {
-            const failedTestsHtml = failedTestsToMarkdown(
-              failedTests,
-              internalOptions,
-              l.title,
-              remainingFailedTests,
-            );
-            failedBlocks += failedTestsHtml ? `\n\n${failedTestsHtml}` : '';
-            remainingFailedTests -= failedTests.length;
-          } else {
-            omittedFailedTests += failedTests.length;
-          }
+      // the summary attributes tell whether the file has failures at all,
+      // so green files and files past the budget skip the second parse
+      if (
+        options.showFailedTests &&
+        l.xmlFile &&
+        summary &&
+        summary.failures + summary.errors > 0
+      ) {
+        if (remainingFailedTests > 0) {
+          const failedTests = getFailedTests(internalOptions);
+          const failedTestsHtml = failedTestsToMarkdown(
+            failedTests,
+            internalOptions,
+            l.title,
+            remainingFailedTests,
+          );
+          failedBlocks += failedTestsHtml ? `\n\n${failedTestsHtml}` : '';
+          remainingFailedTests -= failedTests.length;
+        } else {
+          omittedFailedTests += summary.failures + summary.errors;
         }
       }
     });

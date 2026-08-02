@@ -38783,7 +38783,7 @@ const main = async () => {
     if (!Number.isInteger(maxFailedTests) || maxFailedTests < 1) {
         if (maxFailedTestsInput) {
             // prettier-ignore
-            core.warning(`Invalid "max-failed-tests" input "${maxFailedTestsInput}", should be a positive number. Will use default value`);
+            core.warning(`Invalid "max-failed-tests" input "${maxFailedTestsInput}", should be a positive integer. Will use default value`);
         }
         maxFailedTests = junitXml_1.MAX_FAILED_TESTS;
     }
@@ -39482,8 +39482,11 @@ const getTestLocation = (rawTexts) => {
             }
         }
     }
-    const testFrame = frames.find((frame) => TEST_FILE_REGEX.test(frame.file));
-    // pytest prints frames outermost first, the last one raised the error
+    // pytest prints frames outermost first, so the last test-file frame
+    // (and the last frame overall) is the closest to the raised error
+    const testFrame = [...frames]
+        .reverse()
+        .find((frame) => TEST_FILE_REGEX.test(frame.file));
     return testFrame ?? frames[frames.length - 1] ?? {};
 };
 // collect failed and errored testcases with their failure messages
@@ -39770,17 +39773,20 @@ const getMultipleReport = (options, maxFailedTests = options.maxFailedTests ?? j
             else {
                 table += '\n';
             }
-            if (options.showFailedTests && l.xmlFile) {
-                const failedTests = (0, junitXml_1.getFailedTests)(internalOptions);
-                if (failedTests.length) {
-                    if (remainingFailedTests > 0) {
-                        const failedTestsHtml = (0, junitXml_1.failedTestsToMarkdown)(failedTests, internalOptions, l.title, remainingFailedTests);
-                        failedBlocks += failedTestsHtml ? `\n\n${failedTestsHtml}` : '';
-                        remainingFailedTests -= failedTests.length;
-                    }
-                    else {
-                        omittedFailedTests += failedTests.length;
-                    }
+            // the summary attributes tell whether the file has failures at all,
+            // so green files and files past the budget skip the second parse
+            if (options.showFailedTests &&
+                l.xmlFile &&
+                summary &&
+                summary.failures + summary.errors > 0) {
+                if (remainingFailedTests > 0) {
+                    const failedTests = (0, junitXml_1.getFailedTests)(internalOptions);
+                    const failedTestsHtml = (0, junitXml_1.failedTestsToMarkdown)(failedTests, internalOptions, l.title, remainingFailedTests);
+                    failedBlocks += failedTestsHtml ? `\n\n${failedTestsHtml}` : '';
+                    remainingFailedTests -= failedTests.length;
+                }
+                else {
+                    omittedFailedTests += summary.failures + summary.errors;
                 }
             }
         });

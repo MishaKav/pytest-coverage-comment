@@ -276,6 +276,12 @@ describe('getFailedTests', () => {
       line: 14,
     });
 
+    // with several test-file frames the innermost (last) one wins
+    const nestedTestFrames = getTestLocation([
+      'tests/test_api.py:14: in test_get\ntests/helpers.py:30: AssertionError',
+    ]);
+    expect(nestedTestFrames).toEqual({ file: 'tests/helpers.py', line: 30 });
+
     // without a test-file frame the last (raising) frame wins
     const helperOnly = getTestLocation([
       'app/service.py:10: in create\napp/db.py:25: RuntimeError',

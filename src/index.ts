@@ -249,7 +249,7 @@ const main = async (): Promise<void> => {
   if (!Number.isInteger(maxFailedTests) || maxFailedTests < 1) {
     if (maxFailedTestsInput) {
       // prettier-ignore
-      core.warning(`Invalid "max-failed-tests" input "${maxFailedTestsInput}", should be a positive number. Will use default value`);
+      core.warning(`Invalid "max-failed-tests" input "${maxFailedTestsInput}", should be a positive integer. Will use default value`);
     }
     maxFailedTests = MAX_FAILED_TESTS;
   }
