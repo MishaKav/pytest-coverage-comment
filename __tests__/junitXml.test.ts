@@ -493,6 +493,30 @@ describe('failedTestsToMarkdown', () => {
     expect(fromFirstLine).toContain('<code>Failed: Timeout &gt;3.0s</code>');
   });
 
+  test('should extract reason from E line beyond the display truncation', () => {
+    // pytest puts E lines at the end of a frame block, a long body must
+    // not lose the reason to the message truncation
+    const contextLines = Array.from(
+      { length: 20 },
+      (_, i) => `    context line ${i + 1}`,
+    ).join('\n');
+    const html = failedTestsToMarkdown(
+      [
+        {
+          ...failedTest,
+          message: `def test_fetch_latest_post_times_out():\n${contextLines}\nE       TimeoutError: posts API did not respond within 0.03s`,
+        },
+      ],
+      { ...options, repoUrl: '' },
+    );
+
+    expect(html).toContain(
+      '<code>TimeoutError: posts API did not respond within 0.03s</code>',
+    );
+    // the body itself is still truncated
+    expect(html).toContain('context line 14\n…');
+  });
+
   test('should extend fence when message contains backtick runs', () => {
     const html = failedTestsToMarkdown(
       [{ ...failedTest, message: 'some\n```\ncode\n```' }],

@@ -424,7 +424,11 @@ export const failedTestsToMarkdown = (
   const emoji = options.hideEmoji ? '' : ':x: ';
   const entries = failedTests.slice(0, maxFailedTests).map((test) => {
     const message = formatFailureMessage(test.message);
-    const reason = extractShortReason(message);
+    // pytest puts the `E` lines at the end of each frame block, so the
+    // reason comes from the full message, before the display truncation
+    const reason = extractShortReason(
+      stripTracebackNoise(test.message) || test.message.trim(),
+    );
 
     return `<details><summary>${toTestName(test, options)} — <code>${escapeHtml(
       reason,
