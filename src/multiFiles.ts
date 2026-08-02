@@ -2,7 +2,6 @@ import { getCoverageReport } from './parse';
 import { getCoverageXmlReport } from './parseXml';
 import { getCoverageJsonReport } from './parseJson';
 import {
-  MAX_FAILED_TESTS,
   failedTestsToMarkdown,
   getFailedTests,
   getParsedXml,
@@ -48,7 +47,7 @@ const getOptions = (options: Options, line: MultipleFileLine): Options => {
 // return multiple report in markdown format
 export const getMultipleReport = (
   options: Options,
-  maxFailedTests: number = options.maxFailedTests ?? MAX_FAILED_TESTS,
+  maxFailedTests: number = options.maxFailedTests,
 ): string => {
   const { multipleFiles, defaultBranch } = options;
 
@@ -156,12 +155,8 @@ export const getMultipleReport = (
 
       // the summary attributes tell whether the file has failures at all,
       // so green files and files past the budget skip the second parse
-      if (
-        options.showFailedTests &&
-        l.xmlFile &&
-        summary &&
-        summary.failures + summary.errors > 0
-      ) {
+      const failedCount = summary ? summary.failures + summary.errors : 0;
+      if (options.showFailedTests && failedCount > 0) {
         if (remainingFailedTests > 0) {
           const failedTests = getFailedTests(internalOptions);
           const failedTestsHtml = failedTestsToMarkdown(
@@ -173,7 +168,7 @@ export const getMultipleReport = (
           failedBlocks += failedTestsHtml ? `\n\n${failedTestsHtml}` : '';
           remainingFailedTests -= failedTests.length;
         } else {
-          omittedFailedTests += summary.failures + summary.errors;
+          omittedFailedTests += failedCount;
         }
       }
     });

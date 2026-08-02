@@ -243,17 +243,9 @@ const getFailureMessage = (texts: string[]): string => {
 export const moreFailedTestsNote = (count: number): string =>
   `_...and ${count} more failed tests_`;
 
-// strip traceback noise from failure message, cap length and number of lines
+// cap failure message length and number of lines
 const formatFailureMessage = (message: string): string => {
-  let text = truncateText(
-    stripTracebackNoise(message),
-    MAX_FAILURE_MESSAGE_LENGTH,
-  );
-
-  // a node holding only a traceback strips to nothing, show the trace then
-  if (!text) {
-    text = truncateText(message.trim(), MAX_FAILURE_MESSAGE_LENGTH);
-  }
+  let text = truncateText(message, MAX_FAILURE_MESSAGE_LENGTH);
 
   const lines = text.split('\n');
   if (lines.length > MAX_FAILURE_MESSAGE_LINES) {
@@ -273,10 +265,13 @@ const extractShortReason = (message: string): string => {
     .filter(Boolean);
 
   const eLine = lines.find((line) => /^E\s+\S/.test(line));
-  const errorLine = [...lines]
-    .reverse()
-    .find((line) => /^[A-Za-z_][\w.]*(Error|Exception)\b/.test(line));
-  const reason = eLine?.replace(/^E\s+/, '') ?? errorLine ?? lines[0] ?? '';
+  const reason =
+    eLine?.replace(/^E\s+/, '') ??
+    [...lines]
+      .reverse()
+      .find((line) => /^[A-Za-z_][\w.]*(Error|Exception)\b/.test(line)) ??
+    lines[0] ??
+    '';
 
   return truncateText(reason.replace(/\s+/g, ' '), MAX_REASON_LENGTH);
 };
@@ -417,7 +412,7 @@ export const failedTestsToMarkdown = (
   failedTests: FailedTest[],
   options: Options,
   title?: string,
-  maxFailedTests: number = options.maxFailedTests ?? MAX_FAILED_TESTS,
+  maxFailedTests: number = options.maxFailedTests,
 ): string => {
   if (!options.showFailedTests || !failedTests.length) {
     return '';
@@ -426,12 +421,13 @@ export const failedTestsToMarkdown = (
   const summaryTitle = title ? `Failed Tests — ${title}` : 'Failed Tests';
   const emoji = options.hideEmoji ? '' : ':x: ';
   const entries = failedTests.slice(0, maxFailedTests).map((test) => {
-    const message = formatFailureMessage(test.message);
-    // pytest puts the `E` lines at the end of each frame block, so the
-    // reason comes from the full message, before the display truncation
-    const reason = extractShortReason(
-      stripTracebackNoise(test.message) || test.message.trim(),
-    );
+    // strip once for the body and the reason; a message holding only a
+    // traceback strips to nothing, show the trace then. the reason comes
+    // from the full text since pytest puts the `E` lines at the end of
+    // each frame block, past the display truncation
+    const stripped = stripTracebackNoise(test.message) || test.message.trim();
+    const message = formatFailureMessage(stripped);
+    const reason = extractShortReason(stripped);
 
     return `<details><summary>${toTestName(test, options)} — <code>${escapeHtml(
       reason,
@@ -471,9 +467,5 @@ export const exportedForTesting = {
   getSummary,
   getTestCases,
   toMarkdown,
-  stripTracebackNoise,
-  extractShortReason,
-  formatFailureMessage,
   getTestLocation,
-  toTestName,
 };

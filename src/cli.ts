@@ -1,7 +1,12 @@
 import { mkdirSync, writeFileSync } from 'fs';
 import * as path from 'path';
 import { getCoverageReport } from './parse';
-import { getSummaryReport, getParsedXml, getNotSuccessTest } from './junitXml';
+import {
+  MAX_FAILED_TESTS,
+  getSummaryReport,
+  getParsedXml,
+  getNotSuccessTest,
+} from './junitXml';
 import { getMultipleReport } from './multiFiles';
 import { getCoverageXmlReport } from './parseXml';
 import { getCoverageJsonReport } from './parseJson';
@@ -71,7 +76,7 @@ const main = async (): Promise<void> => {
     xmlSkipCovered: false,
     xmlTitle: '',
     showFailedTests: false,
-    maxFailedTests: 30,
+    maxFailedTests: MAX_FAILED_TESTS,
     removeLinksToFiles: false,
     removeLinksToLines: false,
     textInsteadBadge: false,

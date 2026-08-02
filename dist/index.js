@@ -38878,10 +38878,13 @@ const main = async () => {
     let { html } = report;
     const warnings = report.warnings;
     const summaryReport = (0, junitXml_1.getSummaryReport)(options);
+    const parsedXml = summaryReport ? (0, junitXml_1.getParsedXml)(options) : null;
     // `max-failed-tests` is a total budget, shared with junit files in `multiple-files`
     let failedTestsHtml = '';
     let failedTestsBudget = maxFailedTests;
-    if (options.showFailedTests && options.xmlFile) {
+    if (options.showFailedTests &&
+        parsedXml &&
+        parsedXml.failures + parsedXml.errors > 0) {
         const failedTests = (0, junitXml_1.getFailedTests)(options);
         failedTestsHtml = (0, junitXml_1.failedTestsToMarkdown)(failedTests, options);
         failedTestsBudget = Math.max(0, failedTestsBudget - failedTests.length);
@@ -38907,7 +38910,6 @@ const main = async () => {
     }
     // set to output junitxml values
     if (summaryReport) {
-        const parsedXml = (0, junitXml_1.getParsedXml)(options);
         if (parsedXml) {
             const { errors, failures, skipped, tests, time } = parsedXml;
             const valuesToExport = { errors, failures, skipped, tests, time };
@@ -38925,12 +38927,14 @@ const main = async () => {
     if (multipleFiles && multipleFiles.length) {
         multipleFilesHtml = `\n\n${(0, multiFiles_1.getMultipleReport)(options, failedTestsBudget)}`;
     }
+    // every part that ends up in the comment body counts toward the limit
+    const commentLength = () => html.length +
+        summaryReport.length +
+        failedTestsHtml.length +
+        multipleFilesHtml.length;
+    const multiFailedTestsShown = options.showFailedTests && multipleFilesHtml.includes('Failed Tests');
     if (!options.hideReport &&
-        html.length +
-            summaryReport.length +
-            failedTestsHtml.length +
-            multipleFilesHtml.length >
-            MAX_COMMENT_LENGTH &&
+        commentLength() > MAX_COMMENT_LENGTH &&
         eventName != 'workflow_dispatch' &&
         eventName != 'workflow_run') {
         // generate new html without report
@@ -38951,8 +38955,7 @@ const main = async () => {
             // prettier-ignore
             warningsArr.push('- Add "remove-links-to-lines: true" to remove line number links');
         }
-        if (options.showFailedTests &&
-            (failedTestsHtml || multipleFilesHtml.includes('Failed Tests'))) {
+        if (failedTestsHtml || multiFailedTestsShown) {
             // prettier-ignore
             warningsArr.push('- Reduce "max-failed-tests" to show fewer failed tests in report');
         }
@@ -38971,17 +38974,10 @@ const main = async () => {
         }
         html = report.html;
         // shrinking the report alone may not be enough, drop the block then
-        if (html.length +
-            summaryReport.length +
-            failedTestsHtml.length +
-            multipleFilesHtml.length >
-            MAX_COMMENT_LENGTH) {
+        if (commentLength() > MAX_COMMENT_LENGTH) {
             failedTestsHtml = '';
             // failed-tests blocks inside multiple-files mode count too
-            if (options.showFailedTests &&
-                multipleFilesHtml &&
-                html.length + summaryReport.length + multipleFilesHtml.length >
-                    MAX_COMMENT_LENGTH) {
+            if (multiFailedTestsShown && commentLength() > MAX_COMMENT_LENGTH) {
                 // prettier-ignore
                 multipleFilesHtml = `\n\n${(0, multiFiles_1.getMultipleReport)({ ...options, showFailedTests: false })}`;
             }
@@ -39448,13 +39444,9 @@ const getFailureMessage = (texts) => {
 // note about failed tests that were omitted from the report
 const moreFailedTestsNote = (count) => `_...and ${count} more failed tests_`;
 exports.moreFailedTestsNote = moreFailedTestsNote;
-// strip traceback noise from failure message, cap length and number of lines
+// cap failure message length and number of lines
 const formatFailureMessage = (message) => {
-    let text = truncateText(stripTracebackNoise(message), MAX_FAILURE_MESSAGE_LENGTH);
-    // a node holding only a traceback strips to nothing, show the trace then
-    if (!text) {
-        text = truncateText(message.trim(), MAX_FAILURE_MESSAGE_LENGTH);
-    }
+    let text = truncateText(message, MAX_FAILURE_MESSAGE_LENGTH);
     const lines = text.split('\n');
     if (lines.length > MAX_FAILURE_MESSAGE_LINES) {
         text = `${lines.slice(0, MAX_FAILURE_MESSAGE_LINES).join('\n')}\n…`;
@@ -39470,10 +39462,12 @@ const extractShortReason = (message) => {
         .map((line) => line.trim())
         .filter(Boolean);
     const eLine = lines.find((line) => /^E\s+\S/.test(line));
-    const errorLine = [...lines]
-        .reverse()
-        .find((line) => /^[A-Za-z_][\w.]*(Error|Exception)\b/.test(line));
-    const reason = eLine?.replace(/^E\s+/, '') ?? errorLine ?? lines[0] ?? '';
+    const reason = eLine?.replace(/^E\s+/, '') ??
+        [...lines]
+            .reverse()
+            .find((line) => /^[A-Za-z_][\w.]*(Error|Exception)\b/.test(line)) ??
+        lines[0] ??
+        '';
     return truncateText(reason.replace(/\s+/g, ' '), MAX_REASON_LENGTH);
 };
 // wrap failure message in a fenced `diff` code block, the fence is
@@ -39575,17 +39569,20 @@ const toTestName = (test, options) => {
     return `<a href="${href}">${escapeHtml(mainText)}</a>${restText}`;
 };
 // convert failed tests to collapsed html block
-const failedTestsToMarkdown = (failedTests, options, title, maxFailedTests = options.maxFailedTests ?? exports.MAX_FAILED_TESTS) => {
+const failedTestsToMarkdown = (failedTests, options, title, maxFailedTests = options.maxFailedTests) => {
     if (!options.showFailedTests || !failedTests.length) {
         return '';
     }
     const summaryTitle = title ? `Failed Tests — ${title}` : 'Failed Tests';
     const emoji = options.hideEmoji ? '' : ':x: ';
     const entries = failedTests.slice(0, maxFailedTests).map((test) => {
-        const message = formatFailureMessage(test.message);
-        // pytest puts the `E` lines at the end of each frame block, so the
-        // reason comes from the full message, before the display truncation
-        const reason = extractShortReason(stripTracebackNoise(test.message) || test.message.trim());
+        // strip once for the body and the reason; a message holding only a
+        // traceback strips to nothing, show the trace then. the reason comes
+        // from the full text since pytest puts the `E` lines at the end of
+        // each frame block, past the display truncation
+        const stripped = stripTracebackNoise(test.message) || test.message.trim();
+        const message = formatFailureMessage(stripped);
+        const reason = extractShortReason(stripped);
         return `<details><summary>${toTestName(test, options)} — <code>${escapeHtml(reason)}</code></summary>\n\n${messageToDiffBlock(message)}\n\n</details>`;
     });
     if (failedTests.length > maxFailedTests) {
@@ -39614,11 +39611,7 @@ exports.exportedForTesting = {
     getSummary,
     getTestCases,
     toMarkdown,
-    stripTracebackNoise,
-    extractShortReason,
-    formatFailureMessage,
     getTestLocation,
-    toTestName,
 };
 
 
@@ -39698,7 +39691,7 @@ const getOptions = (options, line) => {
     };
 };
 // return multiple report in markdown format
-const getMultipleReport = (options, maxFailedTests = options.maxFailedTests ?? junitXml_1.MAX_FAILED_TESTS) => {
+const getMultipleReport = (options, maxFailedTests = options.maxFailedTests) => {
     const { multipleFiles, defaultBranch } = options;
     try {
         const lineReports = multipleFiles
@@ -39791,10 +39784,8 @@ const getMultipleReport = (options, maxFailedTests = options.maxFailedTests ?? j
             }
             // the summary attributes tell whether the file has failures at all,
             // so green files and files past the budget skip the second parse
-            if (options.showFailedTests &&
-                l.xmlFile &&
-                summary &&
-                summary.failures + summary.errors > 0) {
+            const failedCount = summary ? summary.failures + summary.errors : 0;
+            if (options.showFailedTests && failedCount > 0) {
                 if (remainingFailedTests > 0) {
                     const failedTests = (0, junitXml_1.getFailedTests)(internalOptions);
                     const failedTestsHtml = (0, junitXml_1.failedTestsToMarkdown)(failedTests, internalOptions, l.title, remainingFailedTests);
@@ -39802,7 +39793,7 @@ const getMultipleReport = (options, maxFailedTests = options.maxFailedTests ?? j
                     remainingFailedTests -= failedTests.length;
                 }
                 else {
-                    omittedFailedTests += summary.failures + summary.errors;
+                    omittedFailedTests += failedCount;
                 }
             }
         });

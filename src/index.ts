@@ -361,11 +361,16 @@ const main = async (): Promise<void> => {
   let { html } = report as { html: string };
   const warnings = (report as { warnings?: number }).warnings;
   const summaryReport = getSummaryReport(options);
+  const parsedXml = summaryReport ? getParsedXml(options) : null;
 
   // `max-failed-tests` is a total budget, shared with junit files in `multiple-files`
   let failedTestsHtml = '';
   let failedTestsBudget = maxFailedTests;
-  if (options.showFailedTests && options.xmlFile) {
+  if (
+    options.showFailedTests &&
+    parsedXml &&
+    parsedXml.failures + parsedXml.errors > 0
+  ) {
     const failedTests = getFailedTests(options);
     failedTestsHtml = failedTestsToMarkdown(failedTests, options);
     failedTestsBudget = Math.max(0, failedTestsBudget - failedTests.length);
@@ -392,7 +397,6 @@ const main = async (): Promise<void> => {
 
   // set to output junitxml values
   if (summaryReport) {
-    const parsedXml = getParsedXml(options);
     if (parsedXml) {
       const { errors, failures, skipped, tests, time } = parsedXml;
       const valuesToExport = { errors, failures, skipped, tests, time };
@@ -414,13 +418,18 @@ const main = async (): Promise<void> => {
     multipleFilesHtml = `\n\n${getMultipleReport(options, failedTestsBudget)}`;
   }
 
+  // every part that ends up in the comment body counts toward the limit
+  const commentLength = (): number =>
+    html.length +
+    summaryReport.length +
+    failedTestsHtml.length +
+    multipleFilesHtml.length;
+  const multiFailedTestsShown =
+    options.showFailedTests && multipleFilesHtml.includes('Failed Tests');
+
   if (
     !options.hideReport &&
-    html.length +
-      summaryReport.length +
-      failedTestsHtml.length +
-      multipleFilesHtml.length >
-      MAX_COMMENT_LENGTH &&
+    commentLength() > MAX_COMMENT_LENGTH &&
     eventName != 'workflow_dispatch' &&
     eventName != 'workflow_run'
   ) {
@@ -445,10 +454,7 @@ const main = async (): Promise<void> => {
       warningsArr.push('- Add "remove-links-to-lines: true" to remove line number links');
     }
 
-    if (
-      options.showFailedTests &&
-      (failedTestsHtml || multipleFilesHtml.includes('Failed Tests'))
-    ) {
+    if (failedTestsHtml || multiFailedTestsShown) {
       // prettier-ignore
       warningsArr.push('- Reduce "max-failed-tests" to show fewer failed tests in report');
     }
@@ -467,22 +473,11 @@ const main = async (): Promise<void> => {
     html = (report as { html: string }).html;
 
     // shrinking the report alone may not be enough, drop the block then
-    if (
-      html.length +
-        summaryReport.length +
-        failedTestsHtml.length +
-        multipleFilesHtml.length >
-      MAX_COMMENT_LENGTH
-    ) {
+    if (commentLength() > MAX_COMMENT_LENGTH) {
       failedTestsHtml = '';
 
       // failed-tests blocks inside multiple-files mode count too
-      if (
-        options.showFailedTests &&
-        multipleFilesHtml &&
-        html.length + summaryReport.length + multipleFilesHtml.length >
-          MAX_COMMENT_LENGTH
-      ) {
+      if (multiFailedTestsShown && commentLength() > MAX_COMMENT_LENGTH) {
         // prettier-ignore
         multipleFilesHtml = `\n\n${getMultipleReport({ ...options, showFailedTests: false })}`;
       }
