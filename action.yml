@@ -86,6 +86,16 @@ inputs:
     default: ''
     required: false
 
+  show-failed-tests:
+    description: 'Show names and outputs of failed tests in the comment (requires junitxml-path or junit files in multiple-files)'
+    default: 'false'
+    required: false
+
+  max-failed-tests:
+    description: 'Maximum number of failed tests to show in the comment, in total across all junit files (requires show-failed-tests)'
+    default: '30'
+    required: false
+
   create-new-comment:
     description: 'Create new comment on each run instead of updating existing comment'
     default: 'false'
@@ -154,6 +164,8 @@ outputs:
     description: 'Test execution time in seconds (from JUnit XML)'
   notSuccessTestInfo:
     description: 'JSON details of failed, errored, and skipped tests (from JUnit XML)'
+  failedTestsHtml:
+    description: 'Collapsible HTML block with failed test names and outputs (empty when show-failed-tests is disabled or there are no failures; not published for junit files in multiple-files)'
 
 runs:
   using: 'node24'

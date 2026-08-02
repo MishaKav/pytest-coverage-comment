@@ -22,6 +22,8 @@ export interface Options {
   textInsteadBadge: boolean;
   defaultBranch: string;
   xmlTitle: string;
+  showFailedTests: boolean;
+  maxFailedTests: number;
   multipleFiles: string[];
   repoUrl?: string;
   commit?: string;
@@ -100,6 +102,14 @@ export interface NotSuccessTestInfo {
   failures: TestCaseInfo[];
   errors: TestCaseInfo[];
   skipped: TestCaseInfo[];
+}
+
+export interface FailedTest {
+  classname: string;
+  name: string;
+  message: string;
+  file?: string;
+  line?: number;
 }
 
 export interface MultipleFileLine {

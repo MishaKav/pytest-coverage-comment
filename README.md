@@ -33,6 +33,7 @@ A GitHub Action that adds pytest coverage reports as comments to your pull reque
   - [📚 Usage Examples](#-usage-examples)
     - [Basic Usage](#basic-usage)
     - [Coverage from XML](#coverage-from-xml)
+    - [Show Failed Tests](#show-failed-tests)
     - [Monorepo Support](#monorepo-support)
     - [Docker Workflows](#docker-workflows)
     - [Matrix Builds](#matrix-builds)
@@ -165,6 +166,8 @@ jobs:
 | `title`                     | `Coverage Report` | Main title for the coverage comment (useful for monorepo projects)  |
 | `badge-title`               | `Coverage`        | Text shown on the coverage percentage badge                         |
 | `junitxml-title`            |                   | Title for the test summary section from JUnit XML                   |
+| `show-failed-tests`         | `false`           | Show names and outputs of failed tests in the comment               |
+| `max-failed-tests`          | `30`              | Max failed tests to show, in total across all junit files           |
 | `hide-badge`                | `false`           | Hide the coverage percentage badge from the comment                 |
 | `hide-report`               | `false`           | Hide the detailed coverage table (show only summary and badge)      |
 | `hide-comment`              | `false`           | Skip creating PR comment entirely (useful for using outputs only)   |
@@ -209,6 +212,7 @@ jobs:
 | `errors`             | `0`             | Number of test errors (from JUnit XML)                                               |
 | `time`               | `12.5`          | Test execution time in seconds (from JUnit XML)                                      |
 | `notSuccessTestInfo` | JSON string     | JSON details of failed, errored, and skipped tests (from JUnit XML)                  |
+| `failedTestsHtml`    | HTML string     | Failed-tests block; empty when disabled or for junit files in `multiple-files`       |
 
 </details>
 
@@ -271,6 +275,47 @@ The JSON report's coverage percentages match `coverage report` exactly (statemen
     pytest-json-coverage-path: ./coverage.json
     junitxml-path: ./pytest.xml
 ```
+
+</details>
+
+### Show Failed Tests
+
+<details>
+<summary>Show names and outputs of failed tests in the comment</summary>
+
+Requires `junitxml-path` (or junit files in `multiple-files`):
+
+```yaml
+- name: Coverage comment
+  uses: MishaKav/pytest-coverage-comment@v1
+  with:
+    pytest-coverage-path: ./pytest-coverage.txt
+    junitxml-path: ./pytest.xml
+    show-failed-tests: true
+```
+
+**Output**: Collapsible section with one line per failed test — the classname links to the test file (when the location can be resolved from the traceback) and a short failure reason, with the pytest output expandable underneath. The section appears **only when there are failed tests** — on a green run the comment stays exactly the same as without this option.
+
+<details open><summary>:x: Failed Tests (<b>1</b>)</summary>
+
+<details open><summary><b>tests.test_service</b> › test_wrong_title — <code>AssertionError: assert 'first post' == 'my first post'</code></summary>
+
+```diff
+def test_wrong_title():
+        post = get_post(1)
+>       assert post["title"] == "my first post"
+E       AssertionError: assert 'first post' == 'my first post'
+E
+E         - my first post
+E         ? ---
+E         + first post
+```
+
+</details>
+
+</details>
+
+With junit files in `multiple-files`, a separate section is added per file with failures (while the shared `max-failed-tests` budget lasts, `30` by default; the rest are noted as `...and N more failed tests`).
 
 </details>
 

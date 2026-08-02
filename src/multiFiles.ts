@@ -1,7 +1,12 @@
 import { getCoverageReport } from './parse';
 import { getCoverageXmlReport } from './parseXml';
 import { getCoverageJsonReport } from './parseJson';
-import { getParsedXml } from './junitXml';
+import {
+  failedTestsToMarkdown,
+  getFailedTests,
+  getParsedXml,
+  moreFailedTestsNote,
+} from './junitXml';
 import * as core from '@actions/core';
 import type { Options, MultipleFileLine } from './types';
 
@@ -40,7 +45,10 @@ const getOptions = (options: Options, line: MultipleFileLine): Options => {
 };
 
 // return multiple report in markdown format
-export const getMultipleReport = (options: Options): string => {
+export const getMultipleReport = (
+  options: Options,
+  maxFailedTests: number = options.maxFailedTests,
+): string => {
   const { multipleFiles, defaultBranch } = options;
 
   try {
@@ -55,6 +63,10 @@ export const getMultipleReport = (options: Options): string => {
 | ----- | ----- | ----- | ------- | -------- | -------- | ------------------ |
 `;
     let table = hasXmlReports ? fullTable : miniTable;
+    let failedBlocks = '';
+    // `max-failed-tests` is a total budget across all junit files
+    let remainingFailedTests = maxFailedTests;
+    let omittedFailedTests = 0;
 
     lineReports.forEach((l, i) => {
       const internalOptions = getOptions(options, l);
@@ -140,9 +152,32 @@ export const getMultipleReport = (options: Options): string => {
       } else {
         table += '\n';
       }
+
+      // the summary attributes tell whether the file has failures at all,
+      // so green files and files past the budget skip the second parse
+      const failedCount = summary ? summary.failures + summary.errors : 0;
+      if (options.showFailedTests && failedCount > 0) {
+        if (remainingFailedTests > 0) {
+          const failedTests = getFailedTests(internalOptions);
+          const failedTestsHtml = failedTestsToMarkdown(
+            failedTests,
+            internalOptions,
+            l.title,
+            remainingFailedTests,
+          );
+          failedBlocks += failedTestsHtml ? `\n\n${failedTestsHtml}` : '';
+          remainingFailedTests -= failedTests.length;
+        } else {
+          omittedFailedTests += failedCount;
+        }
+      }
     });
 
-    return table;
+    if (omittedFailedTests > 0) {
+      failedBlocks += `\n\n${moreFailedTestsNote(omittedFailedTests)}`;
+    }
+
+    return table + failedBlocks;
   } catch (error) {
     core.error(`Error generating summary report. ${(error as Error).message}`);
   }

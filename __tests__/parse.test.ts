@@ -44,6 +44,8 @@ const baseOptions: Options = {
   textInsteadBadge: false,
   defaultBranch: 'main',
   xmlTitle: '',
+  showFailedTests: false,
+  maxFailedTests: 30,
   multipleFiles: [],
   repoUrl: 'https://github.com/MishaKav/pytest-coverage-comment',
 };
