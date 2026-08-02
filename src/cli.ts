@@ -70,6 +70,8 @@ const main = async (): Promise<void> => {
     hideEmoji: false,
     xmlSkipCovered: false,
     xmlTitle: '',
+    showFailedTests: false,
+    maxFailedTests: 30,
     removeLinksToFiles: false,
     removeLinksToLines: false,
     textInsteadBadge: false,

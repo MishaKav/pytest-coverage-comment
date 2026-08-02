@@ -1,5 +1,15 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.11.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.11.0)
+
+**Release Date:** 2026-08-02
+
+#### Changes
+
+- add `show-failed-tests` input that lists every failed test in the comment as a collapsible block with the test name linked to its file, a short failure reason and the pytest output, requested in (#26)
+- add `max-failed-tests` input to cap the number of shown failed tests (30 by default, in total across all junit files, shared with `multiple-files` mode)
+- add `failedTestsHtml` output with the rendered block, empty when the option is disabled or all tests pass
+
 ## [Pytest Coverage Comment 1.10.1](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.10.1)
 
 **Release Date:** 2026-08-01

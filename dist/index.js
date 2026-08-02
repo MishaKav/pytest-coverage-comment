@@ -38773,6 +38773,20 @@ const main = async () => {
     const pathPrefix = core.getInput('coverage-path-prefix', { required: false });
     const xmlFile = core.getInput('junitxml-path', { required: false });
     const xmlTitle = core.getInput('junitxml-title', { required: false });
+    const showFailedTests = core.getBooleanInput('show-failed-tests', {
+        required: false,
+    });
+    const maxFailedTestsInput = core.getInput('max-failed-tests', {
+        required: false,
+    });
+    let maxFailedTests = Number(maxFailedTestsInput);
+    if (!Number.isInteger(maxFailedTests) || maxFailedTests < 1) {
+        if (maxFailedTestsInput) {
+            // prettier-ignore
+            core.warning(`Invalid "max-failed-tests" input "${maxFailedTestsInput}", should be a positive number. Will use default value`);
+        }
+        maxFailedTests = junitXml_1.MAX_FAILED_TESTS;
+    }
     const multipleFiles = core.getMultilineInput('multiple-files', {
         required: false,
     });
@@ -38810,6 +38824,8 @@ const main = async () => {
         textInsteadBadge,
         defaultBranch,
         xmlTitle,
+        showFailedTests,
+        maxFailedTests,
         multipleFiles,
     };
     options.repoUrl =
@@ -38862,6 +38878,14 @@ const main = async () => {
     let { html } = report;
     const warnings = report.warnings;
     const summaryReport = (0, junitXml_1.getSummaryReport)(options);
+    // `max-failed-tests` is a total budget, shared with junit files in `multiple-files`
+    let failedTestsHtml = '';
+    let failedTestsBudget = maxFailedTests;
+    if (options.showFailedTests && options.xmlFile) {
+        const failedTests = (0, junitXml_1.getFailedTests)(options);
+        failedTestsHtml = (0, junitXml_1.failedTestsToMarkdown)(failedTests, options);
+        failedTestsBudget = Math.max(0, failedTestsBudget - failedTests.length);
+    }
     if (summaryReport) {
         core.setOutput('coverageHtml', summaryReport);
     }
@@ -38894,14 +38918,16 @@ const main = async () => {
             const notSuccessTestInfo = (0, junitXml_1.getNotSuccessTest)(options);
             core.setOutput('notSuccessTestInfo', JSON.stringify(notSuccessTestInfo));
         }
+        core.setOutput('failedTestsHtml', failedTestsHtml);
         core.setOutput('summaryReport', JSON.stringify(summaryReport));
     }
     let multipleFilesHtml = '';
     if (multipleFiles && multipleFiles.length) {
-        multipleFilesHtml = `\n\n${(0, multiFiles_1.getMultipleReport)(options)}`;
+        multipleFilesHtml = `\n\n${(0, multiFiles_1.getMultipleReport)(options, failedTestsBudget)}`;
     }
     if (!options.hideReport &&
-        html.length + summaryReport.length > MAX_COMMENT_LENGTH &&
+        html.length + summaryReport.length + failedTestsHtml.length >
+            MAX_COMMENT_LENGTH &&
         eventName != 'workflow_dispatch' &&
         eventName != 'workflow_run') {
         // generate new html without report
@@ -38922,6 +38948,10 @@ const main = async () => {
             // prettier-ignore
             warningsArr.push('- Add "remove-links-to-lines: true" to remove line number links');
         }
+        if (options.showFailedTests && failedTestsHtml) {
+            // prettier-ignore
+            warningsArr.push('- Reduce "max-failed-tests" to show fewer failed tests in report');
+        }
         core.warning(warningsArr.join('\n'));
         if (options.covJsonFile) {
             report = (0, parseJson_1.getCoverageJsonReport)({ ...options, hideReport: true });
@@ -38939,6 +38969,7 @@ const main = async () => {
     }
     finalHtml += html;
     finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
+    finalHtml += failedTestsHtml ? `\n\n${failedTestsHtml}` : '';
     finalHtml += multipleFilesHtml
         ? `\n\n${multipleFilesHtml}`
         : multipleFilesHtml;
@@ -39206,10 +39237,26 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.exportedForTesting = exports.getNotSuccessTest = exports.getSummaryReport = exports.getParsedXml = void 0;
+exports.exportedForTesting = exports.failedTestsToMarkdown = exports.getFailedTests = exports.moreFailedTestsNote = exports.getNotSuccessTest = exports.getSummaryReport = exports.getParsedXml = exports.MAX_FAILED_TESTS = void 0;
 const xml2js = __importStar(__nccwpck_require__(758));
 const core = __importStar(__nccwpck_require__(7484));
 const utils_1 = __nccwpck_require__(1798);
+const MAX_FAILURE_MESSAGE_LENGTH = 500;
+const MAX_FAILURE_MESSAGE_LINES = 15;
+const MAX_REASON_LENGTH = 120;
+const MAX_TEST_NAME_LENGTH = 255;
+exports.MAX_FAILED_TESTS = 30;
+// guard memory on huge failure outputs, rendering truncates far below this
+const MAX_STORED_MESSAGE_LENGTH = 10000;
+const ABSOLUTE_PATH_REGEX = /^(\/|[A-Za-z]:\/)/;
+// pytest short-form location line, e.g. `tests/test_x.py:25: AssertionError`
+const LOCATION_LINE_REGEX = /^(?!E\s|>\s)([^\s].*\.py):(\d+):(?:\s.*)?$/;
+// python native traceback frame, e.g. `  File "tests/test_x.py", line 25, in test_x`
+const NATIVE_FRAME_REGEX = /^\s*File "([^"]+)", line (\d+)/;
+// pytest separator between traceback frames, a long `_ _ _ ...` line
+const FRAME_SEPARATOR_REGEX = /^_ [_ ]*_$/;
+const TEST_FILE_REGEX = /(^|[\\/])test_[^\\/]*\.py$|_test\.py$|(^|[\\/])tests?[\\/]/;
+const INSTALLED_PACKAGES_REGEX = /(^|[\\/])(site-packages|dist-packages)[\\/]/;
 // return parsed xml
 const getParsedXml = (options) => {
     const content = (0, utils_1.getContent)(options.xmlFile);
@@ -39336,6 +39383,192 @@ const getNotSuccessTest = (options) => {
     return initData;
 };
 exports.getNotSuccessTest = getNotSuccessTest;
+// escape characters that are unsafe inside generated html
+const escapeHtml = (text) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+// truncate text with ellipsis when it exceeds the given length
+const truncateText = (text, maxLength) => text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
+// encode url-reserved characters in each path segment, keep `/` separators
+const encodePath = (path) => path.split('/').map(encodeURIComponent).join('/');
+// extract texts from <failure> or <error> node.
+// xml2js parses a node without attributes to a plain string,
+// otherwise to `{ $: { message }, _: 'body text' }` (both parts optional)
+const getNodeTexts = (node) => {
+    // strip leading blank lines only, keeping first-line indentation,
+    // so a body holding only an indented traceback keeps its frame shape
+    const trimBody = (text) => {
+        const body = text?.replace(/^(?:[ \t]*\r?\n)+/, '').trimEnd();
+        return body?.trim() ? body : undefined;
+    };
+    if (typeof node === 'string') {
+        return [trimBody(node)].filter(Boolean);
+    }
+    return [node?.$?.message, trimBody(node?._)].filter(Boolean);
+};
+// remove traceback noise from failure text: location lines, native
+// traceback frames and pytest frame separators. keeps the source context
+// and the `E`/`>` assertion lines, they are the valuable part
+const stripTracebackNoise = (text) => text
+    .split(/\r?\n/)
+    .filter((line) => !LOCATION_LINE_REGEX.test(line) &&
+    !NATIVE_FRAME_REGEX.test(line) &&
+    !FRAME_SEPARATOR_REGEX.test(line) &&
+    line.trim() !== 'Traceback (most recent call last):')
+    .map((line) => line.trimEnd())
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+// extract message from <failure> or <error> node texts, the most
+// detailed text after removing traceback noise wins, so a short message
+// attribute is preferred over a body holding only the traceback
+const getFailureMessage = (texts) => {
+    const meaningful = texts.map(stripTracebackNoise).filter(Boolean);
+    const candidates = meaningful.length ? meaningful : texts;
+    return candidates.reduce((longest, text) => text.length > longest.length ? text : longest, '');
+};
+// note about failed tests that were omitted from the report
+const moreFailedTestsNote = (count) => `_...and ${count} more failed tests_`;
+exports.moreFailedTestsNote = moreFailedTestsNote;
+// strip traceback noise from failure message, cap length and number of lines
+const formatFailureMessage = (message) => {
+    let text = truncateText(stripTracebackNoise(message), MAX_FAILURE_MESSAGE_LENGTH);
+    // a node holding only a traceback strips to nothing, show the trace then
+    if (!text) {
+        text = truncateText(message.trim(), MAX_FAILURE_MESSAGE_LENGTH);
+    }
+    const lines = text.split('\n');
+    if (lines.length > MAX_FAILURE_MESSAGE_LINES) {
+        text = `${lines.slice(0, MAX_FAILURE_MESSAGE_LINES).join('\n')}\n…`;
+    }
+    return text;
+};
+// extract short one-line reason from failure message: the first `E` line
+// with the prefix stripped (e.g. `assert 200 == 201`), the trailing
+// `SomeError: message` line, or the first meaningful line
+const extractShortReason = (message) => {
+    const lines = message
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean);
+    const eLine = lines.find((line) => /^E\s+\S/.test(line));
+    const errorLine = [...lines]
+        .reverse()
+        .find((line) => /^[A-Za-z_][\w.]*(Error|Exception)\b/.test(line));
+    const reason = eLine?.replace(/^E\s+/, '') ?? errorLine ?? lines[0] ?? '';
+    return truncateText(reason.replace(/\s+/g, ' '), MAX_REASON_LENGTH);
+};
+// wrap failure message in a fenced `diff` code block, the fence is
+// extended when the message itself contains backtick runs
+const messageToDiffBlock = (message) => {
+    const backtickRuns = message.match(/`+/g) ?? [];
+    const longestRun = Math.max(0, ...backtickRuns.map((run) => run.length));
+    const fence = '`'.repeat(Math.max(3, longestRun + 1));
+    return `${fence}diff\n${message}\n${fence}`;
+};
+// extract test file location from the failure text. pytest junitxml (xunit2)
+// has no file/line attributes on <testcase>, so the location comes from the
+// traceback: prefer the frame in a test file over app/helper frames
+const getTestLocation = (rawTexts) => {
+    const frames = [];
+    for (const rawText of rawTexts) {
+        for (const textLine of rawText.split(/\r?\n/)) {
+            const match = textLine.match(LOCATION_LINE_REGEX) ??
+                textLine.match(NATIVE_FRAME_REGEX);
+            if (match && !INSTALLED_PACKAGES_REGEX.test(match[1])) {
+                frames.push({ file: match[1], line: Number(match[2]) });
+            }
+        }
+    }
+    const testFrame = frames.find((frame) => TEST_FILE_REGEX.test(frame.file));
+    // pytest prints frames outermost first, the last one raised the error
+    return testFrame ?? frames[frames.length - 1] ?? {};
+};
+// collect failed and errored testcases with their failure messages
+const getFailedTests = (options) => {
+    try {
+        const content = (0, utils_1.getContent)(options.xmlFile);
+        if (!content) {
+            return [];
+        }
+        const testcases = getTestCases(content);
+        if (!testcases) {
+            return [];
+        }
+        return testcases
+            .filter((tc) => tc && (tc.failure || tc.error))
+            .map((tc) => {
+            const nodes = [...(tc.failure ?? []), ...(tc.error ?? [])];
+            const nodeTexts = nodes.map(getNodeTexts);
+            return {
+                classname: tc.$?.classname ?? '',
+                name: tc.$?.name ?? '',
+                message: nodeTexts
+                    .map(getFailureMessage)
+                    .filter(Boolean)
+                    .join('\n')
+                    .slice(0, MAX_STORED_MESSAGE_LENGTH),
+                ...getTestLocation(nodeTexts.flat()),
+            };
+        });
+    }
+    catch (error) {
+        core.warning(`Could not get failed tests. ${error.message}`);
+    }
+    return [];
+};
+exports.getFailedTests = getFailedTests;
+// make test name html for the summary line. the classname carries the link
+// to the test file (when known), the test name stays plain text
+const toTestName = (test, options) => {
+    const { classname, name } = test;
+    const hasClassnamePrefix = classname && name.startsWith(classname);
+    const mainText = truncateText(classname || name, MAX_TEST_NAME_LENGTH);
+    const restText = classname && name !== classname
+        ? ` › ${escapeHtml(truncateText(hasClassnamePrefix ? name.slice(classname.length).trim() : name, Math.max(0, MAX_TEST_NAME_LENGTH - mainText.length)))}`
+        : '';
+    const testFile = test.file
+        ?.replace(/^file:\/\/\/([A-Za-z]:\/)/, '$1')
+        .replace(/^file:\/\//, '')
+        .replace(/\\/g, '/');
+    const isAbsolutePath = testFile ? ABSOLUTE_PATH_REGEX.test(testFile) : false;
+    // absolute traceback paths are repo-relative after removing the
+    // workspace prefix, `coverage-path-prefix` applies only to relative ones
+    const relative = testFile && isAbsolutePath && options.prefix
+        ? testFile.replace(options.prefix.replace(/\\/g, '/'), '')
+        : testFile;
+    const cannotResolvePath = !relative ||
+        (isAbsolutePath && ABSOLUTE_PATH_REGEX.test(relative)) ||
+        relative.split('/').includes('..');
+    if (!options.repoUrl ||
+        !options.commit ||
+        options.removeLinksToFiles ||
+        cannotResolvePath) {
+        return `<b>${escapeHtml(mainText)}</b>${restText}`;
+    }
+    const linkPath = isAbsolutePath
+        ? encodePath(relative)
+        : `${options.pathPrefix}${encodePath(relative)}`;
+    const anchor = test.line && !options.removeLinksToLines ? `#L${test.line}` : '';
+    const href = escapeHtml(`${options.repoUrl}/blob/${options.commit}/${linkPath}${anchor}`).replace(/"/g, '&quot;');
+    return `<a href="${href}">${escapeHtml(mainText)}</a>${restText}`;
+};
+// convert failed tests to collapsed html block
+const failedTestsToMarkdown = (failedTests, options, title, maxFailedTests = options.maxFailedTests ?? exports.MAX_FAILED_TESTS) => {
+    if (!options.showFailedTests || !failedTests.length) {
+        return '';
+    }
+    const summaryTitle = title ? `Failed Tests — ${title}` : 'Failed Tests';
+    const emoji = options.hideEmoji ? '' : ':x: ';
+    const entries = failedTests.slice(0, maxFailedTests).map((test) => {
+        const message = formatFailureMessage(test.message);
+        const reason = extractShortReason(message);
+        return `<details><summary>${toTestName(test, options)} — <code>${escapeHtml(reason)}</code></summary>\n\n${messageToDiffBlock(message)}\n\n</details>`;
+    });
+    if (failedTests.length > maxFailedTests) {
+        entries.push((0, exports.moreFailedTestsNote)(failedTests.length - maxFailedTests));
+    }
+    return `<details><summary>${emoji}${escapeHtml(summaryTitle)} (<b>${failedTests.length}</b>)</summary>\n\n${entries.join('\n')}\n\n</details>`;
+};
+exports.failedTestsToMarkdown = failedTestsToMarkdown;
 // convert summary from junitxml to md
 const toMarkdown = (summary, options) => {
     const { errors, failures, skipped, tests, time } = summary;
@@ -39356,6 +39589,11 @@ exports.exportedForTesting = {
     getSummary,
     getTestCases,
     toMarkdown,
+    stripTracebackNoise,
+    extractShortReason,
+    formatFailureMessage,
+    getTestLocation,
+    toTestName,
 };
 
 
@@ -39435,7 +39673,7 @@ const getOptions = (options, line) => {
     };
 };
 // return multiple report in markdown format
-const getMultipleReport = (options) => {
+const getMultipleReport = (options, maxFailedTests = options.maxFailedTests ?? junitXml_1.MAX_FAILED_TESTS) => {
     const { multipleFiles, defaultBranch } = options;
     try {
         const lineReports = multipleFiles
@@ -39449,6 +39687,10 @@ const getMultipleReport = (options) => {
 | ----- | ----- | ----- | ------- | -------- | -------- | ------------------ |
 `;
         let table = hasXmlReports ? fullTable : miniTable;
+        let failedBlocks = '';
+        // `max-failed-tests` is a total budget across all junit files
+        let remainingFailedTests = maxFailedTests;
+        let omittedFailedTests = 0;
         lineReports.forEach((l, i) => {
             const internalOptions = getOptions(options, l);
             let report;
@@ -39522,8 +39764,24 @@ const getMultipleReport = (options) => {
             else {
                 table += '\n';
             }
+            if (options.showFailedTests && l.xmlFile) {
+                const failedTests = (0, junitXml_1.getFailedTests)(internalOptions);
+                if (failedTests.length) {
+                    if (remainingFailedTests > 0) {
+                        const failedTestsHtml = (0, junitXml_1.failedTestsToMarkdown)(failedTests, internalOptions, l.title, remainingFailedTests);
+                        failedBlocks += failedTestsHtml ? `\n\n${failedTestsHtml}` : '';
+                        remainingFailedTests -= failedTests.length;
+                    }
+                    else {
+                        omittedFailedTests += failedTests.length;
+                    }
+                }
+            }
         });
-        return table;
+        if (omittedFailedTests > 0) {
+            failedBlocks += `\n\n${(0, junitXml_1.moreFailedTestsNote)(omittedFailedTests)}`;
+        }
+        return table + failedBlocks;
     }
     catch (error) {
         core.error(`Error generating summary report. ${error.message}`);

@@ -3,7 +3,14 @@ import * as github from '@actions/github';
 import { getCoverageReport } from './parse';
 import { getCoverageXmlReport } from './parseXml';
 import { getCoverageJsonReport } from './parseJson';
-import { getSummaryReport, getParsedXml, getNotSuccessTest } from './junitXml';
+import {
+  MAX_FAILED_TESTS,
+  failedTestsToMarkdown,
+  getFailedTests,
+  getNotSuccessTest,
+  getParsedXml,
+  getSummaryReport,
+} from './junitXml';
 import { getMultipleReport } from './multiFiles';
 import type { Options, ChangedFiles } from './types';
 
@@ -232,6 +239,20 @@ const main = async (): Promise<void> => {
   const pathPrefix = core.getInput('coverage-path-prefix', { required: false });
   const xmlFile = core.getInput('junitxml-path', { required: false });
   const xmlTitle = core.getInput('junitxml-title', { required: false });
+  const showFailedTests = core.getBooleanInput('show-failed-tests', {
+    required: false,
+  });
+  const maxFailedTestsInput = core.getInput('max-failed-tests', {
+    required: false,
+  });
+  let maxFailedTests = Number(maxFailedTestsInput);
+  if (!Number.isInteger(maxFailedTests) || maxFailedTests < 1) {
+    if (maxFailedTestsInput) {
+      // prettier-ignore
+      core.warning(`Invalid "max-failed-tests" input "${maxFailedTestsInput}", should be a positive number. Will use default value`);
+    }
+    maxFailedTests = MAX_FAILED_TESTS;
+  }
   const multipleFiles = core.getMultilineInput('multiple-files', {
     required: false,
   });
@@ -272,6 +293,8 @@ const main = async (): Promise<void> => {
     textInsteadBadge,
     defaultBranch,
     xmlTitle,
+    showFailedTests,
+    maxFailedTests,
     multipleFiles,
   };
 
@@ -339,6 +362,15 @@ const main = async (): Promise<void> => {
   const warnings = (report as { warnings?: number }).warnings;
   const summaryReport = getSummaryReport(options);
 
+  // `max-failed-tests` is a total budget, shared with junit files in `multiple-files`
+  let failedTestsHtml = '';
+  let failedTestsBudget = maxFailedTests;
+  if (options.showFailedTests && options.xmlFile) {
+    const failedTests = getFailedTests(options);
+    failedTestsHtml = failedTestsToMarkdown(failedTests, options);
+    failedTestsBudget = Math.max(0, failedTestsBudget - failedTests.length);
+  }
+
   if (summaryReport) {
     core.setOutput('coverageHtml', summaryReport);
   }
@@ -373,17 +405,19 @@ const main = async (): Promise<void> => {
       const notSuccessTestInfo = getNotSuccessTest(options);
       core.setOutput('notSuccessTestInfo', JSON.stringify(notSuccessTestInfo));
     }
+    core.setOutput('failedTestsHtml', failedTestsHtml);
     core.setOutput('summaryReport', JSON.stringify(summaryReport));
   }
 
   let multipleFilesHtml = '';
   if (multipleFiles && multipleFiles.length) {
-    multipleFilesHtml = `\n\n${getMultipleReport(options)}`;
+    multipleFilesHtml = `\n\n${getMultipleReport(options, failedTestsBudget)}`;
   }
 
   if (
     !options.hideReport &&
-    html.length + summaryReport.length > MAX_COMMENT_LENGTH &&
+    html.length + summaryReport.length + failedTestsHtml.length >
+      MAX_COMMENT_LENGTH &&
     eventName != 'workflow_dispatch' &&
     eventName != 'workflow_run'
   ) {
@@ -407,6 +441,11 @@ const main = async (): Promise<void> => {
       // prettier-ignore
       warningsArr.push('- Add "remove-links-to-lines: true" to remove line number links');
     }
+
+    if (options.showFailedTests && failedTestsHtml) {
+      // prettier-ignore
+      warningsArr.push('- Reduce "max-failed-tests" to show fewer failed tests in report');
+    }
     core.warning(warningsArr.join('\n'));
     if (options.covJsonFile) {
       report = getCoverageJsonReport({ ...options, hideReport: true });
@@ -424,6 +463,7 @@ const main = async (): Promise<void> => {
 
   finalHtml += html;
   finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
+  finalHtml += failedTestsHtml ? `\n\n${failedTestsHtml}` : '';
   finalHtml += multipleFilesHtml
     ? `\n\n${multipleFilesHtml}`
     : multipleFilesHtml;

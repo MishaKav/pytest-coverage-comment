@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="7" skipped="1" tests="10" time="0.047" timestamp="2026-08-02T09:33:15.148456+00:00" hostname="vm"><testcase classname="tests.test_fixture_error" name="test_uses_broken_fixture" time="0.001"><error message="failed on setup with &quot;RuntimeError: database is unreachable&quot;">@pytest.fixture
+    def broken_fixture():
+&gt;       raise RuntimeError("database is unreachable")
+E       RuntimeError: database is unreachable
+
+tests/test_fixture_error.py:6: RuntimeError</error></testcase><testcase classname="tests.test_service" name="test_get_post_ok" time="0.000" /><testcase classname="tests.test_service" name="test_wrong_title" time="0.001"><failure message="AssertionError: assert 'first post' == 'my first post'&#10;  &#10;  - my first post&#10;  ? ---&#10;  + first post">def test_wrong_title():
+        post = get_post(1)
+&gt;       assert post["title"] == "my first post"
+E       AssertionError: assert 'first post' == 'my first post'
+E         
+E         - my first post
+E         ? ---
+E         + first post
+
+tests/test_service.py:12: AssertionError</failure></testcase><testcase classname="tests.test_service" name="test_dict_diff" time="0.001"><failure message="AssertionError: assert {'id': 2, 'ti...thor': 'dana'} == {'id': 2, 'ti...thor': 'dana'}&#10;  &#10;  Omitting 2 identical items, use -vv to show&#10;  Differing items:&#10;  {'title': 'second post'} != {'title': '2nd post'}&#10;  Use -v to get more diff">def test_dict_diff():
+&gt;       assert get_post(2) == {"id": 2, "title": "2nd post", "author": "dana"}
+E       AssertionError: assert {'id': 2, 'ti...thor': 'dana'} == {'id': 2, 'ti...thor': 'dana'}
+E         
+E         Omitting 2 identical items, use -vv to show
+E         Differing items:
+E         {'title': 'second post'} != {'title': '2nd post'}
+E         Use -v to get more diff
+
+tests/test_service.py:16: AssertionError</failure></testcase><testcase classname="tests.test_service" name="test_type_error" time="0.000"><failure message="TypeError: 'NoneType' object is not iterable">def test_type_error():
+&gt;       titles = list_titles(None)
+                 ^^^^^^^^^^^^^^^^^
+
+tests/test_service.py:20: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+posts = None
+
+    def list_titles(posts):
+&gt;       return [post["title"] for post in posts]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'NoneType' object is not iterable
+
+post_service.py:15: TypeError</failure></testcase><testcase classname="tests.test_service" name="test_helper_failure" time="0.000"><failure message="AssertionError: post not found">def test_helper_failure():
+&gt;       assert_valid_post(get_post(999))
+
+tests/test_service.py:25: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+post = None
+
+    def assert_valid_post(post):
+&gt;       assert post is not None, "post not found"
+               ^^^^^^^^^^^^^^^^
+E       AssertionError: post not found
+
+post_service.py:19: AssertionError</failure></testcase><testcase classname="tests.test_service" name="test_not_implemented" time="0.000"><skipped type="pytest.skip" message="not implemented yet">/home/runner/work/api-example/api-example/tests/test_service.py:28: not implemented yet</skipped></testcase><testcase classname="tests.test_service.TestPostService" name="test_status_code" time="0.000"><failure message="assert 200 == 201">self = &lt;tests.test_service.TestPostService object at 0x7fbfae7c0dd0&gt;
+
+    def test_status_code(self):
+        response = {"status": 200, "body": "ok"}
+&gt;       assert response["status"] == 201
+E       assert 200 == 201
+
+tests/test_service.py:36: AssertionError</failure></testcase><testcase classname="tests.test_service" name="test_escaping[&lt;b&gt;bold&lt;/b&gt; &amp; 'quoted']" time="0.001"><failure message="assert &quot;&lt;b&gt;bold&lt;/b&gt; &amp; 'quoted'&quot; == 'plain text'&#10;  &#10;  - plain text&#10;  + &lt;b&gt;bold&lt;/b&gt; &amp; 'quoted'">value = "&lt;b&gt;bold&lt;/b&gt; &amp; 'quoted'"
+
+    @pytest.mark.parametrize("value", ["&lt;b&gt;bold&lt;/b&gt; &amp; 'quoted'"])
+    def test_escaping(value):
+&gt;       assert value == "plain text"
+E       assert "&lt;b&gt;bold&lt;/b&gt; &amp; 'quoted'" == 'plain text'
+E         
+E         - plain text
+E         + &lt;b&gt;bold&lt;/b&gt; &amp; 'quoted'
+
+tests/test_service.py:41: AssertionError</failure></testcase><testcase classname="tests.test_service" name="test_backticks" time="0.000"><failure message="assert &quot;```python\nprint('hi')\n```&quot; == &quot;print('hi')&quot;&#10;  &#10;  + ```python&#10;  - print('hi')&#10;  + print('hi')&#10;  ?            +&#10;  + ```">def test_backticks():
+        snippet = "```python\nprint('hi')\n```"
+&gt;       assert snippet == "print('hi')"
+E       assert "```python\nprint('hi')\n```" == "print('hi')"
+E         
+E         + ```python
+E         - print('hi')
+E         + print('hi')
+E         ?            +
+E         + ```
+
+tests/test_service.py:46: AssertionError</failure></testcase></testsuite></testsuites>
