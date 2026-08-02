@@ -6,7 +6,7 @@
 
 #### Changes
 
-- add `show-failed-tests` input that lists every failed test in the comment as a collapsible block with the test name linked to its file, a short failure reason and the pytest output (#293), requested in #26
+- add `show-failed-tests` input that lists failed tests (up to `max-failed-tests`) in the comment as a collapsible block with the test name linked to its file, a short failure reason and the pytest output (#293), requested in #26
 - add `max-failed-tests` input to cap the number of shown failed tests (30 by default, in total across all junit files, shared with `multiple-files` mode) (#293)
 - add `failedTestsHtml` output with the rendered block, empty when the option is disabled or all tests pass (#293)
 

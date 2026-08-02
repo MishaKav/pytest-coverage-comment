@@ -465,6 +465,17 @@ const main = async (): Promise<void> => {
       report = { html: '', coverage: null, color: 'red' };
     }
     html = (report as { html: string }).html;
+
+    // shrinking the report alone may not be enough, drop the block then
+    if (
+      html.length +
+        summaryReport.length +
+        failedTestsHtml.length +
+        multipleFilesHtml.length >
+      MAX_COMMENT_LENGTH
+    ) {
+      failedTestsHtml = '';
+    }
   }
 
   finalHtml += html;

@@ -147,37 +147,37 @@ jobs:
 <details>
 <summary>📝 Core Inputs</summary>
 
-| Name                        | Required | Default                 | Description                                                                            |
-| --------------------------- | -------- | ----------------------- | -------------------------------------------------------------------------------------- |
-| `github-token`              | ✓        | `${{github.token}}`     | GitHub token for API access to create/update comments                                  |
-| `pytest-coverage-path`      |          | `./pytest-coverage.txt` | Path to pytest text coverage output (from `--cov-report=term-missing`)                 |
-| `pytest-xml-coverage-path`  |          |                         | Path to XML coverage report (from `--cov-report=xml:coverage.xml`)                     |
-| `pytest-json-coverage-path` |          |                         | Path to JSON coverage report (from `coverage json`)                                    |
-| `junitxml-path`             |          |                         | Path to JUnit XML file for test statistics (passed/failed/skipped)                     |
-| `issue-number`              |          |                         | Pull request number to comment on (required for workflow_dispatch/workflow_run events) |
+| Name                       | Required | Default                 | Description                                                                            |
+| -------------------------- | -------- | ----------------------- | -------------------------------------------------------------------------------------- |
+| `github-token`             | ✓        | `${{github.token}}`     | GitHub token for API access to create/update comments                                  |
+| `pytest-coverage-path`     |          | `./pytest-coverage.txt` | Path to pytest text coverage output (from `--cov-report=term-missing`)                 |
+| `pytest-xml-coverage-path` |          |                         | Path to XML coverage report (from `--cov-report=xml:coverage.xml`)                     |
+| `pytest-json-coverage-path`|          |                         | Path to JSON coverage report (from `coverage json`)                                    |
+| `junitxml-path`            |          |                         | Path to JUnit XML file for test statistics (passed/failed/skipped)                     |
+| `issue-number`             |          |                         | Pull request number to comment on (required for workflow_dispatch/workflow_run events) |
 
 </details>
 
 <details>
 <summary>🎨 Display Options</summary>
 
-| Name                        | Default           | Description                                                                                                           |
-| --------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `title`                     | `Coverage Report` | Main title for the coverage comment (useful for monorepo projects)                                                    |
-| `badge-title`               | `Coverage`        | Text shown on the coverage percentage badge                                                                           |
-| `junitxml-title`            |                   | Title for the test summary section from JUnit XML                                                                     |
-| `show-failed-tests`         | `false`           | Show names and outputs of failed tests in the comment (requires `junitxml-path` or junit files in `multiple-files`)   |
-| `max-failed-tests`          | `30`              | Maximum number of failed tests to show in the comment, in total across all junit files (requires `show-failed-tests`) |
-| `hide-badge`                | `false`           | Hide the coverage percentage badge from the comment                                                                   |
-| `hide-report`               | `false`           | Hide the detailed coverage table (show only summary and badge)                                                        |
-| `hide-comment`              | `false`           | Skip creating PR comment entirely (useful for using outputs only)                                                     |
-| `hide-emoji`                | `false`           | Hide emojis from the test summary table                                                                               |
-| `report-only-changed-files` | `false`           | Show only files changed in the current pull request                                                                   |
-| `xml-skip-covered`          | `false`           | Hide files with 100% coverage from XML coverage reports                                                               |
-| `remove-link-from-badge`    | `false`           | Remove hyperlink from coverage badge (badge becomes plain image)                                                      |
-| `remove-links-to-files`     | `false`           | Remove file links from coverage table to reduce comment size                                                          |
-| `remove-links-to-lines`     | `false`           | Remove line number links from coverage table to reduce comment size                                                   |
-| `text-instead-badge`        | `false`           | Use simple text instead of badge images for coverage display                                                          |
+| Name                        | Default           | Description                                                         |
+| --------------------------- | ----------------- | ------------------------------------------------------------------- |
+| `title`                     | `Coverage Report` | Main title for the coverage comment (useful for monorepo projects)  |
+| `badge-title`               | `Coverage`        | Text shown on the coverage percentage badge                         |
+| `junitxml-title`            |                   | Title for the test summary section from JUnit XML                   |
+| `show-failed-tests`         | `false`           | Show names and outputs of failed tests in the comment               |
+| `max-failed-tests`          | `30`              | Max failed tests to show, in total across all junit files           |
+| `hide-badge`                | `false`           | Hide the coverage percentage badge from the comment                 |
+| `hide-report`               | `false`           | Hide the detailed coverage table (show only summary and badge)      |
+| `hide-comment`              | `false`           | Skip creating PR comment entirely (useful for using outputs only)   |
+| `hide-emoji`                | `false`           | Hide emojis from the test summary table                             |
+| `report-only-changed-files` | `false`           | Show only files changed in the current pull request                 |
+| `xml-skip-covered`          | `false`           | Hide files with 100% coverage from XML coverage reports             |
+| `remove-link-from-badge`    | `false`           | Remove hyperlink from coverage badge (badge becomes plain image)    |
+| `remove-links-to-files`     | `false`           | Remove file links from coverage table to reduce comment size        |
+| `remove-links-to-lines`     | `false`           | Remove line number links from coverage table to reduce comment size |
+| `text-instead-badge`        | `false`           | Use simple text instead of badge images for coverage display        |
 
 </details>
 
@@ -199,20 +199,20 @@ jobs:
 <details>
 <summary>📤 Available Outputs</summary>
 
-| Name                 | Example         | Description                                                                                                               |
-| -------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `coverage`           | `85%`           | Coverage percentage from pytest report                                                                                    |
-| `color`              | `green`         | Badge color based on coverage percentage (red/orange/yellow/green/brightgreen)                                            |
-| `coverageHtml`       | HTML string     | Full HTML coverage report with clickable links to uncovered lines                                                         |
-| `summaryReport`      | Markdown string | Test summary in markdown format with statistics (tests/skipped/failures/errors/time)                                      |
-| `warnings`           | `42`            | Number of coverage warnings from pytest-cov                                                                               |
-| `tests`              | `109`           | Total number of tests run (from JUnit XML)                                                                                |
-| `skipped`            | `2`             | Number of skipped tests (from JUnit XML)                                                                                  |
-| `failures`           | `0`             | Number of failed tests (from JUnit XML)                                                                                   |
-| `errors`             | `0`             | Number of test errors (from JUnit XML)                                                                                    |
-| `time`               | `12.5`          | Test execution time in seconds (from JUnit XML)                                                                           |
-| `notSuccessTestInfo` | JSON string     | JSON details of failed, errored, and skipped tests (from JUnit XML)                                                       |
-| `failedTestsHtml`    | HTML string     | Collapsible block with failed test names and outputs; empty when `show-failed-tests` is disabled or there are no failures |
+| Name                 | Example         | Description                                                                          |
+| -------------------- | --------------- | ------------------------------------------------------------------------------------ |
+| `coverage`           | `85%`           | Coverage percentage from pytest report                                               |
+| `color`              | `green`         | Badge color based on coverage percentage (red/orange/yellow/green/brightgreen)       |
+| `coverageHtml`       | HTML string     | Full HTML coverage report with clickable links to uncovered lines                    |
+| `summaryReport`      | Markdown string | Test summary in markdown format with statistics (tests/skipped/failures/errors/time) |
+| `warnings`           | `42`            | Number of coverage warnings from pytest-cov                                          |
+| `tests`              | `109`           | Total number of tests run (from JUnit XML)                                           |
+| `skipped`            | `2`             | Number of skipped tests (from JUnit XML)                                             |
+| `failures`           | `0`             | Number of failed tests (from JUnit XML)                                              |
+| `errors`             | `0`             | Number of test errors (from JUnit XML)                                               |
+| `time`               | `12.5`          | Test execution time in seconds (from JUnit XML)                                      |
+| `notSuccessTestInfo` | JSON string     | JSON details of failed, errored, and skipped tests (from JUnit XML)                  |
+| `failedTestsHtml`    | HTML string     | Failed-tests block; empty when disabled or for junit files in `multiple-files`       |
 
 </details>
 
@@ -294,11 +294,11 @@ Requires `junitxml-path` (or junit files in `multiple-files`):
     show-failed-tests: true
 ```
 
-**Output**: Collapsible section (collapsed by default in the comment, expanded below for the example) with one line per failed test — the test's classname links to the test file (when the location can be resolved from the traceback) followed by a short failure reason. Clicking a test expands the pytest failure output (traceback location lines are stripped, very long outputs are truncated). The section appears **only when there are failed tests** — on a green run the comment stays exactly the same as without this option.
+**Output**: Collapsible section with one line per failed test — the classname links to the test file (when the location can be resolved from the traceback) and a short failure reason, with the pytest output expandable underneath. The section appears **only when there are failed tests** — on a green run the comment stays exactly the same as without this option.
 
-<details open><summary>:x: Failed Tests (<b>2</b>)</summary>
+<details open><summary>:x: Failed Tests (<b>1</b>)</summary>
 
-<details><summary><b>tests.test_service</b> › test_wrong_title — <code>AssertionError: assert 'first post' == 'my first post'</code></summary>
+<details open><summary><b>tests.test_service</b> › test_wrong_title — <code>AssertionError: assert 'first post' == 'my first post'</code></summary>
 
 ```diff
 def test_wrong_title():
@@ -312,24 +312,10 @@ E         + first post
 ```
 
 </details>
-<details><summary><b>tests.test_service</b> › test_type_error — <code>TypeError: 'NoneType' object is not iterable</code></summary>
-
-```diff
-def test_type_error():
->       titles = list_titles(None)
-
-posts = None
-
-    def list_titles(posts):
->       return [post["title"] for post in posts]
-E       TypeError: 'NoneType' object is not iterable
-```
 
 </details>
 
-</details>
-
-With junit files in `multiple-files`, a separate collapsible section is added for every file that has failures, labeled with the file's title. Use `max-failed-tests` to cap the number of shown tests (`30` by default, in total across all junit files).
+With junit files in `multiple-files`, a separate section is added per file with failures (while the shared `max-failed-tests` budget lasts, `30` by default; the rest are noted as `...and N more failed tests`).
 
 </details>
 
@@ -377,13 +363,13 @@ This creates a consolidated table showing all coverage reports:
 ```
 
 **Default behavior** (with emojis):
-| Tests | Skipped | Failures | Errors   | Time               |
-| ----- | ------- | -------- | -------- | ------------------ |
+| Tests | Skipped | Failures | Errors | Time |
+| ----- | ------- | -------- | ------ | ---- |
 | 109   | 2 :zzz: | 1 :x:    | 0 :fire: | 0.583s :stopwatch: |
 
 **With `hide-emoji: true`**:
-| Tests | Skipped | Failures | Errors | Time   |
-| ----- | ------- | -------- | ------ | ------ |
+| Tests | Skipped | Failures | Errors | Time |
+| ----- | ------- | -------- | ------ | ---- |
 | 109   | 2       | 1        | 0      | 0.583s |
 
 </details>

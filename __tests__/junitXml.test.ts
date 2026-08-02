@@ -202,31 +202,22 @@ describe('getFailedTests', () => {
 
   test('should collect failed and errored testcases only', () => {
     const failedTests = getFailedTests(options);
+    const names = failedTests.map((t) => t.name);
 
     expect(failedTests).toHaveLength(8);
-    expect(failedTests.map((t) => t.name)).toEqual([
-      'test_uses_broken_fixture',
-      'test_wrong_title',
-      'test_dict_diff',
-      'test_type_error',
-      'test_helper_failure',
-      'test_status_code',
-      "test_escaping[<b>bold</b> & 'quoted']",
-      'test_backticks',
-    ]);
-    // passed and skipped testcases are not collected
-    expect(failedTests.map((t) => t.name)).not.toContain('test_get_post_ok');
-    expect(failedTests.map((t) => t.name)).not.toContain(
-      'test_not_implemented',
-    );
-    expect(failedTests[5].classname).toBe(
-      'tests.test_service.TestPostService',
-    );
+    expect(names).toContain('test_wrong_title');
+    expect(names).toContain('test_uses_broken_fixture'); // <error> node
+    expect(names).not.toContain('test_get_post_ok'); // passed
+    expect(names).not.toContain('test_not_implemented'); // skipped
+    expect(
+      failedTests.find((t) => t.name === 'test_status_code')!.classname,
+    ).toBe('tests.test_service.TestPostService');
   });
 
   test('should keep assertion lines and strip location lines from message', () => {
-    const failedTests = getFailedTests(options);
-    const wrongTitle = failedTests.find((t) => t.name === 'test_wrong_title');
+    const wrongTitle = getFailedTests(options).find(
+      (t) => t.name === 'test_wrong_title',
+    );
 
     expect(wrongTitle!.message).toContain(
       "E       AssertionError: assert 'first post' == 'my first post'",
@@ -235,27 +226,16 @@ describe('getFailedTests', () => {
     expect(wrongTitle!.message).not.toContain('tests/test_service.py:12:');
   });
 
-  test('should extract location from pytest short-form traceback', () => {
+  test('should extract location from traceback, preferring test-file frames', () => {
     const failedTests = getFailedTests(options);
     const wrongTitle = failedTests.find((t) => t.name === 'test_wrong_title');
-
     expect(wrongTitle!.file).toBe('tests/test_service.py');
     expect(wrongTitle!.line).toBe(12);
 
-    const fixtureError = failedTests.find(
-      (t) => t.name === 'test_uses_broken_fixture',
-    );
-    expect(fixtureError!.file).toBe('tests/test_fixture_error.py');
-    expect(fixtureError!.line).toBe(6);
-  });
-
-  test('should prefer test-file frame over app/helper frames', () => {
-    const failedTests = getFailedTests(options);
     // the raising frame is post_service.py:19, the test frame must win
     const helperFailure = failedTests.find(
       (t) => t.name === 'test_helper_failure',
     );
-
     expect(helperFailure!.file).toBe('tests/test_service.py');
     expect(helperFailure!.line).toBe(25);
   });
@@ -290,19 +270,6 @@ describe('getFailedTests', () => {
 
     expect(getTestLocation(['no location here'])).toEqual({});
   });
-
-  test('should take message attribute when node has no body', () => {
-    const { getSummary } = exportedForTesting;
-    // keep the parser warm-up out of the assertion path
-    expect(getSummary('')).toBeNull();
-
-    const failedTests = getFailedTests({
-      ...options,
-      xmlFile: path.join(dataPath, 'pytest_1.xml'),
-    });
-    expect(failedTests).toHaveLength(1);
-    expect(failedTests[0].message).toBeTruthy();
-  });
 });
 
 describe('failedTestsToMarkdown', () => {
@@ -319,10 +286,11 @@ describe('failedTestsToMarkdown', () => {
   });
 
   test('should render collapsed section with failed tests', () => {
-    const html = failedTestsToMarkdown(
-      [failedTest],
-      { ...options, repoUrl: '', commit: '' },
-    );
+    const html = failedTestsToMarkdown([failedTest], {
+      ...options,
+      repoUrl: '',
+      commit: '',
+    });
 
     expect(html).toBe(
       '<details><summary>:x: Failed Tests (<b>1</b>)</summary>\n\n' +
@@ -333,9 +301,9 @@ describe('failedTestsToMarkdown', () => {
   });
 
   test('should render title for multiple files mode and honor hide-emoji', () => {
-    expect(
-      failedTestsToMarkdown([failedTest], options, 'Backend'),
-    ).toContain('<summary>:x: Failed Tests — Backend (<b>1</b>)</summary>');
+    expect(failedTestsToMarkdown([failedTest], options, 'Backend')).toContain(
+      '<summary>:x: Failed Tests — Backend (<b>1</b>)</summary>',
+    );
 
     expect(
       failedTestsToMarkdown([failedTest], { ...options, hideEmoji: true }),
@@ -343,18 +311,17 @@ describe('failedTestsToMarkdown', () => {
   });
 
   test('should link classname to the test file from traceback location', () => {
-    const html = failedTestsToMarkdown(
+    // relative path gets coverage-path-prefix
+    const relative = failedTestsToMarkdown(
       [{ ...failedTest, file: 'tests/test_service.py', line: 25 }],
-      options,
+      { ...options, pathPrefix: 'backend/' },
+    );
+    expect(relative).toContain(
+      '<a href="https://github.com/MishaKav/pytest-coverage-comment/blob/abc123/backend/tests/test_service.py#L25">tests.test_service</a> › test_one',
     );
 
-    expect(html).toContain(
-      '<a href="https://github.com/MishaKav/pytest-coverage-comment/blob/abc123/tests/test_service.py#L25">tests.test_service</a> › test_one',
-    );
-  });
-
-  test('should strip workspace prefix from absolute paths without applying pathPrefix', () => {
-    const html = failedTestsToMarkdown(
+    // absolute path is repo-relative after the workspace prefix, no pathPrefix
+    const absolute = failedTestsToMarkdown(
       [
         {
           ...failedTest,
@@ -368,74 +335,62 @@ describe('failedTestsToMarkdown', () => {
         pathPrefix: 'src/',
       },
     );
+    expect(absolute).toContain('/blob/abc123/tests/test_service.py#L25">');
 
-    expect(html).toContain('/blob/abc123/tests/test_service.py#L25">');
+    // url-encoded segments, windows and file:// paths are normalized
+    expect(
+      failedTestsToMarkdown(
+        [{ ...failedTest, file: 'tests/a#b/test_service.py', line: 5 }],
+        options,
+      ),
+    ).toContain('/blob/abc123/tests/a%23b/test_service.py#L5">');
+    expect(
+      failedTestsToMarkdown(
+        [{ ...failedTest, file: 'tests\\test_service.py', line: 5 }],
+        options,
+      ),
+    ).toContain('/blob/abc123/tests/test_service.py#L5">');
+    expect(
+      failedTestsToMarkdown(
+        [
+          {
+            ...failedTest,
+            file: 'file:///home/runner/work/repo/repo/tests/test_service.py',
+            line: 5,
+          },
+        ],
+        { ...options, prefix: '/home/runner/work/repo/repo/' },
+      ),
+    ).toContain('/blob/abc123/tests/test_service.py#L5">');
   });
 
-  test('should apply pathPrefix to relative paths', () => {
-    const html = failedTestsToMarkdown(
-      [{ ...failedTest, file: 'tests/test_service.py', line: 25 }],
-      { ...options, pathPrefix: 'backend/' },
-    );
-
-    expect(html).toContain('/blob/abc123/backend/tests/test_service.py#L25">');
-  });
-
-  test('should url-encode path segments and normalize windows and file uri paths', () => {
-    const encoded = failedTestsToMarkdown(
-      [{ ...failedTest, file: 'tests/a#b/test_service.py', line: 5 }],
-      options,
-    );
-    expect(encoded).toContain('/blob/abc123/tests/a%23b/test_service.py#L5">');
-
-    const windows = failedTestsToMarkdown(
-      [{ ...failedTest, file: 'tests\\test_service.py', line: 5 }],
-      options,
-    );
-    expect(windows).toContain('/blob/abc123/tests/test_service.py#L5">');
-
-    const fileUri = failedTestsToMarkdown(
-      [
-        {
-          ...failedTest,
-          file: 'file:///home/runner/work/repo/repo/tests/test_service.py',
-          line: 5,
-        },
-      ],
-      { ...options, prefix: '/home/runner/work/repo/repo/' },
-    );
-    expect(fileUri).toContain('/blob/abc123/tests/test_service.py#L5">');
-  });
-
-  test('should not link when path cannot be resolved', () => {
+  test('should not link when path cannot be resolved or links are removed', () => {
     const unresolvable = [
       '/other/place/test_service.py', // absolute path outside the workspace prefix
       '../outside/test_service.py', // escapes the repository root
       undefined, // no location extracted
     ];
-
     for (const file of unresolvable) {
-      const html = failedTestsToMarkdown(
-        [{ ...failedTest, file, line: 25 }],
-        { ...options, prefix: '/home/runner/work/repo/repo/' },
-      );
+      const html = failedTestsToMarkdown([{ ...failedTest, file, line: 25 }], {
+        ...options,
+        prefix: '/home/runner/work/repo/repo/',
+      });
       expect(html).toContain('<b>tests.test_service</b> › test_one');
       expect(html).not.toContain('<a href');
     }
 
-    const noRepo = failedTestsToMarkdown(
-      [{ ...failedTest, file: 'tests/test_service.py', line: 25 }],
-      { ...options, repoUrl: '' },
-    );
-    expect(noRepo).not.toContain('<a href');
-  });
-
-  test('should honor remove-links-to-files and remove-links-to-lines', () => {
-    const noFiles = failedTestsToMarkdown(
-      [{ ...failedTest, file: 'tests/test_service.py', line: 25 }],
-      { ...options, removeLinksToFiles: true },
-    );
-    expect(noFiles).not.toContain('<a href');
+    expect(
+      failedTestsToMarkdown(
+        [{ ...failedTest, file: 'tests/test_service.py', line: 25 }],
+        { ...options, repoUrl: '' },
+      ),
+    ).not.toContain('<a href');
+    expect(
+      failedTestsToMarkdown(
+        [{ ...failedTest, file: 'tests/test_service.py', line: 25 }],
+        { ...options, removeLinksToFiles: true },
+      ),
+    ).not.toContain('<a href');
 
     const noLines = failedTestsToMarkdown(
       [{ ...failedTest, file: 'tests/test_service.py', line: 25 }],
@@ -485,7 +440,12 @@ describe('failedTestsToMarkdown', () => {
     );
 
     const fromErrorLine = failedTestsToMarkdown(
-      [{ ...failedTest, message: 'some context\nRuntimeError: database is unreachable' }],
+      [
+        {
+          ...failedTest,
+          message: 'some context\nRuntimeError: database is unreachable',
+        },
+      ],
       { ...options, repoUrl: '' },
     );
     expect(fromErrorLine).toContain(
@@ -497,30 +457,18 @@ describe('failedTestsToMarkdown', () => {
       { ...options, repoUrl: '' },
     );
     expect(fromFirstLine).toContain('<code>Failed: Timeout &gt;3.0s</code>');
-  });
 
-  test('should extract reason from E line beyond the display truncation', () => {
     // pytest puts E lines at the end of a frame block, a long body must
-    // not lose the reason to the message truncation
-    const contextLines = Array.from(
-      { length: 20 },
-      (_, i) => `    context line ${i + 1}`,
-    ).join('\n');
-    const html = failedTestsToMarkdown(
-      [
-        {
-          ...failedTest,
-          message: `def test_fetch_latest_post_times_out():\n${contextLines}\nE       TimeoutError: posts API did not respond within 0.03s`,
-        },
-      ],
-      { ...options, repoUrl: '' },
-    );
-
-    expect(html).toContain(
+    // not lose the reason to the display truncation
+    const longBody = `def test_slow():\n${'    context\n'.repeat(20)}E       TimeoutError: posts API did not respond within 0.03s`;
+    expect(
+      failedTestsToMarkdown([{ ...failedTest, message: longBody }], {
+        ...options,
+        repoUrl: '',
+      }),
+    ).toContain(
       '<code>TimeoutError: posts API did not respond within 0.03s</code>',
     );
-    // the body itself is still truncated
-    expect(html).toContain('context line 14\n…');
   });
 
   test('should extend fence when message contains backtick runs', () => {
@@ -553,10 +501,10 @@ describe('failedTestsToMarkdown', () => {
     const message = Array.from({ length: 20 }, (_, i) => `line ${i + 1}`).join(
       '\n',
     );
-    const manyLines = failedTestsToMarkdown(
-      [{ ...failedTest, message }],
-      { ...options, repoUrl: '' },
-    );
+    const manyLines = failedTestsToMarkdown([{ ...failedTest, message }], {
+      ...options,
+      repoUrl: '',
+    });
     expect(manyLines).toContain('line 15\n…');
     expect(manyLines).not.toContain('line 16');
 

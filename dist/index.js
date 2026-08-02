@@ -38970,6 +38970,14 @@ const main = async () => {
             report = { html: '', coverage: null, color: 'red' };
         }
         html = report.html;
+        // shrinking the report alone may not be enough, drop the block then
+        if (html.length +
+            summaryReport.length +
+            failedTestsHtml.length +
+            multipleFilesHtml.length >
+            MAX_COMMENT_LENGTH) {
+            failedTestsHtml = '';
+        }
     }
     finalHtml += html;
     finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;

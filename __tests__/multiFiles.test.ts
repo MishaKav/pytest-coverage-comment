@@ -180,18 +180,8 @@ describe('getMultipleReport with show-failed-tests', () => {
     expect(result).toContain('test_wrong_title');
   });
 
-  test('should share the budget across files and truncate inside a block', () => {
-    // first file consumes 8 of 10, second renders 2 and notes the rest
-    const result = getMultipleReport(options, 10);
-
-    const backendBlock = result.indexOf('Failed Tests — Backend');
-    const frontendBlock = result.indexOf('Failed Tests — Frontend');
-    expect(backendBlock).toBeGreaterThan(-1);
-    expect(frontendBlock).toBeGreaterThan(backendBlock);
-    expect(result).toContain('_...and 6 more failed tests_');
-  });
-
-  test('should note fully omitted files after the budget is exhausted', () => {
+  test('should share the budget across files and note omitted failures', () => {
+    // 8 failures per file: A renders 8, B renders 2 and notes 6, C is omitted
     const result = getMultipleReport(
       { ...options, multipleFiles: [line('A'), line('B'), line('C')] },
       10,
@@ -200,7 +190,6 @@ describe('getMultipleReport with show-failed-tests', () => {
     expect(result).toContain('Failed Tests — A');
     expect(result).toContain('Failed Tests — B');
     expect(result).not.toContain('Failed Tests — C');
-    // 6 truncated inside block B and all 8 of file C are omitted
     expect(result).toContain('_...and 6 more failed tests_');
     expect(result).toContain('_...and 8 more failed tests_');
   });
