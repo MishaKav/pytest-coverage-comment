@@ -38977,6 +38977,14 @@ const main = async () => {
             multipleFilesHtml.length >
             MAX_COMMENT_LENGTH) {
             failedTestsHtml = '';
+            // failed-tests blocks inside multiple-files mode count too
+            if (options.showFailedTests &&
+                multipleFilesHtml &&
+                html.length + summaryReport.length + multipleFilesHtml.length >
+                    MAX_COMMENT_LENGTH) {
+                // prettier-ignore
+                multipleFilesHtml = `\n\n${(0, multiFiles_1.getMultipleReport)({ ...options, showFailedTests: false })}`;
+            }
         }
     }
     finalHtml += html;
