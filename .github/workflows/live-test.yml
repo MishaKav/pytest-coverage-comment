@@ -38,9 +38,13 @@ jobs:
           echo "Not Success Test Info - ${{ steps.coverageComment.outputs.notSuccessTestInfo }}"
 
       - name: Create the Badge
+        # skipped on Dependabot and fork pull requests, which get no secrets
+        if: env.BADGE_AUTH != ''
+        env:
+          BADGE_AUTH: ${{ secrets.PYTEST_COVERAGE_COMMENT }}
         uses: schneegans/dynamic-badges-action@v1.9.0
         with:
-          auth: ${{ secrets.PYTEST_COVERAGE_COMMENT }}
+          auth: ${{ env.BADGE_AUTH }}
           gistID: 5e90d640f8c212ab7bbac38f72323f80
           filename: pytest-coverage-comment__main.json
           label: Coverage Report
