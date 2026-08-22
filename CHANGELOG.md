@@ -6,7 +6,7 @@
 
 #### Changes
 
-- bump `undici` from 6.27.0 to 6.28.0 (#294)
+- bump `undici` from 6.27.0 to 6.28.0 (fixes three security vulnerabilities)
 
 ## [Pytest Coverage Comment 1.11.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.11.0)
 
