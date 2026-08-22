@@ -1,5 +1,14 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.11.1](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.11.1)
+
+**Release Date:** 2026-08-22
+
+#### Changes
+
+- bump `undici` from 6.27.0 to 6.28.0, picking up the security fixes for GHSA-m8rv-5g2x-5cg5 (CRLF injection into `content-type` from a duck-typed blob body), GHSA-8xcm-r25x-g524 (stale `Content-Length` after a retried partial response) and GHSA-v3r7-h72x-cjcm (cookie attribute injection via unsanitized `domain`/`unparsed` values) (#294)
+- skip the badge step in the `live-test` workflow when the gist secret is unavailable, so Dependabot and fork pull requests no longer fail with `Missing auth secret` (#295)
+
 ## [Pytest Coverage Comment 1.11.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.11.0)
 
 **Release Date:** 2026-08-02
