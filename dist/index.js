@@ -40220,7 +40220,7 @@ const toTable = (data, options, dataFromXml = null) => {
     ], []);
     const hasLines = rows.length > 0;
     const isFilesChanged = reportOnlyChangedFiles && !hasLines
-        ? `<i>report-only-changed-files is enabled. No files were changed during this commit :)</i>`
+        ? `<i>report-only-changed-files is enabled. No changed files were found in the coverage report :)</i>`
         : '';
     // prettier-ignore
     return `<table>${headTr}<tbody>${rows.join('')}${totalTr}</tbody></table>${isFilesChanged}`;
