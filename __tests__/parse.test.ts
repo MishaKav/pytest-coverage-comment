@@ -335,7 +335,9 @@ describe('toTable', () => {
       changedFiles: { all: ['nonexistent.py'] },
     };
     const table = toTable(content, options);
-    expect(table).toContain('report-only-changed-files is enabled');
+    expect(table).toContain(
+      'report-only-changed-files is enabled. No changed files were found in the coverage report :)',
+    );
   });
 
   test('should remove links to files when removeLinksToFiles is true', () => {
