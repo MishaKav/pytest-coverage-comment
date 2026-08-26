@@ -1,5 +1,13 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.11.2](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.11.2)
+
+**Release Date:** 2026-08-26
+
+#### Changes
+
+- improve the comment message when `report-only-changed-files` is enabled and none of the changed files appear in the coverage report — it now says _"No changed files were found in the coverage report"_ instead of the misleading _"No files were changed during this commit"_ (#296), thanks to [@mschoettle](https://github.com/mschoettle) for contribution
+
 ## [Pytest Coverage Comment 1.11.1](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.11.1)
 
 **Release Date:** 2026-08-22
