@@ -38731,7 +38731,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.truncateSummary = exports.resolveCommitSha = void 0;
+exports.tooLongNotice = exports.truncateSummary = exports.resolveCommitSha = void 0;
 const core = __importStar(__nccwpck_require__(7484));
 const github = __importStar(__nccwpck_require__(3228));
 const parse_1 = __nccwpck_require__(2828);
@@ -38802,6 +38802,17 @@ const truncateSummary = (content, maxLength) => {
     return truncatedContent + truncationMessage;
 };
 exports.truncateSummary = truncateSummary;
+// short notice shown in the comment in place of the dropped coverage report,
+// the full list of suggestions stays in the job log
+const tooLongNotice = (maxLength, runUrl) => {
+    // prettier-ignore
+    const reason = `Your comment is too long (maximum is ${maxLength} characters), so the coverage report was not added.`;
+    const details = runUrl
+        ? ` See the [job log](${runUrl}) for how to reduce it.`
+        : '';
+    return `> [!WARNING]\n> ${reason}${details}`;
+};
+exports.tooLongNotice = tooLongNotice;
 const handlePermissionError = (
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 error, context) => {
@@ -39052,10 +39063,12 @@ const main = async () => {
         multipleFilesHtml = `\n\n${(0, multiFiles_1.getMultipleReport)(options, failedTestsBudget)}`;
     }
     // every part that ends up in the comment body counts toward the limit
+    let tooLongHtml = '';
     const commentLength = () => html.length +
         summaryReport.length +
         failedTestsHtml.length +
-        multipleFilesHtml.length;
+        multipleFilesHtml.length +
+        tooLongHtml.length;
     const multiFailedTestsShown = options.showFailedTests && multipleFilesHtml.includes('Failed Tests');
     if (!options.hideReport &&
         commentLength() > MAX_COMMENT_LENGTH &&
@@ -39084,6 +39097,11 @@ const main = async () => {
             warningsArr.push('- Reduce "max-failed-tests" to show fewer failed tests in report');
         }
         core.warning(warningsArr.join('\n'));
+        // surface the reason in the comment too, the report is silently gone otherwise
+        const runUrl = context.runId
+            ? `${options.repoUrl}/actions/runs/${context.runId}`
+            : null;
+        tooLongHtml = (0, exports.tooLongNotice)(MAX_COMMENT_LENGTH, runUrl);
         if (options.covJsonFile) {
             report = (0, parseJson_1.getCoverageJsonReport)({ ...options, hideReport: true });
         }
@@ -39108,6 +39126,9 @@ const main = async () => {
         }
     }
     finalHtml += html;
+    if (tooLongHtml) {
+        finalHtml += finalHtml.length ? `\n\n${tooLongHtml}` : tooLongHtml;
+    }
     finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
     finalHtml += failedTestsHtml ? `\n\n${failedTestsHtml}` : '';
     finalHtml += multipleFilesHtml
