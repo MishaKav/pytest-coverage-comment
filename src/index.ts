@@ -92,12 +92,9 @@ export const truncateSummary = (content: string, maxLength: number): string => {
 
 // short notice shown in the comment in place of the dropped coverage report,
 // the full list of suggestions stays in the job log
-export const tooLongNotice = (
-  maxLength: number,
-  runUrl: string | null,
-): string => {
+export const tooLongNotice = (runUrl: string | null): string => {
   // prettier-ignore
-  const reason = `Your comment is too long (maximum is ${maxLength} characters), so the coverage report was not added.`;
+  const reason = `Your comment is too long (maximum is ${MAX_COMMENT_LENGTH} characters), so the coverage report was not added.`;
   const details = runUrl
     ? ` See the [job log](${runUrl}) for how to reduce it.`
     : '';
@@ -481,7 +478,7 @@ const main = async (): Promise<void> => {
     const runUrl = context.runId
       ? `${options.repoUrl}/actions/runs/${context.runId}`
       : null;
-    tooLongHtml = tooLongNotice(MAX_COMMENT_LENGTH, runUrl);
+    tooLongHtml = tooLongNotice(runUrl);
 
     if (options.covJsonFile) {
       report = getCoverageJsonReport({ ...options, hideReport: true });

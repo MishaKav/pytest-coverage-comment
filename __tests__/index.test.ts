@@ -45,7 +45,7 @@ describe('truncateSummary', () => {
 
 describe('tooLongNotice', () => {
   test('should mention the maximum length', () => {
-    const result = tooLongNotice(65536, null);
+    const result = tooLongNotice(null);
     expect(result).toContain('> [!WARNING]');
     // prettier-ignore
     expect(result).toContain('too long (maximum is 65536 characters)');
@@ -53,18 +53,18 @@ describe('tooLongNotice', () => {
 
   test('should link to the job log when a run url is given', () => {
     const runUrl = 'https://github.com/owner/test/actions/runs/42';
-    const result = tooLongNotice(65536, runUrl);
+    const result = tooLongNotice(runUrl);
     expect(result).toContain(`[job log](${runUrl})`);
   });
 
   test('should omit the link when no run url is given', () => {
-    const result = tooLongNotice(65536, null);
+    const result = tooLongNotice(null);
     expect(result).not.toContain('job log');
     expect(result).not.toContain('](');
   });
 
   test('should keep every line inside the blockquote', () => {
-    const result = tooLongNotice(65536, 'https://example.com/run');
+    const result = tooLongNotice('https://example.com/run');
     expect(result.split('\n').every((line) => line.startsWith('>'))).toBe(true);
   });
 });
