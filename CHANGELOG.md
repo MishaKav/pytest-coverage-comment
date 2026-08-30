@@ -6,7 +6,7 @@
 
 #### Changes
 
-- enforce GitHub's 65,536-character comment limit on the final assembled body right before posting — previously the assembly separators and the watermark weren't counted by the size estimate, so a reduced comment could still exceed the limit and the comment API call would fail (#301), fixes #299
+- fix a rare case where the comment was still too long and failed to post — it's now always truncated to fit GitHub's limit (#301), fixes #299
 
 ## [Pytest Coverage Comment 1.12.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.12.0)
 
