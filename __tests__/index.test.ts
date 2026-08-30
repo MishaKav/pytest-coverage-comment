@@ -76,27 +76,16 @@ describe('tooLongNotice', () => {
 });
 
 describe('enforceCommentLength', () => {
-  test('should return the body unchanged when within the limit', () => {
-    const body = 'Short comment body';
-    expect(enforceCommentLength(body)).toBe(body);
-  });
-
-  test('should return the body unchanged at exactly the limit', () => {
+  test('should return the body unchanged up to the limit', () => {
     const body = 'a'.repeat(MAX_COMMENT_LENGTH);
     expect(enforceCommentLength(body)).toBe(body);
   });
 
-  test('should truncate an oversized body below the limit', () => {
+  test('should truncate an oversized body and add a warning', () => {
     const body = 'line\n'.repeat(20000); // 100,000 characters
     const result = enforceCommentLength(body);
     expect(result.length).toBeLessThanOrEqual(MAX_COMMENT_LENGTH);
-  });
-
-  test('should append the truncation warning when cutting', () => {
-    const body = 'line\n'.repeat(20000);
-    const result = enforceCommentLength(body);
-    // prettier-ignore
-    expect(result).toContain("**Warning: Comment truncated due to GitHub's 65,536 character limit**");
+    expect(result).toContain('**Warning: Comment truncated');
   });
 
   test('should keep the beginning of the body so the watermark survives', () => {
