@@ -1,5 +1,13 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.12.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.12.0)
+
+**Release Date:** 2026-08-30
+
+#### Changes
+
+- show a warning inside the comment itself when it's too long (over 65,536 characters) and the detailed coverage report gets dropped — previously the report silently disappeared and the reason was only visible in the job log. The warning links to the job log, which lists the ways to reduce the comment size (#298), thanks to [@mschoettle](https://github.com/mschoettle) for contribution
+
 ## [Pytest Coverage Comment 1.11.2](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.11.2)
 
 **Release Date:** 2026-08-26
