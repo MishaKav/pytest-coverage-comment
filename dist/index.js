@@ -38731,7 +38731,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.tooLongNotice = exports.enforceCommentLength = exports.truncateSummary = exports.resolveCommitSha = void 0;
+exports.tooLongNotice = exports.enforceCommentLength = exports.truncateSummary = exports.resolveCommitSha = exports.MAX_COMMENT_LENGTH = void 0;
 const core = __importStar(__nccwpck_require__(7484));
 const github = __importStar(__nccwpck_require__(3228));
 const parse_1 = __nccwpck_require__(2828);
@@ -38739,7 +38739,7 @@ const parseXml_1 = __nccwpck_require__(1775);
 const parseJson_1 = __nccwpck_require__(7258);
 const junitXml_1 = __nccwpck_require__(5394);
 const multiFiles_1 = __nccwpck_require__(6211);
-const MAX_COMMENT_LENGTH = 65536;
+exports.MAX_COMMENT_LENGTH = 65536;
 const MAX_SUMMARY_LENGTH = 1024 * 1024; // 1MB limit for GitHub step summary
 const FILE_STATUSES = Object.freeze({
     ADDED: 'added',
@@ -38802,26 +38802,21 @@ truncationMessage = '\n\n**Warning: Summary truncated due to GitHub\'s 1MB limit
     return truncatedContent + truncationMessage;
 };
 exports.truncateSummary = truncateSummary;
-// last-resort guard: the reduction steps estimate the comment size, but the
-// assembled body also carries separators and the watermark, so it can still
-// end up slightly over GitHub's limit — a hard cut beats a failed API call
+// last-resort cut: a truncated comment beats a failed API call
 const enforceCommentLength = (body) => {
-    if (body.length <= MAX_COMMENT_LENGTH) {
+    if (body.length <= exports.MAX_COMMENT_LENGTH) {
         return body;
     }
-    const truncated = (0, exports.truncateSummary)(body, MAX_COMMENT_LENGTH, 
     // prettier-ignore
-    '\n\n**Warning: Comment truncated due to GitHub\'s 65,536 character limit**');
-    // prettier-ignore
-    core.warning(`Comment body was truncated from ${body.length} to ${truncated.length} characters due to GitHub's ${MAX_COMMENT_LENGTH} character limit.`);
-    return truncated;
+    core.warning(`Comment body (${body.length} characters) was truncated to fit GitHub's ${exports.MAX_COMMENT_LENGTH} character limit.`);
+    return (0, exports.truncateSummary)(body, exports.MAX_COMMENT_LENGTH, `\n\n**Warning: Comment truncated due to GitHub's ${exports.MAX_COMMENT_LENGTH} character limit**`);
 };
 exports.enforceCommentLength = enforceCommentLength;
 // short notice shown in the comment in place of the dropped coverage report,
 // the full list of suggestions stays in the job log
 const tooLongNotice = (runUrl) => {
     // prettier-ignore
-    const reason = `Your comment is too long (maximum is ${MAX_COMMENT_LENGTH} characters), so the coverage report was not added.`;
+    const reason = `Your comment is too long (maximum is ${exports.MAX_COMMENT_LENGTH} characters), so the coverage report was not added.`;
     const details = runUrl
         ? ` See the [job log](${runUrl}) for how to reduce it.`
         : '';
@@ -39086,12 +39081,12 @@ const main = async () => {
         tooLongHtml.length;
     const multiFailedTestsShown = options.showFailedTests && multipleFilesHtml.includes('Failed Tests');
     if (!options.hideReport &&
-        commentLength() > MAX_COMMENT_LENGTH &&
+        commentLength() > exports.MAX_COMMENT_LENGTH &&
         eventName != 'workflow_dispatch' &&
         eventName != 'workflow_run') {
         // generate new html without report
         const warningsArr = [
-            `Your comment is too long (maximum is ${MAX_COMMENT_LENGTH} characters), coverage report will not be added.`,
+            `Your comment is too long (maximum is ${exports.MAX_COMMENT_LENGTH} characters), coverage report will not be added.`,
             'Try one/some of the following options:',
             '- Add "--cov-report=term-missing:skip-covered" to pytest command',
             '- Add "hide-report: true" to hide detailed coverage table',
@@ -39131,10 +39126,10 @@ const main = async () => {
         }
         html = report.html;
         // shrinking the report alone may not be enough, drop the block then
-        if (commentLength() > MAX_COMMENT_LENGTH) {
+        if (commentLength() > exports.MAX_COMMENT_LENGTH) {
             failedTestsHtml = '';
             // failed-tests blocks inside multiple-files mode count too
-            if (multiFailedTestsShown && commentLength() > MAX_COMMENT_LENGTH) {
+            if (multiFailedTestsShown && commentLength() > exports.MAX_COMMENT_LENGTH) {
                 // prettier-ignore
                 multipleFilesHtml = `\n\n${(0, multiFiles_1.getMultipleReport)({ ...options, showFailedTests: false })}`;
             }

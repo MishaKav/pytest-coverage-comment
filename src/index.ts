@@ -14,7 +14,7 @@ import {
 import { getMultipleReport } from './multiFiles';
 import type { Options, ChangedFiles } from './types';
 
-const MAX_COMMENT_LENGTH = 65536;
+export const MAX_COMMENT_LENGTH = 65536;
 const MAX_SUMMARY_LENGTH = 1024 * 1024; // 1MB limit for GitHub step summary
 const FILE_STATUSES = Object.freeze({
   ADDED: 'added',
@@ -93,24 +93,19 @@ export const truncateSummary = (
   return truncatedContent + truncationMessage;
 };
 
-// last-resort guard: the reduction steps estimate the comment size, but the
-// assembled body also carries separators and the watermark, so it can still
-// end up slightly over GitHub's limit — a hard cut beats a failed API call
+// last-resort cut: a truncated comment beats a failed API call
 export const enforceCommentLength = (body: string): string => {
   if (body.length <= MAX_COMMENT_LENGTH) {
     return body;
   }
 
-  const truncated = truncateSummary(
+  // prettier-ignore
+  core.warning(`Comment body (${body.length} characters) was truncated to fit GitHub's ${MAX_COMMENT_LENGTH} character limit.`);
+  return truncateSummary(
     body,
     MAX_COMMENT_LENGTH,
-    // prettier-ignore
-    '\n\n**Warning: Comment truncated due to GitHub\'s 65,536 character limit**',
+    `\n\n**Warning: Comment truncated due to GitHub's ${MAX_COMMENT_LENGTH} character limit**`,
   );
-  // prettier-ignore
-  core.warning(`Comment body was truncated from ${body.length} to ${truncated.length} characters due to GitHub's ${MAX_COMMENT_LENGTH} character limit.`);
-
-  return truncated;
 };
 
 // short notice shown in the comment in place of the dropped coverage report,

@@ -15,12 +15,11 @@ vi.mock('@actions/github', () => ({
 }));
 
 import {
+  MAX_COMMENT_LENGTH,
   enforceCommentLength,
   tooLongNotice,
   truncateSummary,
 } from '../src/index';
-
-const MAX_COMMENT_LENGTH = 65536;
 
 describe('truncateSummary', () => {
   test('should return content as-is when under limit', () => {
