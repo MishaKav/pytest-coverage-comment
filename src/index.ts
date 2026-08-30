@@ -90,6 +90,18 @@ export const truncateSummary = (content: string, maxLength: number): string => {
   return truncatedContent + truncationMessage;
 };
 
+// short notice shown in the comment in place of the dropped coverage report,
+// the full list of suggestions stays in the job log
+export const tooLongNotice = (runUrl: string | null): string => {
+  // prettier-ignore
+  const reason = `Your comment is too long (maximum is ${MAX_COMMENT_LENGTH} characters), so the coverage report was not added.`;
+  const details = runUrl
+    ? ` See the [job log](${runUrl}) for how to reduce it.`
+    : '';
+
+  return `> [!WARNING]\n> ${reason}${details}`;
+};
+
 const handlePermissionError = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   error: any,
@@ -419,11 +431,13 @@ const main = async (): Promise<void> => {
   }
 
   // every part that ends up in the comment body counts toward the limit
+  let tooLongHtml = '';
   const commentLength = (): number =>
     html.length +
     summaryReport.length +
     failedTestsHtml.length +
-    multipleFilesHtml.length;
+    multipleFilesHtml.length +
+    tooLongHtml.length;
   const multiFailedTestsShown =
     options.showFailedTests && multipleFilesHtml.includes('Failed Tests');
 
@@ -459,6 +473,13 @@ const main = async (): Promise<void> => {
       warningsArr.push('- Reduce "max-failed-tests" to show fewer failed tests in report');
     }
     core.warning(warningsArr.join('\n'));
+
+    // surface the reason in the comment too, the report is silently gone otherwise
+    const runUrl = context.runId
+      ? `${options.repoUrl}/actions/runs/${context.runId}`
+      : null;
+    tooLongHtml = tooLongNotice(runUrl);
+
     if (options.covJsonFile) {
       report = getCoverageJsonReport({ ...options, hideReport: true });
     } else if (options.covXmlFile) {
@@ -485,6 +506,9 @@ const main = async (): Promise<void> => {
   }
 
   finalHtml += html;
+  if (tooLongHtml) {
+    finalHtml += finalHtml.length ? `\n\n${tooLongHtml}` : tooLongHtml;
+  }
   finalHtml += finalHtml.length ? `\n\n${summaryReport}` : summaryReport;
   finalHtml += failedTestsHtml ? `\n\n${failedTestsHtml}` : '';
   finalHtml += multipleFilesHtml
