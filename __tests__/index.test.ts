@@ -14,7 +14,13 @@ vi.mock('@actions/github', () => ({
   getOctokit: vi.fn(),
 }));
 
-import { tooLongNotice, truncateSummary } from '../src/index';
+import {
+  enforceCommentLength,
+  tooLongNotice,
+  truncateSummary,
+} from '../src/index';
+
+const MAX_COMMENT_LENGTH = 65536;
 
 describe('truncateSummary', () => {
   test('should return content as-is when under limit', () => {
@@ -66,5 +72,37 @@ describe('tooLongNotice', () => {
   test('should keep every line inside the blockquote', () => {
     const result = tooLongNotice('https://example.com/run');
     expect(result.split('\n').every((line) => line.startsWith('>'))).toBe(true);
+  });
+});
+
+describe('enforceCommentLength', () => {
+  test('should return the body unchanged when within the limit', () => {
+    const body = 'Short comment body';
+    expect(enforceCommentLength(body)).toBe(body);
+  });
+
+  test('should return the body unchanged at exactly the limit', () => {
+    const body = 'a'.repeat(MAX_COMMENT_LENGTH);
+    expect(enforceCommentLength(body)).toBe(body);
+  });
+
+  test('should truncate an oversized body below the limit', () => {
+    const body = 'line\n'.repeat(20000); // 100,000 characters
+    const result = enforceCommentLength(body);
+    expect(result.length).toBeLessThanOrEqual(MAX_COMMENT_LENGTH);
+  });
+
+  test('should append the truncation warning when cutting', () => {
+    const body = 'line\n'.repeat(20000);
+    const result = enforceCommentLength(body);
+    // prettier-ignore
+    expect(result).toContain("**Warning: Comment truncated due to GitHub's 65,536 character limit**");
+  });
+
+  test('should keep the beginning of the body so the watermark survives', () => {
+    const watermark = '<!-- Pytest Coverage Comment: some-id -->\n';
+    const body = watermark + 'line\n'.repeat(20000);
+    const result = enforceCommentLength(body);
+    expect(result.startsWith(watermark)).toBe(true);
   });
 });

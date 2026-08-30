@@ -66,13 +66,16 @@ export const resolveCommitSha = async (
   return sha;
 };
 
-export const truncateSummary = (content: string, maxLength: number): string => {
+export const truncateSummary = (
+  content: string,
+  maxLength: number,
+  // prettier-ignore
+  truncationMessage = '\n\n**Warning: Summary truncated due to GitHub\'s 1MB limit**',
+): string => {
   if (content.length <= maxLength) {
     return content;
   }
 
-  // prettier-ignore
-  const truncationMessage = '\n\n**Warning: Summary truncated due to GitHub\'s 1MB limit**';
   const messageLength = truncationMessage.length;
   // prettier-ignore
   const truncatedContent = content.substring(0, maxLength - messageLength - 100); // Leave some buffer
@@ -88,6 +91,26 @@ export const truncateSummary = (content: string, maxLength: number): string => {
   }
 
   return truncatedContent + truncationMessage;
+};
+
+// last-resort guard: the reduction steps estimate the comment size, but the
+// assembled body also carries separators and the watermark, so it can still
+// end up slightly over GitHub's limit — a hard cut beats a failed API call
+export const enforceCommentLength = (body: string): string => {
+  if (body.length <= MAX_COMMENT_LENGTH) {
+    return body;
+  }
+
+  const truncated = truncateSummary(
+    body,
+    MAX_COMMENT_LENGTH,
+    // prettier-ignore
+    '\n\n**Warning: Comment truncated due to GitHub\'s 65,536 character limit**',
+  );
+  // prettier-ignore
+  core.warning(`Comment body was truncated from ${body.length} to ${truncated.length} characters due to GitHub's ${MAX_COMMENT_LENGTH} character limit.`);
+
+  return truncated;
 };
 
 // short notice shown in the comment in place of the dropped coverage report,
@@ -548,6 +571,8 @@ const main = async (): Promise<void> => {
     return;
   }
   const body = WATERMARK + finalHtml;
+  // the step summary allows up to 1MB, so only the comment paths get the cut
+  const commentBody = enforceCommentLength(body);
 
   const issue_number = payload.pull_request
     ? payload.pull_request.number
@@ -562,7 +587,7 @@ const main = async (): Promise<void> => {
         repo,
         owner,
         commit_sha: options.commit!,
-        body,
+        body: commentBody,
       });
     } catch (error) {
       handlePermissionError(error, context);
@@ -579,7 +604,7 @@ const main = async (): Promise<void> => {
           repo,
           owner,
           issue_number,
-          body,
+          body: commentBody,
         });
       } catch (error) {
         handlePermissionError(error, context);
@@ -590,7 +615,7 @@ const main = async (): Promise<void> => {
         repo,
         owner,
         issue_number,
-        body,
+        commentBody,
         WATERMARK,
         context,
       );
@@ -616,7 +641,7 @@ const main = async (): Promise<void> => {
             repo,
             owner,
             issue_number,
-            body,
+            body: commentBody,
           });
         } catch (error) {
           handlePermissionError(error, context);
@@ -627,7 +652,7 @@ const main = async (): Promise<void> => {
           repo,
           owner,
           issue_number,
-          body,
+          commentBody,
           WATERMARK,
           context,
         );

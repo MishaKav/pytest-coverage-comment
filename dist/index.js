@@ -38731,7 +38731,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.tooLongNotice = exports.truncateSummary = exports.resolveCommitSha = void 0;
+exports.tooLongNotice = exports.enforceCommentLength = exports.truncateSummary = exports.resolveCommitSha = void 0;
 const core = __importStar(__nccwpck_require__(7484));
 const github = __importStar(__nccwpck_require__(3228));
 const parse_1 = __nccwpck_require__(2828);
@@ -38782,12 +38782,12 @@ const resolveCommitSha = async (octokit, owner, repo, sha, ref) => {
     return sha;
 };
 exports.resolveCommitSha = resolveCommitSha;
-const truncateSummary = (content, maxLength) => {
+const truncateSummary = (content, maxLength, 
+// prettier-ignore
+truncationMessage = '\n\n**Warning: Summary truncated due to GitHub\'s 1MB limit**') => {
     if (content.length <= maxLength) {
         return content;
     }
-    // prettier-ignore
-    const truncationMessage = '\n\n**Warning: Summary truncated due to GitHub\'s 1MB limit**';
     const messageLength = truncationMessage.length;
     // prettier-ignore
     const truncatedContent = content.substring(0, maxLength - messageLength - 100); // Leave some buffer
@@ -38802,6 +38802,21 @@ const truncateSummary = (content, maxLength) => {
     return truncatedContent + truncationMessage;
 };
 exports.truncateSummary = truncateSummary;
+// last-resort guard: the reduction steps estimate the comment size, but the
+// assembled body also carries separators and the watermark, so it can still
+// end up slightly over GitHub's limit — a hard cut beats a failed API call
+const enforceCommentLength = (body) => {
+    if (body.length <= MAX_COMMENT_LENGTH) {
+        return body;
+    }
+    const truncated = (0, exports.truncateSummary)(body, MAX_COMMENT_LENGTH, 
+    // prettier-ignore
+    '\n\n**Warning: Comment truncated due to GitHub\'s 65,536 character limit**');
+    // prettier-ignore
+    core.warning(`Comment body was truncated from ${body.length} to ${truncated.length} characters due to GitHub's ${MAX_COMMENT_LENGTH} character limit.`);
+    return truncated;
+};
+exports.enforceCommentLength = enforceCommentLength;
 // short notice shown in the comment in place of the dropped coverage report,
 // the full list of suggestions stays in the job log
 const tooLongNotice = (runUrl) => {
@@ -39161,6 +39176,8 @@ const main = async () => {
         return;
     }
     const body = WATERMARK + finalHtml;
+    // the step summary allows up to 1MB, so only the comment paths get the cut
+    const commentBody = (0, exports.enforceCommentLength)(body);
     const issue_number = payload.pull_request
         ? payload.pull_request.number
         : issueNumberInput
@@ -39173,7 +39190,7 @@ const main = async () => {
                 repo,
                 owner,
                 commit_sha: options.commit,
-                body,
+                body: commentBody,
             });
         }
         catch (error) {
@@ -39189,7 +39206,7 @@ const main = async () => {
                     repo,
                     owner,
                     issue_number,
-                    body,
+                    body: commentBody,
                 });
             }
             catch (error) {
@@ -39197,7 +39214,7 @@ const main = async () => {
             }
         }
         else {
-            await createOrEditComment(octokit, repo, owner, issue_number, body, WATERMARK, context);
+            await createOrEditComment(octokit, repo, owner, issue_number, commentBody, WATERMARK, context);
         }
     }
     else if (eventName === 'workflow_dispatch' ||
@@ -39220,7 +39237,7 @@ const main = async () => {
                         repo,
                         owner,
                         issue_number,
-                        body,
+                        body: commentBody,
                     });
                 }
                 catch (error) {
@@ -39228,7 +39245,7 @@ const main = async () => {
                 }
             }
             else {
-                await createOrEditComment(octokit, repo, owner, issue_number, body, WATERMARK, context);
+                await createOrEditComment(octokit, repo, owner, issue_number, commentBody, WATERMARK, context);
             }
         }
     }
