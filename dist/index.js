@@ -38731,7 +38731,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.tooLongNotice = exports.truncateSummary = exports.resolveCommitSha = void 0;
+exports.tooLongNotice = exports.enforceCommentLength = exports.truncateSummary = exports.resolveCommitSha = exports.MAX_COMMENT_LENGTH = void 0;
 const core = __importStar(__nccwpck_require__(7484));
 const github = __importStar(__nccwpck_require__(3228));
 const parse_1 = __nccwpck_require__(2828);
@@ -38739,7 +38739,7 @@ const parseXml_1 = __nccwpck_require__(1775);
 const parseJson_1 = __nccwpck_require__(7258);
 const junitXml_1 = __nccwpck_require__(5394);
 const multiFiles_1 = __nccwpck_require__(6211);
-const MAX_COMMENT_LENGTH = 65536;
+exports.MAX_COMMENT_LENGTH = 65536;
 const MAX_SUMMARY_LENGTH = 1024 * 1024; // 1MB limit for GitHub step summary
 const FILE_STATUSES = Object.freeze({
     ADDED: 'added',
@@ -38782,12 +38782,12 @@ const resolveCommitSha = async (octokit, owner, repo, sha, ref) => {
     return sha;
 };
 exports.resolveCommitSha = resolveCommitSha;
-const truncateSummary = (content, maxLength) => {
+const truncateSummary = (content, maxLength, 
+// prettier-ignore
+truncationMessage = '\n\n**Warning: Summary truncated due to GitHub\'s 1MB limit**') => {
     if (content.length <= maxLength) {
         return content;
     }
-    // prettier-ignore
-    const truncationMessage = '\n\n**Warning: Summary truncated due to GitHub\'s 1MB limit**';
     const messageLength = truncationMessage.length;
     // prettier-ignore
     const truncatedContent = content.substring(0, maxLength - messageLength - 100); // Leave some buffer
@@ -38802,11 +38802,21 @@ const truncateSummary = (content, maxLength) => {
     return truncatedContent + truncationMessage;
 };
 exports.truncateSummary = truncateSummary;
+// last-resort cut: a truncated comment beats a failed API call
+const enforceCommentLength = (body) => {
+    if (body.length <= exports.MAX_COMMENT_LENGTH) {
+        return body;
+    }
+    // prettier-ignore
+    core.warning(`Comment body (${body.length} characters) was truncated to fit GitHub's ${exports.MAX_COMMENT_LENGTH} character limit.`);
+    return (0, exports.truncateSummary)(body, exports.MAX_COMMENT_LENGTH, `\n\n**Warning: Comment truncated due to GitHub's ${exports.MAX_COMMENT_LENGTH} character limit**`);
+};
+exports.enforceCommentLength = enforceCommentLength;
 // short notice shown in the comment in place of the dropped coverage report,
 // the full list of suggestions stays in the job log
 const tooLongNotice = (runUrl) => {
     // prettier-ignore
-    const reason = `Your comment is too long (maximum is ${MAX_COMMENT_LENGTH} characters), so the coverage report was not added.`;
+    const reason = `Your comment is too long (maximum is ${exports.MAX_COMMENT_LENGTH} characters), so the coverage report was not added.`;
     const details = runUrl
         ? ` See the [job log](${runUrl}) for how to reduce it.`
         : '';
@@ -39071,12 +39081,12 @@ const main = async () => {
         tooLongHtml.length;
     const multiFailedTestsShown = options.showFailedTests && multipleFilesHtml.includes('Failed Tests');
     if (!options.hideReport &&
-        commentLength() > MAX_COMMENT_LENGTH &&
+        commentLength() > exports.MAX_COMMENT_LENGTH &&
         eventName != 'workflow_dispatch' &&
         eventName != 'workflow_run') {
         // generate new html without report
         const warningsArr = [
-            `Your comment is too long (maximum is ${MAX_COMMENT_LENGTH} characters), coverage report will not be added.`,
+            `Your comment is too long (maximum is ${exports.MAX_COMMENT_LENGTH} characters), coverage report will not be added.`,
             'Try one/some of the following options:',
             '- Add "--cov-report=term-missing:skip-covered" to pytest command',
             '- Add "hide-report: true" to hide detailed coverage table',
@@ -39116,10 +39126,10 @@ const main = async () => {
         }
         html = report.html;
         // shrinking the report alone may not be enough, drop the block then
-        if (commentLength() > MAX_COMMENT_LENGTH) {
+        if (commentLength() > exports.MAX_COMMENT_LENGTH) {
             failedTestsHtml = '';
             // failed-tests blocks inside multiple-files mode count too
-            if (multiFailedTestsShown && commentLength() > MAX_COMMENT_LENGTH) {
+            if (multiFailedTestsShown && commentLength() > exports.MAX_COMMENT_LENGTH) {
                 // prettier-ignore
                 multipleFilesHtml = `\n\n${(0, multiFiles_1.getMultipleReport)({ ...options, showFailedTests: false })}`;
             }
@@ -39161,6 +39171,8 @@ const main = async () => {
         return;
     }
     const body = WATERMARK + finalHtml;
+    // the step summary allows up to 1MB, so only the comment paths get the cut
+    const commentBody = (0, exports.enforceCommentLength)(body);
     const issue_number = payload.pull_request
         ? payload.pull_request.number
         : issueNumberInput
@@ -39173,7 +39185,7 @@ const main = async () => {
                 repo,
                 owner,
                 commit_sha: options.commit,
-                body,
+                body: commentBody,
             });
         }
         catch (error) {
@@ -39189,7 +39201,7 @@ const main = async () => {
                     repo,
                     owner,
                     issue_number,
-                    body,
+                    body: commentBody,
                 });
             }
             catch (error) {
@@ -39197,7 +39209,7 @@ const main = async () => {
             }
         }
         else {
-            await createOrEditComment(octokit, repo, owner, issue_number, body, WATERMARK, context);
+            await createOrEditComment(octokit, repo, owner, issue_number, commentBody, WATERMARK, context);
         }
     }
     else if (eventName === 'workflow_dispatch' ||
@@ -39220,7 +39232,7 @@ const main = async () => {
                         repo,
                         owner,
                         issue_number,
-                        body,
+                        body: commentBody,
                     });
                 }
                 catch (error) {
@@ -39228,7 +39240,7 @@ const main = async () => {
                 }
             }
             else {
-                await createOrEditComment(octokit, repo, owner, issue_number, body, WATERMARK, context);
+                await createOrEditComment(octokit, repo, owner, issue_number, commentBody, WATERMARK, context);
             }
         }
     }

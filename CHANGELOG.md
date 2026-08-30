@@ -1,5 +1,13 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.12.1](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.12.1)
+
+**Release Date:** 2026-08-30
+
+#### Changes
+
+- fix a rare case where the comment was still too long and failed to post — it's now always truncated to fit GitHub's limit (#301), fixes #299
+
 ## [Pytest Coverage Comment 1.12.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.12.0)
 
 **Release Date:** 2026-08-30

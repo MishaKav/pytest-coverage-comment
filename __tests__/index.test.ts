@@ -14,7 +14,12 @@ vi.mock('@actions/github', () => ({
   getOctokit: vi.fn(),
 }));
 
-import { tooLongNotice, truncateSummary } from '../src/index';
+import {
+  MAX_COMMENT_LENGTH,
+  enforceCommentLength,
+  tooLongNotice,
+  truncateSummary,
+} from '../src/index';
 
 describe('truncateSummary', () => {
   test('should return content as-is when under limit', () => {
@@ -66,5 +71,26 @@ describe('tooLongNotice', () => {
   test('should keep every line inside the blockquote', () => {
     const result = tooLongNotice('https://example.com/run');
     expect(result.split('\n').every((line) => line.startsWith('>'))).toBe(true);
+  });
+});
+
+describe('enforceCommentLength', () => {
+  test('should return the body unchanged up to the limit', () => {
+    const body = 'a'.repeat(MAX_COMMENT_LENGTH);
+    expect(enforceCommentLength(body)).toBe(body);
+  });
+
+  test('should truncate an oversized body and add a warning', () => {
+    const body = 'line\n'.repeat(20000); // 100,000 characters
+    const result = enforceCommentLength(body);
+    expect(result.length).toBeLessThanOrEqual(MAX_COMMENT_LENGTH);
+    expect(result).toContain('**Warning: Comment truncated');
+  });
+
+  test('should keep the beginning of the body so the watermark survives', () => {
+    const watermark = '<!-- Pytest Coverage Comment: some-id -->\n';
+    const body = watermark + 'line\n'.repeat(20000);
+    const result = enforceCommentLength(body);
+    expect(result.startsWith(watermark)).toBe(true);
   });
 });

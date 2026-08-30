@@ -14,7 +14,7 @@ import {
 import { getMultipleReport } from './multiFiles';
 import type { Options, ChangedFiles } from './types';
 
-const MAX_COMMENT_LENGTH = 65536;
+export const MAX_COMMENT_LENGTH = 65536;
 const MAX_SUMMARY_LENGTH = 1024 * 1024; // 1MB limit for GitHub step summary
 const FILE_STATUSES = Object.freeze({
   ADDED: 'added',
@@ -66,13 +66,16 @@ export const resolveCommitSha = async (
   return sha;
 };
 
-export const truncateSummary = (content: string, maxLength: number): string => {
+export const truncateSummary = (
+  content: string,
+  maxLength: number,
+  // prettier-ignore
+  truncationMessage = '\n\n**Warning: Summary truncated due to GitHub\'s 1MB limit**',
+): string => {
   if (content.length <= maxLength) {
     return content;
   }
 
-  // prettier-ignore
-  const truncationMessage = '\n\n**Warning: Summary truncated due to GitHub\'s 1MB limit**';
   const messageLength = truncationMessage.length;
   // prettier-ignore
   const truncatedContent = content.substring(0, maxLength - messageLength - 100); // Leave some buffer
@@ -88,6 +91,21 @@ export const truncateSummary = (content: string, maxLength: number): string => {
   }
 
   return truncatedContent + truncationMessage;
+};
+
+// last-resort cut: a truncated comment beats a failed API call
+export const enforceCommentLength = (body: string): string => {
+  if (body.length <= MAX_COMMENT_LENGTH) {
+    return body;
+  }
+
+  // prettier-ignore
+  core.warning(`Comment body (${body.length} characters) was truncated to fit GitHub's ${MAX_COMMENT_LENGTH} character limit.`);
+  return truncateSummary(
+    body,
+    MAX_COMMENT_LENGTH,
+    `\n\n**Warning: Comment truncated due to GitHub's ${MAX_COMMENT_LENGTH} character limit**`,
+  );
 };
 
 // short notice shown in the comment in place of the dropped coverage report,
@@ -548,6 +566,8 @@ const main = async (): Promise<void> => {
     return;
   }
   const body = WATERMARK + finalHtml;
+  // the step summary allows up to 1MB, so only the comment paths get the cut
+  const commentBody = enforceCommentLength(body);
 
   const issue_number = payload.pull_request
     ? payload.pull_request.number
@@ -562,7 +582,7 @@ const main = async (): Promise<void> => {
         repo,
         owner,
         commit_sha: options.commit!,
-        body,
+        body: commentBody,
       });
     } catch (error) {
       handlePermissionError(error, context);
@@ -579,7 +599,7 @@ const main = async (): Promise<void> => {
           repo,
           owner,
           issue_number,
-          body,
+          body: commentBody,
         });
       } catch (error) {
         handlePermissionError(error, context);
@@ -590,7 +610,7 @@ const main = async (): Promise<void> => {
         repo,
         owner,
         issue_number,
-        body,
+        commentBody,
         WATERMARK,
         context,
       );
@@ -616,7 +636,7 @@ const main = async (): Promise<void> => {
             repo,
             owner,
             issue_number,
-            body,
+            body: commentBody,
           });
         } catch (error) {
           handlePermissionError(error, context);
@@ -627,7 +647,7 @@ const main = async (): Promise<void> => {
           repo,
           owner,
           issue_number,
-          body,
+          commentBody,
           WATERMARK,
           context,
         );
