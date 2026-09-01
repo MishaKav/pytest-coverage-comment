@@ -38,14 +38,14 @@
     "xml2js": "^0.6.2"
   },
   "devDependencies": {
-    "@types/node": "^26.1.2",
+    "@types/node": "^26.4.0",
     "@types/xml2js": "^0.4.14",
-    "@vercel/ncc": "^0.44.1",
-    "@vitest/coverage-v8": "^4.1.10",
-    "eslint": "^10.8.0",
+    "@vercel/ncc": "^0.45.0",
+    "@vitest/coverage-v8": "^4.1.11",
+    "eslint": "^10.9.1",
     "prettier": "^3.9.6",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.65.0",
+    "typescript-eslint": "^8.68.0",
     "vitest": "^4.1.10"
   },
   "prettier": {
