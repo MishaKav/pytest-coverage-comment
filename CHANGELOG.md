@@ -1,5 +1,13 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.12.2](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.12.2)
+
+**Release Date:** 2026-09-01
+
+#### Changes
+
+- bump dev dependencies: `@types/node` 26.4.0, `@vercel/ncc` 0.45.0, `@vitest/coverage-v8` 4.1.11, `vitest` 4.1.11, `eslint` 10.9.1, `typescript-eslint` 8.68.0 (#302)
+
 ## [Pytest Coverage Comment 1.12.1](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.12.1)
 
 **Release Date:** 2026-08-30
