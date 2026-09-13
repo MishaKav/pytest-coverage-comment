@@ -1,2 +1,5 @@
-patreon: MishaKav
-custom: ['paypal.me/MishaKav']
+# Funding links shown in the "Sponsor" button on the repository page.
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
+github: MishaKav
+buy_me_a_coffee: MishaKav
+custom: ['https://paypal.me/MishaKav']

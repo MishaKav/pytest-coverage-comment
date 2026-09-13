@@ -3,6 +3,8 @@
 ![License](https://img.shields.io/github/license/MishaKav/pytest-coverage-comment)
 ![Version](https://img.shields.io/github/package-json/v/MishaKav/pytest-coverage-comment)
 [![Wakatime](https://wakatime.com/badge/user/f838c8aa-c197-42f0-b335-cd1d26159dfd/project/b1e64a51-e518-4b91-bb00-189ffdd444c6.svg)](https://wakatime.com/badge/user/f838c8aa-c197-42f0-b335-cd1d26159dfd/project/b1e64a51-e518-4b91-bb00-189ffdd444c6)
+[![GitHub Sponsors](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/MishaKav)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-%E2%98%95-ffdd00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/MishaKav)
 
 A GitHub Action that adds pytest coverage reports as comments to your pull requests, helping you track and improve test coverage with visual feedback.
 
@@ -55,6 +57,7 @@ A GitHub Action that adds pytest coverage reports as comments to your pull reque
   - [🤝 Contributing](#-contributing)
     - [Development Setup](#development-setup)
   - [👥 Contributors](#-contributors)
+  - [💖 Support This Project](#-support-this-project)
   - [📄 License](#-license)
   - [🔗 Similar Actions](#-similar-actions)
 
@@ -832,6 +835,24 @@ npm run build
   <img src="https://contrib.rocks/image?repo=MishaKav/pytest-coverage-comment" alt="Contributors" />
 </a>
 
+## 💖 Support This Project
+
+This action is free and open source, maintained in my spare time. If it saves you time or you use it at work, consider supporting its development — every bit helps keep it maintained and improving.
+
+<div align="center">
+
+[![GitHub Sponsors](https://img.shields.io/badge/GitHub%20Sponsors-%E2%9D%A4%20Sponsor-ea4aaa?style=for-the-badge&logo=githubsponsors&logoColor=white)](https://github.com/sponsors/MishaKav)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-%E2%98%95-ffdd00?style=for-the-badge&logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/MishaKav)
+[![PayPal](https://img.shields.io/badge/PayPal-Donate-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://paypal.me/MishaKav)
+
+</div>
+
+- **[GitHub Sponsors](https://github.com/sponsors/MishaKav)** — monthly or one-time, right here on GitHub (works with company billing too)
+- **[Buy Me a Coffee](https://buymeacoffee.com/MishaKav)** — a quick one-off ☕ to say thanks
+- **[PayPal](https://paypal.me/MishaKav)** — direct one-time donation
+
+Not able to sponsor? A ⭐ on the repo, a [bug report](https://github.com/MishaKav/pytest-coverage-comment/issues), or sharing the action with your team helps just as much.
+
 ## 📄 License
 
 MIT © [Misha Kav](https://github.com/MishaKav)
@@ -847,6 +868,6 @@ Check out [jest-coverage-comment](https://github.com/marketplace/actions/jest-co
 
 <div align="center">
 
-**If you find this action helpful, please consider giving it a ⭐ on [GitHub](https://github.com/MishaKav/pytest-coverage-comment)!**
+**If you find this action helpful, please consider giving it a ⭐ on [GitHub](https://github.com/MishaKav/pytest-coverage-comment) or [buying me a coffee ☕](https://buymeacoffee.com/MishaKav)!**
 
 </div>
