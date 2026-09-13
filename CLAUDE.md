@@ -11,7 +11,7 @@ pytest-coverage-comment is a GitHub Action that comments on pull requests with p
 - Coverage thresholds for badge colors: 0-40% (red), 40-60% (orange), 60-80% (yellow), 80-90% (green), 90-100% (brightgreen)
 - Maximum comment length: 65,536 characters (GitHub limit)
 - Supports filtering to show only changed files in the current commit
-- Can skip files with 100% coverage from XML reports
+- Can skip files with 100% coverage from XML and JSON reports (the `xml-skip-covered` input applies to both)
 - Handles both absolute and relative file paths for coverage inputs
 - Coverage parser precedence (index.ts, cli.ts, multiFiles.ts): JSON > XML > TXT. multiFiles picks the parser by file extension (`.json`/`.xml`, else txt). JSON and XML expose `coverage` as a `TotalLine` object; TXT exposes it as a string
 - coverage.py JSON schema (from `coverage json`): top-level key is `totals` (not `summary`); per-file `summary.missing_lines` is a **count** while `file.missing_lines` is an **array**; `missing_branches` arcs are `[from, to]` pairs where a negative `to` means an exit arc (`from->exit`)
