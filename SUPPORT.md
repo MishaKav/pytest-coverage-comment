@@ -32,6 +32,16 @@ For security vulnerabilities, please follow the [Security Policy](SECURITY.md) a
 
 Interested in contributing? See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
+## Supporting the Project
+
+pytest-coverage-comment is free, open source, and maintained in spare time. If it's useful to you or your team, you can support its development:
+
+- **[GitHub Sponsors](https://github.com/sponsors/MishaKav)** — monthly or one-time sponsorship
+- **[Buy Me a Coffee](https://buymeacoffee.com/MishaKav)** — one-off thank-you
+- **[PayPal](https://paypal.me/MishaKav)** — direct donation
+
+Starring the repo and sharing it with others helps too.
+
 ---
 
 **Response time**: Issues are typically reviewed within a few days, though response times may vary.
