@@ -19,4 +19,7 @@ pytest-coverage-comment is a GitHub Action that comments on pull requests with p
 - `formatCoverPercent` (exported from parseXml.ts) is the shared rounding helper (caps 99.x→99, floors 0.x→1); JSON uses coverage.py's precomputed `percent_covered` so it never needs `computeCoverPercent`
 - xml2js `parseString` is used synchronously via callback pattern (not async)
 - `@actions/github` has ESM/CJS compatibility issues in test context — mock it with `vi.mock()` in tests
-- `@actions/core` v3+ and `@actions/github` v9+ are pure ESM — incompatible with ncc's webpack CJS bundling. Must stay on `@actions/core` v2.x and `@actions/github` v8.x until ncc supports ESM or the project switches bundlers
+- `@actions/core` v3+ and `@actions/github` v9+ are pure ESM (`exports` has only an `import` condition). ncc bundles them only because tsconfig uses `"module": "preserve"` + `"moduleResolution": "bundler"`, so TS keeps `import` statements and webpack resolves the `import` condition. With `"module": "commonjs"` the emitted `require()` can't resolve them and ncc **silently** leaves them out of `dist/index.js` (crashes at runtime with `Cannot find module`) — after a build, sanity-check that `dist/index.js` is ~1.5MB, not ~300KB
+- Pure-ESM `@actions/core` exports can't be spied on with `vi.spyOn` — `__tests__/setup.ts` replaces them via `vi.mock('@actions/core', importOriginal)` and exports `spyCore` (`vi.mocked` handles)
+- `vitest.config.mts` uses the `.mts` extension because the package is CJS (no `"type": "module"`); a `.ts` config triggers a Vite native-config-loader warning
+- TypeScript 7 (native Go compiler) is not usable yet: typescript-eslint peers on `<6.1.0` and ncc needs the classic TS JS API. Dependabot ignores TS majors
