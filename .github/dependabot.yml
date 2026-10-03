@@ -18,9 +18,12 @@ updates:
           - minor
           - patch
     ignore:
-      # v7+ is the native (Go) compiler without the JS API that
-      # typescript-eslint and @vercel/ncc rely on
-      - dependency-name: 'typescript'
+      # v3+ is pure ESM — incompatible with @vercel/ncc's CJS bundling
+      - dependency-name: '@actions/core'
+        update-types:
+          - version-update:semver-major
+      # v9+ is pure ESM — incompatible with @vercel/ncc's CJS bundling
+      - dependency-name: '@actions/github'
         update-types:
           - version-update:semver-major
 
