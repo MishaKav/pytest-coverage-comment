@@ -6,8 +6,8 @@
 
 #### Changes
 
-- bump dev dependencies: `vitest` 5.0.3, `@vitest/coverage-v8` 5.0.3, `@types/node` 26.6.4, `eslint` 10.12.0, `typescript-eslint` 8.71.0, `prettier` 3.9.9 (#309), closes #306, #307, #308
-- bump `undici` from 6.28.0 to 6.29.0 (#309), closes #305
+- bump dev dependencies: `vitest` 5.0.3, `@vitest/coverage-v8` 5.0.3, `@types/node` 26.6.4, `eslint` 10.12.0, `typescript-eslint` 8.71.0, `prettier` 3.9.9 (#309)
+- bump `undici` from 6.28.0 to 6.29.0 (#309)
 - bump `brace-expansion` from 5.0.8 to 5.0.12 (fixes four high severity DoS vulnerabilities) (#309)
 
 ## [Pytest Coverage Comment 1.12.2](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.12.2)
