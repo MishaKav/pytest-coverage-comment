@@ -20,3 +20,4 @@ pytest-coverage-comment is a GitHub Action that comments on pull requests with p
 - xml2js `parseString` is used synchronously via callback pattern (not async)
 - `@actions/github` has ESM/CJS compatibility issues in test context — mock it with `vi.mock()` in tests
 - `@actions/core` v3+ and `@actions/github` v9+ are pure ESM — incompatible with ncc's webpack CJS bundling. Must stay on `@actions/core` v2.x and `@actions/github` v8.x until ncc supports ESM or the project switches bundlers
+- `vitest.config.mts` uses the `.mts` extension because the package is CJS (no `"type": "module"`); a `.ts` config triggers a Vite native-config-loader warning under vitest 5
