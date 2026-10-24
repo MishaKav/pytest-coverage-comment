@@ -8,6 +8,7 @@ import {
   escapeHtml,
   escapeHtmlAttr,
   encodePath,
+  hasParentSegment,
 } from '../src/utils';
 import { spyCore } from './setup';
 
@@ -174,5 +175,16 @@ describe('encodePath', () => {
 
   test('should leave a plain path unchanged', () => {
     expect(encodePath('src/utils/helpers.py')).toBe('src/utils/helpers.py');
+  });
+});
+
+describe('hasParentSegment', () => {
+  test('should detect a .. segment', () => {
+    expect(hasParentSegment('../a/b.py')).toBe(true);
+    expect(hasParentSegment('a/../b.py')).toBe(true);
+  });
+
+  test('should allow regular paths', () => {
+    expect(hasParentSegment('src/..a/b..py')).toBe(false);
   });
 });

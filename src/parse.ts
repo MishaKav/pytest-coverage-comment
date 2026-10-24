@@ -409,6 +409,10 @@ const toTotalRow = (item: TotalLine, options: Options): string => {
   return `<tr><td><b>${escapeValue(name)}</b></td><td><b>${escapeValue(stmts)}</b></td><td><b>${escapeValue(miss)}</b></td>${branchTd}<td><b>${escapeValue(cover)}</b></td>${missingTd}</tr>`;
 };
 
+// link to a file of the report in the repo
+const toFileHref = (path: string, options: Options): string =>
+  `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${path}`;
+
 // make fileName cell - td
 const toFileNameTd = (
   item: CoverageLine,
@@ -416,7 +420,7 @@ const toFileNameTd = (
   options: Options,
 ): string => {
   const relative = item.name.replace(options.prefix, '');
-  const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}`;
+  const href = toFileHref(relative, options);
   const parts = relative.split('/');
   const last = parts[parts.length - 1];
   const space = indent ? '&nbsp; &nbsp;' : '';
@@ -452,7 +456,7 @@ const toMissingTd = (item: CoverageLine, options: Options): string => {
       // line and keep the arrow text as-is.
       if (range.includes('->')) {
         const [start] = range.split('->');
-        const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}#L${start}`;
+        const href = `${toFileHref(relative, options)}#L${start}`;
         // keep the arrow as coverage.py prints it, a bare `>` is safe in text
         const text = range.split('->').map(escapeValue).join('->');
         return options.removeLinksToLines
@@ -462,7 +466,7 @@ const toMissingTd = (item: CoverageLine, options: Options): string => {
 
       const [start, end = start] = range.split('-');
       const fragment = start === end ? `L${start}` : `L${start}-L${end}`;
-      const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}#${fragment}`;
+      const href = `${toFileHref(relative, options)}#${fragment}`;
       const text =
         start === end
           ? escapeValue(start)

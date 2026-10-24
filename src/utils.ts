@@ -48,6 +48,10 @@ export const escapeHtmlAttr = (text: string): string =>
 export const encodePath = (path: string): string =>
   path.split('/').map(encodeURIComponent).join('/');
 
+// a `..` segment would let a link leave the repo once the browser resolves it
+export const hasParentSegment = (path: string): boolean =>
+  path.split('/').includes('..');
+
 export const getContent = (filePath: string): string | null => {
   try {
     const fullFilePath = getPathToFile(filePath);
