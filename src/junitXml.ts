@@ -1,6 +1,12 @@
 import * as xml2js from 'xml2js';
 import * as core from '@actions/core';
-import { encodePath, escapeHtml, escapeHtmlAttr, getContent } from './utils';
+import {
+  encodePath,
+  escapeHtml,
+  escapeHtmlAttr,
+  getContent,
+  hasParentSegment,
+} from './utils';
 import type {
   Options,
   JUnitSummary,
@@ -376,7 +382,7 @@ const toTestName = (test: FailedTest, options: Options): string => {
   const cannotResolvePath =
     !relative ||
     (isAbsolutePath && ABSOLUTE_PATH_REGEX.test(relative)) ||
-    relative.split('/').includes('..');
+    hasParentSegment(relative);
 
   if (
     !options.repoUrl ||

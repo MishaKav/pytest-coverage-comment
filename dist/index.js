@@ -40077,7 +40077,7 @@ const toTestName = (test, options) => {
         : testFile;
     const cannotResolvePath = !relative ||
         (isAbsolutePath && ABSOLUTE_PATH_REGEX.test(relative)) ||
-        relative.split('/').includes('..');
+        (0, utils_1.hasParentSegment)(relative);
     if (!options.repoUrl ||
         !options.commit ||
         options.removeLinksToFiles ||
@@ -40668,10 +40668,12 @@ const toTotalRow = (item, options) => {
     // prettier-ignore
     return `<tr><td><b>${escapeValue(name)}</b></td><td><b>${escapeValue(stmts)}</b></td><td><b>${escapeValue(miss)}</b></td>${branchTd}<td><b>${escapeValue(cover)}</b></td>${missingTd}</tr>`;
 };
+// link to a file of the report in the repo
+const toFileHref = (path, options) => `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${path}`;
 // make fileName cell - td
 const toFileNameTd = (item, indent = false, options) => {
     const relative = item.name.replace(options.prefix, '');
-    const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}`;
+    const href = toFileHref(relative, options);
     const parts = relative.split('/');
     const last = parts[parts.length - 1];
     const space = indent ? '&nbsp; &nbsp;' : '';
@@ -40700,7 +40702,7 @@ const toMissingTd = (item, options) => {
         // line and keep the arrow text as-is.
         if (range.includes('->')) {
             const [start] = range.split('->');
-            const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}#L${start}`;
+            const href = `${toFileHref(relative, options)}#L${start}`;
             // keep the arrow as coverage.py prints it, a bare `>` is safe in text
             const text = range.split('->').map(escapeValue).join('->');
             return options.removeLinksToLines
@@ -40709,7 +40711,7 @@ const toMissingTd = (item, options) => {
         }
         const [start, end = start] = range.split('-');
         const fragment = start === end ? `L${start}` : `L${start}-L${end}`;
-        const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}#${fragment}`;
+        const href = `${toFileHref(relative, options)}#${fragment}`;
         const text = start === end
             ? escapeValue(start)
             : `${escapeValue(start)}&ndash;${escapeValue(end)}`;
@@ -41250,7 +41252,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getCoverageColor = exports.getContent = exports.encodePath = exports.escapeHtmlAttr = exports.escapeHtml = exports.getContentFile = exports.getPathToFile = void 0;
+exports.getCoverageColor = exports.getContent = exports.hasParentSegment = exports.encodePath = exports.escapeHtmlAttr = exports.escapeHtml = exports.getContentFile = exports.getPathToFile = void 0;
 const fs = __importStar(__nccwpck_require__(9896));
 const core = __importStar(__nccwpck_require__(7484));
 const getPathToFile = (pathToFile) => {
@@ -41290,6 +41292,9 @@ exports.escapeHtmlAttr = escapeHtmlAttr;
 // url-encode each segment of a repo path for use in a link
 const encodePath = (path) => path.split('/').map(encodeURIComponent).join('/');
 exports.encodePath = encodePath;
+// a `..` segment would let a link leave the repo once the browser resolves it
+const hasParentSegment = (path) => path.split('/').includes('..');
+exports.hasParentSegment = hasParentSegment;
 const getContent = (filePath) => {
     try {
         const fullFilePath = (0, exports.getPathToFile)(filePath);
