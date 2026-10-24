@@ -1,13 +1,5 @@
 # Changelog of the Pytest Coverage Comment
 
-## [Pytest Coverage Comment 1.12.5](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.12.5)
-
-**Release Date:** 2026-10-24
-
-#### Changes
-
-- escape report values in the coverage table and keep it out of markdown parsing, so a crafted coverage report can't inject HTML, markdown, links or a fake badge into the comment
-
 ## [Pytest Coverage Comment 1.12.4](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.12.4)
 
 **Release Date:** 2026-10-24
