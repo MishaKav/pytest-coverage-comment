@@ -40562,12 +40562,12 @@ const toHtml = (data, options, dataFromXml = null) => {
     if (!total) {
         return '';
     }
-    const color = (0, utils_1.getCoverageColor)(total.cover);
     const onlyChanged = reportOnlyChangedFiles ? '\u2022 ' : '';
     const readmeHref = `${options.repoUrl}/blob/${options.commit}/README.md`;
     // report values are untrusted (e.g. from a fork PR), only a number may
     // reach the badge, other text could fake its message or color
     const cover = /^\d+(\.\d+)?%?$/.test(total.cover) ? total.cover : '0';
+    const color = (0, utils_1.getCoverageColor)(cover);
     const badge = `<img alt="${badgeTitle}" src="https://img.shields.io/badge/${badgeTitle}-${cover}25-${color}.svg" />`;
     const badgeWithLink = removeLinkFromBadge
         ? badge

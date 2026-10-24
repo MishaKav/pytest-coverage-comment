@@ -420,4 +420,13 @@ describe('untrusted report values', () => {
 
     expect(html).not.toContain('badge/Coverage-approved');
   });
+
+  test('derives the badge color from the validated total', () => {
+    const html = toHtml(
+      report('src/a.py      10    2    80%   1-2', '99%evil'),
+      baseOptions,
+    );
+
+    expect(html).toContain('badge/Coverage-025-red.svg');
+  });
 });
