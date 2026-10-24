@@ -39926,12 +39926,8 @@ const getNotSuccessTest = (options) => {
     return initData;
 };
 exports.getNotSuccessTest = getNotSuccessTest;
-// escape characters that are unsafe inside generated html
-const escapeHtml = (text) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 // truncate text with ellipsis when it exceeds the given length
 const truncateText = (text, maxLength) => text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
-// encode url-reserved characters in each path segment, keep `/` separators
-const encodePath = (path) => path.split('/').map(encodeURIComponent).join('/');
 // extract texts from <failure> or <error> node.
 // xml2js parses a node without attributes to a plain string,
 // otherwise to `{ $: { message }, _: 'body text' }` (both parts optional)
@@ -40067,7 +40063,7 @@ const toTestName = (test, options) => {
     const hasClassnamePrefix = classname && name.startsWith(classname);
     const mainText = truncateText(classname || name, MAX_TEST_NAME_LENGTH);
     const restText = classname && name !== classname
-        ? ` › ${escapeHtml(truncateText(hasClassnamePrefix ? name.slice(classname.length).trim() : name, Math.max(0, MAX_TEST_NAME_LENGTH - mainText.length)))}`
+        ? ` › ${(0, utils_1.escapeHtml)(truncateText(hasClassnamePrefix ? name.slice(classname.length).trim() : name, Math.max(0, MAX_TEST_NAME_LENGTH - mainText.length)))}`
         : '';
     const testFile = test.file
         ?.replace(/^file:\/\/\/([A-Za-z]:\/)/, '$1')
@@ -40086,14 +40082,14 @@ const toTestName = (test, options) => {
         !options.commit ||
         options.removeLinksToFiles ||
         cannotResolvePath) {
-        return `<b>${escapeHtml(mainText)}</b>${restText}`;
+        return `<b>${(0, utils_1.escapeHtml)(mainText)}</b>${restText}`;
     }
     const linkPath = isAbsolutePath
-        ? encodePath(relative)
-        : `${options.pathPrefix}${encodePath(relative)}`;
+        ? (0, utils_1.encodePath)(relative)
+        : `${options.pathPrefix}${(0, utils_1.encodePath)(relative)}`;
     const anchor = test.line && !options.removeLinksToLines ? `#L${test.line}` : '';
-    const href = escapeHtml(`${options.repoUrl}/blob/${options.commit}/${linkPath}${anchor}`).replace(/"/g, '&quot;');
-    return `<a href="${href}">${escapeHtml(mainText)}</a>${restText}`;
+    const href = (0, utils_1.escapeHtmlAttr)(`${options.repoUrl}/blob/${options.commit}/${linkPath}${anchor}`);
+    return `<a href="${href}">${(0, utils_1.escapeHtml)(mainText)}</a>${restText}`;
 };
 // convert failed tests to collapsed html block
 const failedTestsToMarkdown = (failedTests, options, title, maxFailedTests = options.maxFailedTests) => {
@@ -40110,12 +40106,12 @@ const failedTestsToMarkdown = (failedTests, options, title, maxFailedTests = opt
         const stripped = stripTracebackNoise(test.message) || test.message.trim();
         const message = formatFailureMessage(stripped);
         const reason = extractShortReason(stripped);
-        return `<details><summary>${toTestName(test, options)} — <code>${escapeHtml(reason)}</code></summary>\n\n${messageToDiffBlock(message)}\n\n</details>`;
+        return `<details><summary>${toTestName(test, options)} — <code>${(0, utils_1.escapeHtml)(reason)}</code></summary>\n\n${messageToDiffBlock(message)}\n\n</details>`;
     });
     if (failedTests.length > maxFailedTests) {
         entries.push((0, exports.moreFailedTestsNote)(failedTests.length - maxFailedTests));
     }
-    return `<details><summary>${emoji}${escapeHtml(summaryTitle)} (<b>${failedTests.length}</b>)</summary>\n\n${entries.join('\n')}\n\n</details>`;
+    return `<details><summary>${emoji}${(0, utils_1.escapeHtml)(summaryTitle)} (<b>${failedTests.length}</b>)</summary>\n\n${entries.join('\n')}\n\n</details>`;
 };
 exports.failedTestsToMarkdown = failedTestsToMarkdown;
 // convert summary from junitxml to md
@@ -41236,7 +41232,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getCoverageColor = exports.getContent = exports.getContentFile = exports.getPathToFile = void 0;
+exports.getCoverageColor = exports.getContent = exports.encodePath = exports.escapeHtmlAttr = exports.escapeHtml = exports.getContentFile = exports.getPathToFile = void 0;
 const fs = __importStar(__nccwpck_require__(9896));
 const core = __importStar(__nccwpck_require__(7484));
 const getPathToFile = (pathToFile) => {
@@ -41267,6 +41263,15 @@ const getContentFile = (pathToFile) => {
     return content;
 };
 exports.getContentFile = getContentFile;
+// escape characters that are unsafe inside generated html
+const escapeHtml = (text) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+exports.escapeHtml = escapeHtml;
+// escape a value placed inside a double-quoted html attribute
+const escapeHtmlAttr = (text) => (0, exports.escapeHtml)(text).replace(/"/g, '&quot;');
+exports.escapeHtmlAttr = escapeHtmlAttr;
+// url-encode each segment of a repo path for use in a link
+const encodePath = (path) => path.split('/').map(encodeURIComponent).join('/');
+exports.encodePath = encodePath;
 const getContent = (filePath) => {
     try {
         const fullFilePath = (0, exports.getPathToFile)(filePath);
