@@ -1,6 +1,6 @@
 import * as xml2js from 'xml2js';
 import * as core from '@actions/core';
-import { getContent } from './utils';
+import { encodePath, escapeHtml, escapeHtmlAttr, getContent } from './utils';
 import type {
   Options,
   JUnitSummary,
@@ -177,17 +177,9 @@ export const getNotSuccessTest = (options: Options): NotSuccessTestInfo => {
   return initData;
 };
 
-// escape characters that are unsafe inside generated html
-const escapeHtml = (text: string): string =>
-  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
 // truncate text with ellipsis when it exceeds the given length
 const truncateText = (text: string, maxLength: number): string =>
   text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
-
-// encode url-reserved characters in each path segment, keep `/` separators
-const encodePath = (path: string): string =>
-  path.split('/').map(encodeURIComponent).join('/');
 
 // extract texts from <failure> or <error> node.
 // xml2js parses a node without attributes to a plain string,
@@ -400,9 +392,9 @@ const toTestName = (test: FailedTest, options: Options): string => {
     : `${options.pathPrefix}${encodePath(relative)}`;
   const anchor =
     test.line && !options.removeLinksToLines ? `#L${test.line}` : '';
-  const href = escapeHtml(
+  const href = escapeHtmlAttr(
     `${options.repoUrl}/blob/${options.commit}/${linkPath}${anchor}`,
-  ).replace(/"/g, '&quot;');
+  );
 
   return `<a href="${href}">${escapeHtml(mainText)}</a>${restText}`;
 };
