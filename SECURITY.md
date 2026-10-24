@@ -15,7 +15,7 @@ Instead, please use one of these methods:
    - Click "Report a vulnerability"
    - Fill out the form with details
 
-2. **Email**: Contact the maintainer directly through GitHub profile
+2. **Email**: [misha.kav@gmail.com](mailto:misha.kav@gmail.com)
 
 ### What to Include
 
