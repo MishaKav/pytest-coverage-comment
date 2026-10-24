@@ -40565,7 +40565,10 @@ const toHtml = (data, options, dataFromXml = null) => {
     const color = (0, utils_1.getCoverageColor)(total.cover);
     const onlyChanged = reportOnlyChangedFiles ? '\u2022 ' : '';
     const readmeHref = `${options.repoUrl}/blob/${options.commit}/README.md`;
-    const badge = `<img alt="${badgeTitle}" src="https://img.shields.io/badge/${badgeTitle}-${total.cover}25-${color}.svg" />`;
+    // report values are untrusted (e.g. from a fork PR), only a number may
+    // reach the badge, other text could fake its message or color
+    const cover = /^\d+(\.\d+)?%?$/.test(total.cover) ? total.cover : '0';
+    const badge = `<img alt="${badgeTitle}" src="https://img.shields.io/badge/${badgeTitle}-${cover}25-${color}.svg" />`;
     const badgeWithLink = removeLinkFromBadge
         ? badge
         : `<a href="${readmeHref}">${badge}</a>`;
@@ -40577,13 +40580,17 @@ const toHtml = (data, options, dataFromXml = null) => {
     const brpart = dataFromXml && total.brpart ? parseInt(total.brpart) : 0;
     const covered = stmts - miss + (branch - brpart);
     const totalCount = stmts + branch;
-    const textBadge = `${total.cover} (${covered}/${totalCount})`;
+    const textBadge = `${cover} (${covered}/${totalCount})`;
     const badgeContent = textInsteadBadge ? textBadge : badgeWithLink;
     const badgeHtml = hideBadge ? '' : badgeContent;
     const reportHtml = hideReport
         ? ''
         : `<details><summary>${title} ${onlyChanged}</summary>${table}</details>`;
-    return `${badgeHtml}${reportHtml}`;
+    // a line starting with <div> is an html block, so github doesn't parse
+    // markdown (links, autolinks, mentions syntax) inside the table cells
+    return reportHtml
+        ? `<div>${badgeHtml}${reportHtml}</div>`
+        : `${badgeHtml}${reportHtml}`;
 };
 exports.toHtml = toHtml;
 // make html table from coverage-file
@@ -40631,28 +40638,31 @@ const toHeadRow = (options) => {
     // prettier-ignore
     return `<tr><th>File</th><th>Stmts</th><th>Miss</th>${branchTh}<th>Cover</th>${missingTh}</tr>`;
 };
+// escape a report value for html text or attributes, a line break would
+// end the html block
+const escapeValue = (value) => (0, utils_1.escapeHtmlAttr)(String(value)).replace(/[\r\n]+/g, ' ');
 // make html row - tr
 const toRow = (item, indent = false, options) => {
     const { stmts, miss, cover } = item;
     const name = toFileNameTd(item, indent, options);
     const missing = toMissingTd(item, options);
     const branchTd = options.hasBranch
-        ? `<td>${item.branch || 0}</td><td>${item.brpart || 0}</td>`
+        ? `<td>${escapeValue(item.branch || 0)}</td><td>${escapeValue(item.brpart || 0)}</td>`
         : '';
     const missingTd = options.hasMissing ? `<td>${missing}</td>` : '';
     // prettier-ignore
-    return `<tr><td>${name}</td><td>${stmts}</td><td>${miss}</td>${branchTd}<td>${cover}</td>${missingTd}</tr>`;
+    return `<tr><td>${name}</td><td>${escapeValue(stmts)}</td><td>${escapeValue(miss)}</td>${branchTd}<td>${escapeValue(cover)}</td>${missingTd}</tr>`;
 };
 // make summary row - tr
 const toTotalRow = (item, options) => {
     const { name, stmts, miss, cover } = item;
     const branchTd = options.hasBranch
-        ? `<td><b>${item.branch || 0}</b></td>` +
-            `<td><b>${item.brpart || 0}</b></td>`
+        ? `<td><b>${escapeValue(item.branch || 0)}</b></td>` +
+            `<td><b>${escapeValue(item.brpart || 0)}</b></td>`
         : '';
     const missingTd = options.hasMissing ? '<td>&nbsp;</td>' : '';
     // prettier-ignore
-    return `<tr><td><b>${name}</b></td><td><b>${stmts}</b></td><td><b>${miss}</b></td>${branchTd}<td><b>${cover}</b></td>${missingTd}</tr>`;
+    return `<tr><td><b>${escapeValue(name)}</b></td><td><b>${escapeValue(stmts)}</b></td><td><b>${escapeValue(miss)}</b></td>${branchTd}<td><b>${escapeValue(cover)}</b></td>${missingTd}</tr>`;
 };
 // make fileName cell - td
 const toFileNameTd = (item, indent = false, options) => {
@@ -40661,10 +40671,10 @@ const toFileNameTd = (item, indent = false, options) => {
     const parts = relative.split('/');
     const last = parts[parts.length - 1];
     const space = indent ? '&nbsp; &nbsp;' : '';
-    const fileName = last.replace(/__/g, '\\_\\_');
+    const fileName = escapeValue(last).replace(/__/g, '\\_\\_');
     return options.removeLinksToFiles
         ? `${space}${fileName}`
-        : `${space}<a href="${href}">${fileName}</a>`;
+        : `${space}<a href="${escapeValue(href)}">${fileName}</a>`;
 };
 // make folder row - tr
 const toFolderTd = (path, options) => {
@@ -40672,7 +40682,7 @@ const toFolderTd = (path, options) => {
         return '';
     }
     const colspan = 4 + (options.hasBranch ? 2 : 0) + (options.hasMissing ? 1 : 0);
-    return `<tr><td colspan="${colspan}"><b>${path}</b></td></tr>`;
+    return `<tr><td colspan="${colspan}"><b>${escapeValue(path)}</b></td></tr>`;
 };
 // make missing cell - td
 const toMissingTd = (item, options) => {
@@ -40687,17 +40697,21 @@ const toMissingTd = (item, options) => {
         if (range.includes('->')) {
             const [start] = range.split('->');
             const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}#L${start}`;
+            // keep the arrow as coverage.py prints it, a bare `>` is safe in text
+            const text = range.split('->').map(escapeValue).join('->');
             return options.removeLinksToLines
-                ? range
-                : `<a href="${href}">${range}</a>`;
+                ? text
+                : `<a href="${escapeValue(href)}">${text}</a>`;
         }
         const [start, end = start] = range.split('-');
         const fragment = start === end ? `L${start}` : `L${start}-L${end}`;
         const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}#${fragment}`;
-        const text = start === end ? start : `${start}&ndash;${end}`;
+        const text = start === end
+            ? escapeValue(start)
+            : `${escapeValue(start)}&ndash;${escapeValue(end)}`;
         return options.removeLinksToLines
             ? text
-            : `<a href="${href}">${text}</a>`;
+            : `<a href="${escapeValue(href)}">${text}</a>`;
     })
         .join(', ');
 };

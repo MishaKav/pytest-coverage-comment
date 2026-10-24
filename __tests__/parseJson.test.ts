@@ -1,4 +1,6 @@
 import { expect, test, describe, beforeEach } from 'vitest';
+import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import { getCoverageJsonReport, exportedForTesting } from '../src/parseJson';
 import { spyCore } from './setup';
@@ -56,7 +58,10 @@ describe('getCoverageJsonReport', () => {
   });
 
   test('should return null for non-existent file', () => {
-    const options = { ...baseOptions, covJsonFile: '/nonexistent/coverage.json' };
+    const options = {
+      ...baseOptions,
+      covJsonFile: '/nonexistent/coverage.json',
+    };
     const result = getCoverageJsonReport(options);
     expect(result).toBeNull();
   });
@@ -188,5 +193,41 @@ describe('parseJson internals', () => {
       } as TotalsArg),
     ).toBeNull();
     expect(spyCore.warning).toHaveBeenCalled();
+  });
+});
+
+describe('untrusted report values', () => {
+  test('a line break in a file name cannot end the html block', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cov-json-'));
+    const covJsonFile = path.join(dir, 'coverage.json');
+    const summary = {
+      covered_lines: 0,
+      num_statements: 1,
+      percent_covered: 0,
+      missing_lines: 1,
+      excluded_lines: 0,
+    };
+    const file = {
+      executed_lines: [],
+      summary,
+      missing_lines: [1],
+      excluded_lines: [],
+    };
+    fs.writeFileSync(
+      covJsonFile,
+      JSON.stringify({
+        files: { 'src/a\n\n# approved.py': file },
+        totals: summary,
+      }),
+    );
+
+    try {
+      const result = getCoverageJsonReport({ ...baseOptions, covJsonFile });
+
+      expect(result!.html).not.toMatch(/[\r\n]/);
+      expect(result!.html).toContain('a # approved.py');
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

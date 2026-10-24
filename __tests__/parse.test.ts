@@ -383,3 +383,41 @@ describe('parse', () => {
     expect(result![0]).toHaveProperty('cover');
   });
 });
+
+describe('untrusted report values', () => {
+  // minimal pytest-cov text report with one file row
+  const report = (row: string, total = '80%'): string =>
+    [
+      '----------- coverage: platform linux, python 3.8.3-final-0 -----------',
+      'Name                          Stmts   Miss  Cover   Missing',
+      '-----------------------------------------------------------',
+      row,
+      '-----------------------------------------------------------',
+      `TOTAL                            10      2    ${total}`,
+    ].join('\n');
+
+  test('escapes html and keeps the table in a markdown-free html block', () => {
+    const html = toHtml(
+      report(
+        'src/<img src=x onerror=alert(1)>"[a](evil).py      10    2    80%   1-2',
+      ),
+      baseOptions,
+    );
+
+    expect(html.startsWith('<div>')).toBe(true);
+    expect(html).not.toContain('<img src=x');
+    expect(html).toContain(
+      '&lt;img src=x onerror=alert(1)&gt;&quot;[a](evil).py</a>',
+    );
+    expect(html).not.toContain('"[a](evil)');
+  });
+
+  test('only puts a numeric total into the badge', () => {
+    const html = toHtml(
+      report('src/a.py      10    2    80%   1-2', 'approved-brightgreen.svg?'),
+      baseOptions,
+    );
+
+    expect(html).not.toContain('badge/Coverage-approved');
+  });
+});
