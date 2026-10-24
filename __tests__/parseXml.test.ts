@@ -1,4 +1,6 @@
 import { expect, test, describe, beforeEach } from 'vitest';
+import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import { getCoverageXmlReport } from '../src/parseXml';
 import { spyCore } from './setup';
@@ -147,5 +149,35 @@ describe('getCoverageXmlReport', () => {
     expect(result).not.toBeNull();
     expect(result!.html).toContain('img.shields.io/badge');
     expect(result!.html).not.toContain('<details>');
+  });
+});
+
+describe('html escaping of report values', () => {
+  test('escapes a malicious class filename from a coverage xml', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cov-xml-'));
+    const covXmlFile = path.join(dir, 'coverage.xml');
+    fs.writeFileSync(
+      covXmlFile,
+      `<?xml version="1.0"?>
+<coverage lines-valid="1" lines-covered="0">
+  <packages><package><classes>
+    <class filename='a"&gt;&lt;/a&gt;&lt;h1&gt;approved&lt;/h1&gt;&lt;a href="https://evil.example/x.py'>
+      <lines><line number="1" hits="0"/></lines>
+    </class>
+  </classes></package></packages>
+</coverage>`,
+    );
+
+    let result;
+    try {
+      result = getCoverageXmlReport({ ...baseOptions, covXmlFile });
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+
+    expect(result).not.toBeNull();
+    expect(result!.html).not.toContain('<h1>');
+    expect(result!.html).not.toContain('<a href="https://evil.example');
+    expect(result!.html).toContain('&lt;h1&gt;approved&lt;/h1&gt;');
   });
 });

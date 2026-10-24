@@ -1,5 +1,16 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.12.4](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.12.4)
+
+**Release Date:** 2026-10-24
+
+#### Changes
+
+- escape file names, folder paths and report values in the coverage table, so a crafted coverage report can't inject HTML or markdown links into the comment
+- url-encode file paths in coverage table links and strip the workspace prefix from missing-line links
+- bump dev dependencies: `vitest` 5.0.5, `@vitest/coverage-v8` 5.0.5, `@types/node` 26.6.5, `eslint` 10.13.0, `typescript-eslint` 8.72.0, `prettier` 3.9.10, `vite` 8.3.5
+- bump `undici` from 6.29.0 to 6.29.1 (fixes two high severity vulnerabilities)
+
 ## [Pytest Coverage Comment 1.12.3](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.12.3)
 
 **Release Date:** 2026-10-03

@@ -1,5 +1,12 @@
 import * as core from '@actions/core';
-import { getPathToFile, getContentFile, getCoverageColor } from './utils';
+import {
+  getPathToFile,
+  getContentFile,
+  getCoverageColor,
+  escapeHtmlAttr,
+  escapeMarkdownText,
+  encodePath,
+} from './utils';
 import type {
   Options,
   CoverageLine,
@@ -260,7 +267,9 @@ export const toHtml = (
   const color = getCoverageColor(total.cover);
   const onlyChanged = reportOnlyChangedFiles ? '\u2022 ' : '';
   const readmeHref = `${options.repoUrl}/blob/${options.commit}/README.md`;
-  const badge = `<img alt="${badgeTitle}" src="https://img.shields.io/badge/${badgeTitle}-${total.cover}25-${color}.svg" />`;
+  // report values are untrusted (e.g. a fork PR), escape before rendering
+  const cover = escapeHtmlAttr(total.cover);
+  const badge = `<img alt="${badgeTitle}" src="https://img.shields.io/badge/${badgeTitle}-${cover}25-${color}.svg" />`;
   const badgeWithLink = removeLinkFromBadge
     ? badge
     : `<a href="${readmeHref}">${badge}</a>`;
@@ -274,7 +283,7 @@ export const toHtml = (
   const brpart = dataFromXml && total.brpart ? parseInt(total.brpart) : 0;
   const covered = stmts - miss + (branch - brpart);
   const totalCount = stmts + branch;
-  const textBadge = `${total.cover} (${covered}/${totalCount})`;
+  const textBadge = `${escapeMarkdownText(total.cover)} (${covered}/${totalCount})`;
   const badgeContent = textInsteadBadge ? textBadge : badgeWithLink;
   const badgeHtml = hideBadge ? '' : badgeContent;
   const reportHtml = hideReport
@@ -353,36 +362,36 @@ const toHeadRow = (options: Options): string => {
   return `<tr><th>File</th><th>Stmts</th><th>Miss</th>${branchTh}<th>Cover</th>${missingTh}</tr>`;
 };
 
+// escaped text of a table cell, report values are untrusted
+const cell = (value: string | number | undefined): string =>
+  escapeMarkdownText(String(value ?? 0));
+
 // make html row - tr
 const toRow = (
   item: CoverageLine,
   indent: boolean = false,
   options: Options,
 ): string => {
-  const { stmts, miss, cover } = item;
-
   const name = toFileNameTd(item, indent, options);
   const missing = toMissingTd(item, options);
   const branchTd = options.hasBranch
-    ? `<td>${item.branch || 0}</td><td>${item.brpart || 0}</td>`
+    ? `<td>${cell(item.branch || 0)}</td><td>${cell(item.brpart || 0)}</td>`
     : '';
   const missingTd = options.hasMissing ? `<td>${missing}</td>` : '';
 
   // prettier-ignore
-  return `<tr><td>${name}</td><td>${stmts}</td><td>${miss}</td>${branchTd}<td>${cover}</td>${missingTd}</tr>`;
+  return `<tr><td>${name}</td><td>${cell(item.stmts)}</td><td>${cell(item.miss)}</td>${branchTd}<td>${cell(item.cover)}</td>${missingTd}</tr>`;
 };
 
 // make summary row - tr
 const toTotalRow = (item: TotalLine, options: Options): string => {
-  const { name, stmts, miss, cover } = item;
   const branchTd = options.hasBranch
-    ? `<td><b>${item.branch || 0}</b></td>` +
-      `<td><b>${item.brpart || 0}</b></td>`
+    ? `<td><b>${cell(item.branch || 0)}</b></td><td><b>${cell(item.brpart || 0)}</b></td>`
     : '';
   const missingTd = options.hasMissing ? '<td>&nbsp;</td>' : '';
 
   // prettier-ignore
-  return `<tr><td><b>${name}</b></td><td><b>${stmts}</b></td><td><b>${miss}</b></td>${branchTd}<td><b>${cover}</b></td>${missingTd}</tr>`;
+  return `<tr><td><b>${cell(item.name)}</b></td><td><b>${cell(item.stmts)}</b></td><td><b>${cell(item.miss)}</b></td>${branchTd}<td><b>${cell(item.cover)}</b></td>${missingTd}</tr>`;
 };
 
 // make fileName cell - td
@@ -392,15 +401,15 @@ const toFileNameTd = (
   options: Options,
 ): string => {
   const relative = item.name.replace(options.prefix, '');
-  const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}`;
+  const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${encodePath(relative)}`;
   const parts = relative.split('/');
   const last = parts[parts.length - 1];
   const space = indent ? '&nbsp; &nbsp;' : '';
-  const fileName = last.replace(/__/g, '\\_\\_');
+  const fileName = escapeMarkdownText(last).replace(/__/g, '\\_\\_');
 
   return options.removeLinksToFiles
     ? `${space}${fileName}`
-    : `${space}<a href="${href}">${fileName}</a>`;
+    : `${space}<a href="${escapeHtmlAttr(href)}">${fileName}</a>`;
 };
 
 // make folder row - tr
@@ -411,7 +420,7 @@ const toFolderTd = (path: string, options: Options): string => {
 
   const colspan =
     4 + (options.hasBranch ? 2 : 0) + (options.hasMissing ? 1 : 0);
-  return `<tr><td colspan="${colspan}"><b>${path}</b></td></tr>`;
+  return `<tr><td colspan="${colspan}"><b>${escapeMarkdownText(path)}</b></td></tr>`;
 };
 
 // make missing cell - td
@@ -420,28 +429,33 @@ const toMissingTd = (item: CoverageLine, options: Options): string => {
     return '&nbsp;';
   }
 
+  const relative = encodePath(item.name.replace(options.prefix, ''));
+  const fileHref = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}`;
+
   return item.missing
     .map((range) => {
-      const relative = item.name;
+      let fragment: string;
+      let text: string;
 
       // Partial branch, e.g. `158->182` or `158->exit`: link to the source
       // line and keep the arrow text as-is.
       if (range.includes('->')) {
-        const [start] = range.split('->');
-        const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}#L${start}`;
-        return options.removeLinksToLines
-          ? range
-          : `<a href="${href}">${range}</a>`;
+        const parts = range.split('->');
+        fragment = `L${parts[0]}`;
+        // a bare `>` is safe in text, keep the arrow as coverage.py prints it
+        text = parts.map(escapeMarkdownText).join('->');
+      } else {
+        const [start, end = start] = range.split('-');
+        fragment = start === end ? `L${start}` : `L${start}-L${end}`;
+        text =
+          start === end
+            ? escapeMarkdownText(start)
+            : `${escapeMarkdownText(start)}&ndash;${escapeMarkdownText(end)}`;
       }
-
-      const [start, end = start] = range.split('-');
-      const fragment = start === end ? `L${start}` : `L${start}-L${end}`;
-      const href = `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${relative}#${fragment}`;
-      const text = start === end ? start : `${start}&ndash;${end}`;
 
       return options.removeLinksToLines
         ? text
-        : `<a href="${href}">${text}</a>`;
+        : `<a href="${escapeHtmlAttr(`${fileHref}#${fragment}`)}">${text}</a>`;
     })
     .join(', ');
 };

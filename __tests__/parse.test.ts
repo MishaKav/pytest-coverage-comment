@@ -383,3 +383,59 @@ describe('parse', () => {
     expect(result![0]).toHaveProperty('cover');
   });
 });
+
+describe('html escaping of report values', () => {
+  // minimal pytest-cov text report with one file row
+  const report = (row: string, total = '80%'): string =>
+    [
+      '----------- coverage: platform linux, python 3.8.3-final-0 -----------',
+      'Name                          Stmts   Miss  Cover   Missing',
+      '-----------------------------------------------------------',
+      row,
+      '-----------------------------------------------------------',
+      `TOTAL                            10      2    ${total}`,
+    ].join('\n');
+  const evilName = 'evil"><b>x</b>/<h1>pwned</h1>.py';
+  const content = report(`${evilName}      10    2    80%   1-2, 5<i>x</i>`);
+
+  test('escapes file names, folders and missing ranges from a text report', () => {
+    const html = toHtml(content, baseOptions);
+
+    expect(html).not.toContain('<h1>');
+    expect(html).not.toContain('<b>x</b>');
+    expect(html).not.toContain('<i>');
+    expect(html).toContain('>h1&gt;.py</a>');
+    expect(html).toContain(
+      '<b>evil"&gt;&lt;b&gt;x&lt;/b&gt;/&lt;h1&gt;pwned&lt;</b>',
+    );
+    // the link target is url-encoded and stays inside its attribute
+    expect(html).toContain('/blob/abc123/evil%22%3E%3Cb%3Ex%3C/b%3E/');
+    expect(html).toContain('5&lt;i&gt;x&lt;/i&gt;');
+  });
+
+  test('neutralizes markdown link syntax and table pipes', () => {
+    const mdContent = report(
+      '[approved](evil.example).py           10    2    80%   1-2',
+      '80%|x',
+    );
+    const html = toHtml(mdContent, {
+      ...baseOptions,
+      textInsteadBadge: true,
+    });
+
+    expect(html).not.toContain('[approved]');
+    expect(html).toContain('>&#91;approved&#93;(evil.example).py</a>');
+    expect(html).not.toContain('80%|x');
+    expect(html).toContain('80%&#124;x');
+  });
+
+  test('strips the workspace prefix from missing-line links', () => {
+    const absContent = report(
+      '/ws/src/a.py                     10    2    80%   1-2',
+    );
+    const html = toHtml(absContent, { ...baseOptions, prefix: '/ws/' });
+
+    expect(html).toContain('/blob/abc123/src/a.py#L1-L2');
+    expect(html).not.toContain('/blob/abc123//ws/');
+  });
+});

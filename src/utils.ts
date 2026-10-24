@@ -36,6 +36,24 @@ export const getContentFile = (pathToFile: string | null): string | null => {
   return content;
 };
 
+// escape characters that are unsafe inside generated html
+export const escapeHtml = (text: string): string =>
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+// escape a value placed inside a double-quoted html attribute
+export const escapeHtmlAttr = (text: string): string =>
+  escapeHtml(text).replace(/"/g, '&quot;');
+
+// escape text that github also renders as markdown (the coverage table sits
+// in a markdown paragraph or table cell): besides html, neutralize link and
+// image syntax and table pipes. markdown ignores entities for structure
+export const escapeMarkdownText = (text: string): string =>
+  escapeHtml(text).replace(/[[\]|]/g, (c) => `&#${c.charCodeAt(0)};`);
+
+// url-encode each segment of a repo path for use in a link
+export const encodePath = (path: string): string =>
+  path.split('/').map(encodeURIComponent).join('/');
+
 export const getContent = (filePath: string): string | null => {
   try {
     const fullFilePath = getPathToFile(filePath);

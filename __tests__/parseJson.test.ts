@@ -1,4 +1,6 @@
 import { expect, test, describe, beforeEach } from 'vitest';
+import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import { getCoverageJsonReport, exportedForTesting } from '../src/parseJson';
 import { spyCore } from './setup';
@@ -188,5 +190,45 @@ describe('parseJson internals', () => {
       } as TotalsArg),
     ).toBeNull();
     expect(spyCore.warning).toHaveBeenCalled();
+  });
+});
+
+describe('html escaping of report values', () => {
+  test('escapes a malicious file key from a coverage json', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cov-json-'));
+    const covJsonFile = path.join(dir, 'coverage.json');
+    const summary = {
+      covered_lines: 0,
+      num_statements: 1,
+      percent_covered: 0,
+      missing_lines: 1,
+      excluded_lines: 0,
+    };
+    fs.writeFileSync(
+      covJsonFile,
+      JSON.stringify({
+        meta: { version: '7.6.1' },
+        files: {
+          'src/<img src=x onerror=alert(1)>.py': {
+            executed_lines: [],
+            summary,
+            missing_lines: [1],
+            excluded_lines: [],
+          },
+        },
+        totals: summary,
+      }),
+    );
+
+    let result;
+    try {
+      result = getCoverageJsonReport({ ...baseOptions, covJsonFile });
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+
+    expect(result).not.toBeNull();
+    expect(result!.html).not.toContain('<img src=x');
+    expect(result!.html).toContain('&lt;img src=x onerror=alert(1)&gt;.py');
   });
 });
