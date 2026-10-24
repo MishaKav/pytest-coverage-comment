@@ -40540,7 +40540,8 @@ const parse = (data) => {
 };
 // collapse all lines to folders structure
 const makeFolders = (coverage, options) => {
-    const folders = {};
+    // no prototype, a folder named e.g. `constructor` must not hit Object members
+    const folders = Object.create(null);
     for (const line of coverage) {
         const parts = line.name.replace(options.prefix, '').split('/');
         const folder = parts.slice(0, -1).join('/');
@@ -40668,17 +40669,25 @@ const toTotalRow = (item, options) => {
     // prettier-ignore
     return `<tr><td><b>${escapeValue(name)}</b></td><td><b>${escapeValue(stmts)}</b></td><td><b>${escapeValue(miss)}</b></td>${branchTd}<td><b>${escapeValue(cover)}</b></td>${missingTd}</tr>`;
 };
-// link to a file of the report in the repo
-const toFileHref = (path, options) => `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${path}`;
+// link to a file of the report in the repo, null when it can't be linked safely
+const toFileHref = (name, options) => {
+    // windows reports use `\`, browsers treat it as `/` in links
+    const relative = name
+        .replace(/\\/g, '/')
+        .replace(options.prefix.replace(/\\/g, '/'), '');
+    return (0, utils_1.hasParentSegment)(relative)
+        ? null
+        : `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${(0, utils_1.encodePath)(relative)}`;
+};
 // make fileName cell - td
 const toFileNameTd = (item, indent = false, options) => {
     const relative = item.name.replace(options.prefix, '');
-    const href = toFileHref(relative, options);
+    const href = toFileHref(item.name, options);
     const parts = relative.split('/');
     const last = parts[parts.length - 1];
     const space = indent ? '&nbsp; &nbsp;' : '';
     const fileName = escapeValue(last);
-    return options.removeLinksToFiles
+    return options.removeLinksToFiles || !href
         ? `${space}${fileName}`
         : `${space}<a href="${escapeValue(href)}">${fileName}</a>`;
 };
@@ -40695,29 +40704,28 @@ const toMissingTd = (item, options) => {
     if (!item.missing || !item.missing.length) {
         return '&nbsp;';
     }
+    const fileHref = toFileHref(item.name, options);
+    const removeLinks = options.removeLinksToLines || !fileHref;
     return item.missing
         .map((range) => {
-        const relative = item.name;
         // Partial branch, e.g. `158->182` or `158->exit`: link to the source
         // line and keep the arrow text as-is.
         if (range.includes('->')) {
             const [start] = range.split('->');
-            const href = `${toFileHref(relative, options)}#L${start}`;
+            const href = `${fileHref}#L${start}`;
             // keep the arrow as coverage.py prints it, a bare `>` is safe in text
             const text = range.split('->').map(escapeValue).join('->');
-            return options.removeLinksToLines
+            return removeLinks
                 ? text
                 : `<a href="${escapeValue(href)}">${text}</a>`;
         }
         const [start, end = start] = range.split('-');
         const fragment = start === end ? `L${start}` : `L${start}-L${end}`;
-        const href = `${toFileHref(relative, options)}#${fragment}`;
+        const href = `${fileHref}#${fragment}`;
         const text = start === end
             ? escapeValue(start)
             : `${escapeValue(start)}&ndash;${escapeValue(end)}`;
-        return options.removeLinksToLines
-            ? text
-            : `<a href="${escapeValue(href)}">${text}</a>`;
+        return removeLinks ? text : `<a href="${escapeValue(href)}">${text}</a>`;
     })
         .join(', ');
 };
@@ -41290,7 +41298,11 @@ exports.escapeHtml = escapeHtml;
 const escapeHtmlAttr = (text) => (0, exports.escapeHtml)(text).replace(/"/g, '&quot;');
 exports.escapeHtmlAttr = escapeHtmlAttr;
 // url-encode each segment of a repo path for use in a link
-const encodePath = (path) => path.split('/').map(encodeURIComponent).join('/');
+// (toWellFormed: a lone utf-16 surrogate makes encodeURIComponent throw)
+const encodePath = (path) => path
+    .split('/')
+    .map((segment) => encodeURIComponent(segment.toWellFormed()))
+    .join('/');
 exports.encodePath = encodePath;
 // a `..` segment would let a link leave the repo once the browser resolves it
 const hasParentSegment = (path) => path.split('/').includes('..');

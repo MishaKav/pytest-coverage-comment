@@ -4,6 +4,8 @@ import {
   getContentFile,
   getCoverageColor,
   escapeHtmlAttr,
+  encodePath,
+  hasParentSegment,
 } from './utils';
 import type {
   Options,
@@ -220,7 +222,8 @@ const makeFolders = (
   coverage: CoverageLine[],
   options: Options,
 ): Record<string, CoverageLine[]> => {
-  const folders: Record<string, CoverageLine[]> = {};
+  // no prototype, a folder named e.g. `constructor` must not hit Object members
+  const folders: Record<string, CoverageLine[]> = Object.create(null);
 
   for (const line of coverage) {
     const parts = line.name.replace(options.prefix, '').split('/');
@@ -409,9 +412,17 @@ const toTotalRow = (item: TotalLine, options: Options): string => {
   return `<tr><td><b>${escapeValue(name)}</b></td><td><b>${escapeValue(stmts)}</b></td><td><b>${escapeValue(miss)}</b></td>${branchTd}<td><b>${escapeValue(cover)}</b></td>${missingTd}</tr>`;
 };
 
-// link to a file of the report in the repo
-const toFileHref = (path: string, options: Options): string =>
-  `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${path}`;
+// link to a file of the report in the repo, null when it can't be linked safely
+const toFileHref = (name: string, options: Options): string | null => {
+  // windows reports use `\`, browsers treat it as `/` in links
+  const relative = name
+    .replace(/\\/g, '/')
+    .replace(options.prefix.replace(/\\/g, '/'), '');
+
+  return hasParentSegment(relative)
+    ? null
+    : `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${encodePath(relative)}`;
+};
 
 // make fileName cell - td
 const toFileNameTd = (
@@ -420,13 +431,13 @@ const toFileNameTd = (
   options: Options,
 ): string => {
   const relative = item.name.replace(options.prefix, '');
-  const href = toFileHref(relative, options);
+  const href = toFileHref(item.name, options);
   const parts = relative.split('/');
   const last = parts[parts.length - 1];
   const space = indent ? '&nbsp; &nbsp;' : '';
   const fileName = escapeValue(last);
 
-  return options.removeLinksToFiles
+  return options.removeLinksToFiles || !href
     ? `${space}${fileName}`
     : `${space}<a href="${escapeValue(href)}">${fileName}</a>`;
 };
@@ -448,33 +459,32 @@ const toMissingTd = (item: CoverageLine, options: Options): string => {
     return '&nbsp;';
   }
 
+  const fileHref = toFileHref(item.name, options);
+  const removeLinks = options.removeLinksToLines || !fileHref;
+
   return item.missing
     .map((range) => {
-      const relative = item.name;
-
       // Partial branch, e.g. `158->182` or `158->exit`: link to the source
       // line and keep the arrow text as-is.
       if (range.includes('->')) {
         const [start] = range.split('->');
-        const href = `${toFileHref(relative, options)}#L${start}`;
+        const href = `${fileHref}#L${start}`;
         // keep the arrow as coverage.py prints it, a bare `>` is safe in text
         const text = range.split('->').map(escapeValue).join('->');
-        return options.removeLinksToLines
+        return removeLinks
           ? text
           : `<a href="${escapeValue(href)}">${text}</a>`;
       }
 
       const [start, end = start] = range.split('-');
       const fragment = start === end ? `L${start}` : `L${start}-L${end}`;
-      const href = `${toFileHref(relative, options)}#${fragment}`;
+      const href = `${fileHref}#${fragment}`;
       const text =
         start === end
           ? escapeValue(start)
           : `${escapeValue(start)}&ndash;${escapeValue(end)}`;
 
-      return options.removeLinksToLines
-        ? text
-        : `<a href="${escapeValue(href)}">${text}</a>`;
+      return removeLinks ? text : `<a href="${escapeValue(href)}">${text}</a>`;
     })
     .join(', ');
 };
