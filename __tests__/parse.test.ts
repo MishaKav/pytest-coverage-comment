@@ -1,4 +1,6 @@
 import { expect, test, describe, beforeEach } from 'vitest';
+import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import { getCoverageReport, toHtml, exportedForTesting } from '../src/parse';
 import { getContentFile } from '../src/utils';
@@ -381,5 +383,76 @@ describe('parse', () => {
     expect(result![0]).toHaveProperty('stmts');
     expect(result![0]).toHaveProperty('miss');
     expect(result![0]).toHaveProperty('cover');
+  });
+});
+
+describe('untrusted report values', () => {
+  // minimal pytest-cov text report with one file row
+  const report = (row: string, total = '80%'): string =>
+    [
+      '----------- coverage: platform linux, python 3.8.3-final-0 -----------',
+      'Name                          Stmts   Miss  Cover   Missing',
+      '-----------------------------------------------------------',
+      row,
+      '-----------------------------------------------------------',
+      `TOTAL                            10      2    ${total}`,
+    ].join('\n');
+
+  test('escapes html and keeps the table in a markdown-free html block', () => {
+    const html = toHtml(
+      report(
+        'src/<img src=x onerror=alert(1)>"[a](evil).py      10    2    80%   1-2',
+      ),
+      baseOptions,
+    );
+
+    expect(html.startsWith('<!-- pytest-coverage-comment -->')).toBe(true);
+    expect(html).not.toContain('<img src=x');
+    expect(html).toContain(
+      '&lt;img src=x onerror=alert(1)&gt;&quot;[a](evil).py</a>',
+    );
+    expect(html).not.toContain('"[a](evil)');
+  });
+
+  test('only puts a numeric total into the badge', () => {
+    const html = toHtml(
+      report('src/a.py      10    2    80%   1-2', 'approved-brightgreen.svg?'),
+      baseOptions,
+    );
+
+    expect(html).not.toContain('badge/Coverage-approved');
+  });
+
+  test('derives the badge color from the validated total', () => {
+    const html = toHtml(
+      report('src/a.py      10    2    80%   1-2', '99%evil'),
+      baseOptions,
+    );
+
+    expect(html).toContain('badge/Coverage-025-red.svg');
+  });
+
+  test('exports the color of the validated total', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cov-txt-'));
+    const covFile = path.join(dir, 'coverage.txt');
+    fs.writeFileSync(
+      covFile,
+      report('src/a.py      10    2    80%   1-2', '99%evil'),
+    );
+
+    try {
+      expect(getCoverageReport({ ...baseOptions, covFile }).color).toBe('red');
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('shows dunder file names as is, markdown is not parsed in the block', () => {
+    const html = toHtml(
+      report('src/__init__.py      10    2    80%   1-2'),
+      baseOptions,
+    );
+
+    expect(html).toContain('>__init__.py</a>');
   });
 });
