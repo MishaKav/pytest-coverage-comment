@@ -176,6 +176,10 @@ describe('encodePath', () => {
   test('should leave a plain path unchanged', () => {
     expect(encodePath('src/utils/helpers.py')).toBe('src/utils/helpers.py');
   });
+
+  test('should not throw on a lone surrogate', () => {
+    expect(encodePath('src/\ud800.py')).toBe('src/%EF%BF%BD.py');
+  });
 });
 
 describe('hasParentSegment', () => {

@@ -414,6 +414,49 @@ describe('untrusted report values', () => {
     expect(html).not.toContain('"[a](evil)');
   });
 
+  test('does not link paths that leave the repo with ..', () => {
+    const html = toHtml(
+      report('../../attacker/repo/blob/main/x.py      10    2    80%   1-2'),
+      baseOptions,
+    );
+
+    expect(html).not.toMatch(/<a href="[^"]*">x\.py<\/a>/);
+    expect(html).not.toMatch(/<a href="[^"]*">1&ndash;2<\/a>/);
+    expect(html).toContain('<td>1&ndash;2</td>');
+  });
+
+  test('links windows paths with forward slashes and checks them for ..', () => {
+    const html = toHtml(
+      report('src\\a.py      10    2    80%   1-2'),
+      baseOptions,
+    );
+    const unsafe = toHtml(
+      report('..\\..\\x.py      10    2    80%   1-2'),
+      baseOptions,
+    );
+
+    expect(html).toContain('/blob/abc123/src/a.py#L1-L2');
+    expect(unsafe).not.toMatch(/<a href="[^"]*">1&ndash;2<\/a>/);
+  });
+
+  test('strips the workspace prefix from missing-line links', () => {
+    const html = toHtml(report('/ws/src/a.py      10    2    80%   1-2'), {
+      ...baseOptions,
+      prefix: '/ws/',
+    });
+
+    expect(html).toContain('/blob/abc123/src/a.py#L1-L2');
+  });
+
+  test('handles a folder named like an Object member', () => {
+    const html = toHtml(
+      report('constructor/a.py      10    2    80%   1-2'),
+      baseOptions,
+    );
+
+    expect(html).toContain('<b>constructor</b>');
+  });
+
   test('only puts a numeric total into the badge', () => {
     const html = toHtml(
       report('src/a.py      10    2    80%   1-2', 'approved-brightgreen.svg?'),

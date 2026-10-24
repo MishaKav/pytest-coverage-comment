@@ -45,8 +45,12 @@ export const escapeHtmlAttr = (text: string): string =>
   escapeHtml(text).replace(/"/g, '&quot;');
 
 // url-encode each segment of a repo path for use in a link
+// (toWellFormed: a lone utf-16 surrogate makes encodeURIComponent throw)
 export const encodePath = (path: string): string =>
-  path.split('/').map(encodeURIComponent).join('/');
+  path
+    .split('/')
+    .map((segment) => encodeURIComponent(segment.toWellFormed()))
+    .join('/');
 
 // a `..` segment would let a link leave the repo once the browser resolves it
 export const hasParentSegment = (path: string): boolean =>
