@@ -292,11 +292,15 @@ export const toHtml = (
     ? ''
     : `<details><summary>${title} ${onlyChanged}</summary>${table}</details>`;
 
-  // a line starting with <div> is an html block, so github doesn't parse
-  // markdown (links, autolinks, mentions syntax) inside the table cells
-  return reportHtml
-    ? `<div>${badgeHtml}${reportHtml}</div>`
-    : `${badgeHtml}${reportHtml}`;
+  if (!reportHtml) {
+    return badgeHtml;
+  }
+
+  // a line starting with an html comment is a raw html block, so github
+  // doesn't parse markdown in the table cells. The block ends with the line,
+  // so text after it (e.g. in a readme) still renders as markdown
+  const badgeLine = badgeHtml ? `<p>${badgeHtml}</p>` : '';
+  return `<!-- pytest-coverage-comment -->${badgeLine}${reportHtml}`;
 };
 
 // make html table from coverage-file

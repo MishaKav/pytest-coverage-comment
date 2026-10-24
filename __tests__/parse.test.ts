@@ -406,7 +406,7 @@ describe('untrusted report values', () => {
       baseOptions,
     );
 
-    expect(html.startsWith('<div>')).toBe(true);
+    expect(html.startsWith('<!-- pytest-coverage-comment -->')).toBe(true);
     expect(html).not.toContain('<img src=x');
     expect(html).toContain(
       '&lt;img src=x onerror=alert(1)&gt;&quot;[a](evil).py</a>',
