@@ -40419,7 +40419,7 @@ const getCoverageReport = (options) => {
                 const html = (0, exports.toHtml)(content, options);
                 const total = getTotal(content);
                 const warnings = getWarnings(content);
-                const color = (0, utils_1.getCoverageColor)(total ? total.cover : '0');
+                const color = (0, utils_1.getCoverageColor)(toBadgeCover(total ? total.cover : '0'));
                 return { html, coverage, color, warnings: warnings ?? 0 };
             }
         }
@@ -40549,6 +40549,9 @@ const makeFolders = (coverage, options) => {
     }
     return folders;
 };
+// report values are untrusted (e.g. from a fork PR), only a number may
+// reach the badge, other text could fake its message or color
+const toBadgeCover = (cover) => /^\d+(\.\d+)?%?$/.test(cover) ? cover : '0';
 // gets total coverage in percentage
 const getTotalCoverage = (data) => {
     const total = getTotal(data);
@@ -40564,9 +40567,7 @@ const toHtml = (data, options, dataFromXml = null) => {
     }
     const onlyChanged = reportOnlyChangedFiles ? '\u2022 ' : '';
     const readmeHref = `${options.repoUrl}/blob/${options.commit}/README.md`;
-    // report values are untrusted (e.g. from a fork PR), only a number may
-    // reach the badge, other text could fake its message or color
-    const cover = /^\d+(\.\d+)?%?$/.test(total.cover) ? total.cover : '0';
+    const cover = toBadgeCover(total.cover);
     const color = (0, utils_1.getCoverageColor)(cover);
     const badge = `<img alt="${badgeTitle}" src="https://img.shields.io/badge/${badgeTitle}-${cover}25-${color}.svg" />`;
     const badgeWithLink = removeLinkFromBadge
@@ -40671,7 +40672,7 @@ const toFileNameTd = (item, indent = false, options) => {
     const parts = relative.split('/');
     const last = parts[parts.length - 1];
     const space = indent ? '&nbsp; &nbsp;' : '';
-    const fileName = escapeValue(last).replace(/__/g, '\\_\\_');
+    const fileName = escapeValue(last);
     return options.removeLinksToFiles
         ? `${space}${fileName}`
         : `${space}<a href="${escapeValue(href)}">${fileName}</a>`;

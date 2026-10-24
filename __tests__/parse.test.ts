@@ -1,4 +1,6 @@
 import { expect, test, describe, beforeEach } from 'vitest';
+import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import { getCoverageReport, toHtml, exportedForTesting } from '../src/parse';
 import { getContentFile } from '../src/utils';
@@ -428,5 +430,29 @@ describe('untrusted report values', () => {
     );
 
     expect(html).toContain('badge/Coverage-025-red.svg');
+  });
+
+  test('exports the color of the validated total', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cov-txt-'));
+    const covFile = path.join(dir, 'coverage.txt');
+    fs.writeFileSync(
+      covFile,
+      report('src/a.py      10    2    80%   1-2', '99%evil'),
+    );
+
+    try {
+      expect(getCoverageReport({ ...baseOptions, covFile }).color).toBe('red');
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('shows dunder file names as is, markdown is not parsed in the block', () => {
+    const html = toHtml(
+      report('src/__init__.py      10    2    80%   1-2'),
+      baseOptions,
+    );
+
+    expect(html).toContain('>__init__.py</a>');
   });
 });
