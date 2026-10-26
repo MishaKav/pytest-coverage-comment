@@ -85,27 +85,31 @@ export const getAnnotations = (
   options: Pick<Options, 'prefix' | 'pathPrefix'>,
 ): Annotation[] => {
   const annotations: Annotation[] = [];
-  // xml reports can list one file in several classes, annotate a line once
-  const seen = new Set<string>();
-
+  // xml reports can list one file in several classes, merge them per file.
+  // json reports keep arcs to missing lines out of `missing`, add them back
+  const missingByFile = new Map<string, string[]>();
   for (const item of coverage) {
     const file = `${options.pathPrefix}${toRelativePath(item.name, options)}`;
+    missingByFile.set(file, [
+      ...(missingByFile.get(file) ?? []),
+      ...(item.missing ?? []),
+      ...(item.missingBranches ?? []),
+    ]);
+  }
+
+  for (const [file, missing] of missingByFile) {
     // sorted and unique, see getAddedLines. Own keys only, a report file
     // named e.g. `constructor` must not hit Object members
     const added = Object.hasOwn(addedLines, file)
       ? addedLines[file]
       : undefined;
 
-    if (!item.missing?.length || !added?.length) {
+    if (!missing.length || !added?.length) {
       continue;
     }
 
     const addedSet = new Set(added);
-    // json reports keep arcs to missing lines out of `missing`, add them back
-    const { ranges, arcs } = parseMissing([
-      ...item.missing,
-      ...(item.missingBranches ?? []),
-    ]);
+    const { ranges, arcs } = parseMissing(missing);
     const uncovered = added.filter((line) =>
       ranges.some(([s, e]) => line >= s && line <= e),
     );
@@ -143,13 +147,7 @@ export const getAnnotations = (
     });
 
     fileAnnotations.sort((a, b) => a.startLine - b.startLine);
-    for (const a of fileAnnotations) {
-      const key = `${a.file}:${a.startLine}:${a.endLine}:${a.message}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        annotations.push(a);
-      }
-    }
+    annotations.push(...fileAnnotations);
   }
 
   return annotations;
