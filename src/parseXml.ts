@@ -141,7 +141,7 @@ export const getCoverageXmlReport = (
       const html = toHtml(null, options, dataFromXml);
       const color = getCoverageColor(coverage ? coverage.cover : '0');
 
-      return { html, coverage, color };
+      return { html, coverage, color, lines: coverageObj };
     }
     return null;
   } catch (error) {

@@ -25,6 +25,8 @@ export interface Options {
   showFailedTests: boolean;
   maxFailedTests: number;
   multipleFiles: string[];
+  annotateMissingLines?: boolean;
+  annotationType?: AnnotationType;
   repoUrl?: string;
   commit?: string;
   head?: string;
@@ -42,7 +44,11 @@ export interface ChangedFiles {
   removed?: string[];
   renamed?: string[];
   AddedOrModified?: string[];
+  // line numbers added in the head version of each file, keyed like `all`
+  addedLines?: Record<string, number[]>;
 }
+
+export type AnnotationType = 'notice' | 'warning' | 'error';
 
 export type CoverageColor =
   'red' | 'orange' | 'yellow' | 'green' | 'brightgreen';
@@ -71,12 +77,15 @@ export interface CoverageReport {
   coverage: string;
   color: CoverageColor;
   warnings: number;
+  // per-file rows, e.g. for annotations
+  lines?: CoverageLine[];
 }
 
 export interface XmlCoverageReport {
   html: string;
   coverage: TotalLine | null;
   color: CoverageColor;
+  lines?: CoverageLine[];
 }
 
 export interface DataFromXml {

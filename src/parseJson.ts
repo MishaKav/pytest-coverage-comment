@@ -185,7 +185,7 @@ export const getCoverageJsonReport = (
       const html = toHtml(null, options, dataFromXml);
       const color = getCoverageColor(coverage.cover);
 
-      return { html, coverage, color };
+      return { html, coverage, color, lines: coverageObj };
     }
 
     return null;

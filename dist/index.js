@@ -40378,7 +40378,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.exportedForTesting = exports.toHtml = exports.getCoverageReport = void 0;
+exports.exportedForTesting = exports.toRelativePath = exports.toHtml = exports.getCoverageReport = void 0;
 const core = __importStar(__nccwpck_require__(7484));
 const utils_1 = __nccwpck_require__(1798);
 // return true if "coverage file" include all special words
@@ -40420,7 +40420,8 @@ const getCoverageReport = (options) => {
                 const total = getTotal(content);
                 const warnings = getWarnings(content);
                 const color = (0, utils_1.getCoverageColor)(toBadgeCover(total ? total.cover : '0'));
-                return { html, coverage, color, warnings: warnings ?? 0 };
+                const lines = parse(content) ?? [];
+                return { html, coverage, color, warnings: warnings ?? 0, lines };
             }
         }
         catch (error) {
@@ -40669,12 +40670,13 @@ const toTotalRow = (item, options) => {
     // prettier-ignore
     return `<tr><td><b>${escapeValue(name)}</b></td><td><b>${escapeValue(stmts)}</b></td><td><b>${escapeValue(miss)}</b></td>${branchTd}<td><b>${escapeValue(cover)}</b></td>${missingTd}</tr>`;
 };
+// path of a report file relative to the workspace, with `/` separators
+// (windows reports use `\`, browsers treat it as `/` in links)
+const toRelativePath = (name, options) => name.replace(/\\/g, '/').replace(options.prefix.replace(/\\/g, '/'), '');
+exports.toRelativePath = toRelativePath;
 // link to a file of the report in the repo, null when it can't be linked safely
 const toFileHref = (name, options) => {
-    // windows reports use `\`, browsers treat it as `/` in links
-    const relative = name
-        .replace(/\\/g, '/')
-        .replace(options.prefix.replace(/\\/g, '/'), '');
+    const relative = (0, exports.toRelativePath)(name, options);
     return (0, utils_1.hasParentSegment)(relative)
         ? null
         : `${options.repoUrl}/blob/${options.commit}/${options.pathPrefix}${(0, utils_1.encodePath)(relative)}`;
@@ -40906,7 +40908,7 @@ const getCoverageJsonReport = (options) => {
             };
             const html = (0, parse_1.toHtml)(null, options, dataFromXml);
             const color = (0, utils_1.getCoverageColor)(coverage.cover);
-            return { html, coverage, color };
+            return { html, coverage, color, lines: coverageObj };
         }
         return null;
     }
@@ -41065,7 +41067,7 @@ const getCoverageXmlReport = (options) => {
             };
             const html = (0, parse_1.toHtml)(null, options, dataFromXml);
             const color = (0, utils_1.getCoverageColor)(coverage ? coverage.cover : '0');
-            return { html, coverage, color };
+            return { html, coverage, color, lines: coverageObj };
         }
         return null;
     }
