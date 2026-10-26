@@ -152,6 +152,17 @@ describe('getAnnotations', () => {
     expect(result).toHaveLength(1);
   });
 
+  test('keeps only numeric branch arcs, so messages stay inert', () => {
+    const coverage = [line('a.py', ['3->5\n::error::forged', '3->7'])];
+    const result = getAnnotations(coverage, { 'a.py': [3] }, pathOptions);
+
+    expect(result).toEqual([
+      expect.objectContaining({
+        message: 'Line 3 has a branch not covered by tests: 3->7',
+      }),
+    ]);
+  });
+
   test('ignores malformed missing entries', () => {
     const coverage = [line('a.py', ['x', 'a-b', 'y->z', '2'])];
     const result = getAnnotations(coverage, { 'a.py': [2] }, pathOptions);
@@ -195,6 +206,19 @@ describe('annotateMissingLines', () => {
         startLine: 5,
         endLine: 5,
       },
+    );
+  });
+
+  test('annotates a json arc whose target line is missing', () => {
+    // src/app.py: line 5 missing, arc 2->5 left out of the Missing column
+    annotateMissingLines(jsonLines(`${dataPath}/coverage_2.json`), {
+      ...baseOptions,
+      changedFiles: { all: ['src/app.py'], addedLines: { 'src/app.py': [2] } },
+    });
+
+    expect(spyCore.warning).toHaveBeenCalledWith(
+      'Line 2 has a branch not covered by tests: 2->5',
+      expect.objectContaining({ file: 'src/app.py', startLine: 2 }),
     );
   });
 
