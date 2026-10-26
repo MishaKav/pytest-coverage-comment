@@ -86,6 +86,8 @@ export const getAnnotations = (
   options: Pick<Options, 'prefix' | 'pathPrefix'>,
 ): Annotation[] => {
   const annotations: Annotation[] = [];
+  // xml reports can list one file in several classes, annotate a line once
+  const seen = new Set<string>();
 
   for (const item of coverage) {
     const relative = toRelativePath(item.name, options);
@@ -139,7 +141,13 @@ export const getAnnotations = (
     });
 
     fileAnnotations.sort((a, b) => a.startLine - b.startLine);
-    annotations.push(...fileAnnotations);
+    for (const a of fileAnnotations) {
+      const key = `${a.file}:${a.startLine}:${a.endLine}:${a.message}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        annotations.push(a);
+      }
+    }
   }
 
   return annotations;
@@ -180,7 +188,11 @@ export const annotateMissingLines = (
     if (rest.length) {
       // prettier-ignore
       core.info(`${rest.length} more annotations were not created, GitHub shows at most ${MAX_ANNOTATIONS} ${type} annotations per step:`);
-      rest.forEach((a) => core.info(`${a.file}:${a.startLine} ${a.message}`));
+      // a file name can hold a newline, keep each entry on its own log line
+      // so it can't start a workflow command
+      rest.forEach((a) =>
+        core.info(`${JSON.stringify(a.file)}:${a.startLine} ${a.message}`),
+      );
     }
   } catch (error) {
     // prettier-ignore

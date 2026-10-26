@@ -145,6 +145,13 @@ describe('getAnnotations', () => {
     expect(result).toEqual([expect.objectContaining({ file: 'a.py' })]);
   });
 
+  test('annotates a line once when a file is listed twice', () => {
+    const coverage = [line('a.py', ['2-3']), line('a.py', ['2-3'])];
+    const result = getAnnotations(coverage, { 'a.py': [2, 3] }, pathOptions);
+
+    expect(result).toHaveLength(1);
+  });
+
   test('ignores malformed missing entries', () => {
     const coverage = [line('a.py', ['x', 'a-b', 'y->z', '2'])];
     const result = getAnnotations(coverage, { 'a.py': [2] }, pathOptions);
@@ -238,6 +245,21 @@ describe('annotateMissingLines', () => {
 
     expect(spyCore.error).toHaveBeenCalled();
     expect(spyCore.endGroup).toHaveBeenCalledTimes(1);
+  });
+
+  test('keeps a file name with a newline on one log line', () => {
+    const name = 'a.py\n::warning::forged';
+    const missing = Array.from({ length: 11 }, (_, i) => `${i * 2 + 1}`);
+    const added = Array.from({ length: 22 }, (_, i) => i + 1);
+
+    annotateMissingLines([line(name, missing)], {
+      ...baseOptions,
+      changedFiles: { all: [name], addedLines: { [name]: added } },
+    });
+
+    const logged = spyCore.info.mock.calls.map(([m]) => m).join('\n');
+    expect(logged).toContain('"a.py\\n::warning::forged":21');
+    expect(logged.split('\n').some((l) => l.startsWith('::'))).toBe(false);
   });
 
   test('works with the lines of an xml report', () => {
