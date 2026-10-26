@@ -39104,6 +39104,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.annotateMissingLines = exports.getAnnotations = exports.getAddedLines = exports.ANNOTATION_EVENTS = exports.ANNOTATION_TYPES = exports.MAX_ANNOTATIONS = void 0;
 const core = __importStar(__nccwpck_require__(7484));
 const parse_1 = __nccwpck_require__(2828);
+const utils_1 = __nccwpck_require__(1798);
 // github shows at most 10 annotations of each type per step (50 per job)
 exports.MAX_ANNOTATIONS = 10;
 exports.ANNOTATION_TYPES = [
@@ -39162,25 +39163,17 @@ const parseMissing = (missing) => {
     }
     return { ranges, arcs };
 };
-// group sorted line numbers into consecutive runs, e.g. [4, 5, 9] -> [[4, 5], [9, 9]]
-const toRuns = (lines) => lines.reduce((runs, line) => {
-    const last = runs[runs.length - 1];
-    if (last && line === last[1] + 1) {
-        last[1] = line;
-    }
-    else {
-        runs.push([line, line]);
-    }
-    return runs;
-}, []);
 // annotations for uncovered lines that the diff added, `addedLines` is keyed
 // like `changedFiles.all` (repo path without `coverage-path-prefix`)
 const getAnnotations = (coverage, addedLines, options) => {
     const annotations = [];
     for (const item of coverage) {
         const relative = (0, parse_1.toRelativePath)(item.name, options);
-        // sorted and unique, see getAddedLines
-        const added = addedLines[relative];
+        // sorted and unique, see getAddedLines. Own keys only, a report file
+        // named e.g. `constructor` must not hit Object members
+        const added = Object.hasOwn(addedLines, relative)
+            ? addedLines[relative]
+            : undefined;
         if (!item.missing?.length || !added?.length) {
             continue;
         }
@@ -39190,7 +39183,7 @@ const getAnnotations = (coverage, addedLines, options) => {
         const uncovered = added.filter((line) => ranges.some(([s, e]) => line >= s && line <= e));
         const uncoveredSet = new Set(uncovered);
         const fileAnnotations = [];
-        toRuns(uncovered).forEach(([startLine, endLine]) => {
+        (0, utils_1.toRuns)(uncovered).forEach(([startLine, endLine]) => {
             const lines = startLine === endLine
                 ? `Line ${startLine} is`
                 : `Lines ${startLine}-${endLine} are`;
@@ -39228,10 +39221,13 @@ const annotateMissingLines = (coverage, options) => {
     if (!addedLines) {
         return;
     }
+    // the type picks a `core` function, never call anything but an annotation
+    const type = exports.ANNOTATION_TYPES.includes(options.annotationType)
+        ? options.annotationType
+        : 'warning';
+    core.startGroup('Annotations');
     try {
         const annotations = (0, exports.getAnnotations)(coverage, addedLines, options);
-        const type = options.annotationType || 'warning';
-        core.startGroup('Annotations');
         if (!annotations.length) {
             core.info('No uncovered lines found in the changed code');
         }
@@ -39242,14 +39238,16 @@ const annotateMissingLines = (coverage, options) => {
         const rest = annotations.slice(exports.MAX_ANNOTATIONS);
         if (rest.length) {
             // prettier-ignore
-            core.info(`${rest.length} more uncovered ranges were not annotated, GitHub shows at most ${exports.MAX_ANNOTATIONS} ${type} annotations per step:`);
+            core.info(`${rest.length} more annotations were not created, GitHub shows at most ${exports.MAX_ANNOTATIONS} ${type} annotations per step:`);
             rest.forEach((a) => core.info(`${a.file}:${a.startLine} ${a.message}`));
         }
-        core.endGroup();
     }
     catch (error) {
         // prettier-ignore
         core.error(`Error creating annotations for missing lines. ${error.message}`);
+    }
+    finally {
+        core.endGroup();
     }
 };
 exports.annotateMissingLines = annotateMissingLines;
