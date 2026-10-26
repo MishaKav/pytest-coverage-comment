@@ -113,15 +113,20 @@ describe('getAnnotations', () => {
   });
 
   test('maps coverage paths to repo paths with prefix and path prefix', () => {
-    const coverage = [line('/home/runner/work/pkg/mod.py', ['1'])];
-    const added = { 'pkg/mod.py': [1] };
+    const coverage = [line('/home/runner/work/pkg/mod.py', ['1-2'])];
+    // a root `pkg/mod.py` must not be taken for `src/pkg/mod.py`
+    const added = { 'src/pkg/mod.py': [1], 'pkg/mod.py': [2] };
     const result = getAnnotations(coverage, added, {
       prefix: '/home/runner/work/',
       pathPrefix: 'src/',
     });
 
     expect(result).toHaveLength(1);
-    expect(result[0].file).toBe('src/pkg/mod.py');
+    expect(result[0]).toMatchObject({
+      file: 'src/pkg/mod.py',
+      startLine: 1,
+      endLine: 1,
+    });
   });
 
   test('normalizes windows paths', () => {

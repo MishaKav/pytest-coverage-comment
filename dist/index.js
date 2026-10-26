@@ -39164,22 +39164,21 @@ const parseMissing = (missing) => {
     return { ranges, arcs };
 };
 // annotations for uncovered lines that the diff added, `addedLines` is keyed
-// like `changedFiles.all` (repo path without `coverage-path-prefix`)
+// by the full repo path (with `coverage-path-prefix`)
 const getAnnotations = (coverage, addedLines, options) => {
     const annotations = [];
     // xml reports can list one file in several classes, annotate a line once
     const seen = new Set();
     for (const item of coverage) {
-        const relative = (0, parse_1.toRelativePath)(item.name, options);
+        const file = `${options.pathPrefix}${(0, parse_1.toRelativePath)(item.name, options)}`;
         // sorted and unique, see getAddedLines. Own keys only, a report file
         // named e.g. `constructor` must not hit Object members
-        const added = Object.hasOwn(addedLines, relative)
-            ? addedLines[relative]
+        const added = Object.hasOwn(addedLines, file)
+            ? addedLines[file]
             : undefined;
         if (!item.missing?.length || !added?.length) {
             continue;
         }
-        const file = `${options.pathPrefix}${relative}`;
         const addedSet = new Set(added);
         const { ranges, arcs } = parseMissing(item.missing);
         const uncovered = added.filter((line) => ranges.some(([s, e]) => line >= s && line <= e));
@@ -39615,7 +39614,15 @@ const main = async () => {
         report = { html: '', coverage: null, color: 'red' };
     }
     if (options.annotateMissingLines) {
-        (0, annotations_1.annotateMissingLines)(report.lines ?? [], options);
+        const { lines } = report;
+        if (lines) {
+            (0, annotations_1.annotateMissingLines)(lines, options);
+        }
+        else {
+            // e.g. only `multiple-files`, don't report the new code as covered
+            // prettier-ignore
+            core.warning('`annotate-missing-lines: true` needs a coverage report from `pytest-coverage-path`, `pytest-xml-coverage-path` or `pytest-json-coverage-path`, no annotations were added. `multiple-files` reports are not annotated.');
+        }
     }
     const { coverage, color } = report;
     let { html } = report;
@@ -39929,7 +39936,8 @@ const getChangedFiles = async (options, pr_number) => {
             all.push(filename);
             // github omits `patch` for binary and very large diffs
             if (options.annotateMissingLines && file.patch) {
-                addedLines[filename] = (0, annotations_1.getAddedLines)(file.patch);
+                // full path, a file outside the prefix can share the stripped name
+                addedLines[filenameOriginal] = (0, annotations_1.getAddedLines)(file.patch);
             }
             switch (status) {
                 case FILE_STATUSES.ADDED:
@@ -39969,6 +39977,8 @@ const getChangedFiles = async (options, pr_number) => {
         };
     }
     catch (error) {
+        // the caller may go on (annotations only), don't leave the group open
+        core.endGroup();
         fail(error.message);
         return null;
     }

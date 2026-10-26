@@ -418,7 +418,14 @@ const main = async (): Promise<void> => {
   }
 
   if (options.annotateMissingLines) {
-    annotate((report as { lines?: CoverageLine[] }).lines ?? [], options);
+    const { lines } = report as { lines?: CoverageLine[] };
+    if (lines) {
+      annotate(lines, options);
+    } else {
+      // e.g. only `multiple-files`, don't report the new code as covered
+      // prettier-ignore
+      core.warning('`annotate-missing-lines: true` needs a coverage report from `pytest-coverage-path`, `pytest-xml-coverage-path` or `pytest-json-coverage-path`, no annotations were added. `multiple-files` reports are not annotated.');
+    }
   }
 
   const { coverage, color } = report as {
@@ -800,7 +807,8 @@ const getChangedFiles = async (
 
       // github omits `patch` for binary and very large diffs
       if (options.annotateMissingLines && file.patch) {
-        addedLines[filename] = getAddedLines(file.patch);
+        // full path, a file outside the prefix can share the stripped name
+        addedLines[filenameOriginal] = getAddedLines(file.patch);
       }
 
       switch (status) {
@@ -843,6 +851,8 @@ const getChangedFiles = async (
       addedLines,
     };
   } catch (error) {
+    // the caller may go on (annotations only), don't leave the group open
+    core.endGroup();
     fail((error as Error).message);
     return null;
   }

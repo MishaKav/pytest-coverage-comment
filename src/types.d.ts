@@ -44,7 +44,7 @@ export interface ChangedFiles {
   removed?: string[];
   renamed?: string[];
   AddedOrModified?: string[];
-  // line numbers added in the head version of each file, keyed like `all`
+  // line numbers added in the head version of each file, keyed by full repo path
   addedLines?: Record<string, number[]>;
 }
 

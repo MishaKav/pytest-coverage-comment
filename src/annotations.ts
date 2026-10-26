@@ -79,7 +79,7 @@ const parseMissing = (
 };
 
 // annotations for uncovered lines that the diff added, `addedLines` is keyed
-// like `changedFiles.all` (repo path without `coverage-path-prefix`)
+// by the full repo path (with `coverage-path-prefix`)
 export const getAnnotations = (
   coverage: CoverageLine[],
   addedLines: Record<string, number[]>,
@@ -90,18 +90,17 @@ export const getAnnotations = (
   const seen = new Set<string>();
 
   for (const item of coverage) {
-    const relative = toRelativePath(item.name, options);
+    const file = `${options.pathPrefix}${toRelativePath(item.name, options)}`;
     // sorted and unique, see getAddedLines. Own keys only, a report file
     // named e.g. `constructor` must not hit Object members
-    const added = Object.hasOwn(addedLines, relative)
-      ? addedLines[relative]
+    const added = Object.hasOwn(addedLines, file)
+      ? addedLines[file]
       : undefined;
 
     if (!item.missing?.length || !added?.length) {
       continue;
     }
 
-    const file = `${options.pathPrefix}${relative}`;
     const addedSet = new Set(added);
     const { ranges, arcs } = parseMissing(item.missing);
     const uncovered = added.filter((line) =>
