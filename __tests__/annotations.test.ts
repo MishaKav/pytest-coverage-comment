@@ -138,6 +138,13 @@ describe('getAnnotations', () => {
     expect(result).toEqual([expect.objectContaining({ startLine: 5 })]);
   });
 
+  test('ignores report files named like Object members', () => {
+    const coverage = [line('constructor', ['1']), line('a.py', ['1'])];
+    const result = getAnnotations(coverage, { 'a.py': [1] }, pathOptions);
+
+    expect(result).toEqual([expect.objectContaining({ file: 'a.py' })]);
+  });
+
   test('ignores malformed missing entries', () => {
     const coverage = [line('a.py', ['x', 'a-b', 'y->z', '2'])];
     const result = getAnnotations(coverage, { 'a.py': [2] }, pathOptions);
@@ -206,8 +213,31 @@ describe('annotateMissingLines', () => {
 
     expect(spyCore.warning).toHaveBeenCalledTimes(MAX_ANNOTATIONS);
     expect(spyCore.info).toHaveBeenCalledWith(
-      expect.stringContaining('5 more uncovered ranges were not annotated'),
+      expect.stringContaining('5 more annotations were not created'),
     );
+  });
+
+  test('falls back to warning for an unknown annotation type', () => {
+    annotateMissingLines([line('a.py', ['1'])], {
+      ...baseOptions,
+      annotationType: 'setFailed' as Options['annotationType'],
+      changedFiles: { all: ['a.py'], addedLines: { 'a.py': [1] } },
+    });
+
+    expect(spyCore.setFailed).not.toHaveBeenCalled();
+    expect(spyCore.warning).toHaveBeenCalledTimes(1);
+  });
+
+  test('closes the log group when creating annotations fails', () => {
+    spyCore.endGroup.mockClear();
+    annotateMissingLines([{ name: 'a.py' } as unknown as CoverageLine], {
+      ...baseOptions,
+      prefix: undefined as unknown as string,
+      changedFiles: { all: ['a.py'], addedLines: { 'a.py': [1] } },
+    });
+
+    expect(spyCore.error).toHaveBeenCalled();
+    expect(spyCore.endGroup).toHaveBeenCalledTimes(1);
   });
 
   test('works with the lines of an xml report', () => {

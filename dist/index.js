@@ -41191,19 +41191,14 @@ const parseLines = (lines) => {
             }
         }
     });
-    const missing = missingLines.reduce((arr, val, i, a) => {
-        if (!i || val !== a[i - 1] + 1)
-            arr.push([]);
-        arr[arr.length - 1].push(val);
-        return arr;
-    }, []);
+    const missing = (0, utils_1.toRuns)(missingLines);
     // Merge missing-line ranges and partial-branch arrows into a single list
     // ordered by line number, matching the order of `coverage report -m`.
     const missingEntries = [];
     missing.forEach((m) => {
         missingEntries.push({
             sort: m[0],
-            text: m.length === 1 ? `${m[0]}` : `${m[0]}-${m[m.length - 1]}`,
+            text: m[0] === m[1] ? `${m[0]}` : `${m[0]}-${m[1]}`,
         });
     });
     partialBranches.forEach(({ line, target }) => {
@@ -41262,7 +41257,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getCoverageColor = exports.getContent = exports.hasParentSegment = exports.encodePath = exports.escapeHtmlAttr = exports.escapeHtml = exports.getContentFile = exports.getPathToFile = void 0;
+exports.toRuns = exports.getCoverageColor = exports.getContent = exports.hasParentSegment = exports.encodePath = exports.escapeHtmlAttr = exports.escapeHtml = exports.getContentFile = exports.getPathToFile = void 0;
 const fs = __importStar(__nccwpck_require__(9896));
 const core = __importStar(__nccwpck_require__(7484));
 const getPathToFile = (pathToFile) => {
@@ -41353,6 +41348,18 @@ const getCoverageColor = (percentage) => {
     return (found || rangeColors[0]).color;
 };
 exports.getCoverageColor = getCoverageColor;
+// group sorted line numbers into consecutive runs, e.g. [4, 5, 9] -> [[4, 5], [9, 9]]
+const toRuns = (lines) => lines.reduce((runs, line) => {
+    const last = runs[runs.length - 1];
+    if (last && line === last[1] + 1) {
+        last[1] = line;
+    }
+    else {
+        runs.push([line, line]);
+    }
+    return runs;
+}, []);
+exports.toRuns = toRuns;
 
 
 /***/ }),

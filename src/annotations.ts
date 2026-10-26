@@ -1,5 +1,6 @@
 import * as core from '@actions/core';
 import { toRelativePath } from './parse';
+import { toRuns } from './utils';
 import type { Options, CoverageLine, AnnotationType } from './types';
 
 // github shows at most 10 annotations of each type per step (50 per job)
@@ -77,18 +78,6 @@ const parseMissing = (
   return { ranges, arcs };
 };
 
-// group sorted line numbers into consecutive runs, e.g. [4, 5, 9] -> [[4, 5], [9, 9]]
-const toRuns = (lines: number[]): [number, number][] =>
-  lines.reduce((runs: [number, number][], line) => {
-    const last = runs[runs.length - 1];
-    if (last && line === last[1] + 1) {
-      last[1] = line;
-    } else {
-      runs.push([line, line]);
-    }
-    return runs;
-  }, []);
-
 // annotations for uncovered lines that the diff added, `addedLines` is keyed
 // like `changedFiles.all` (repo path without `coverage-path-prefix`)
 export const getAnnotations = (
@@ -100,8 +89,11 @@ export const getAnnotations = (
 
   for (const item of coverage) {
     const relative = toRelativePath(item.name, options);
-    // sorted and unique, see getAddedLines
-    const added = addedLines[relative];
+    // sorted and unique, see getAddedLines. Own keys only, a report file
+    // named e.g. `constructor` must not hit Object members
+    const added = Object.hasOwn(addedLines, relative)
+      ? addedLines[relative]
+      : undefined;
 
     if (!item.missing?.length || !added?.length) {
       continue;
@@ -164,11 +156,17 @@ export const annotateMissingLines = (
     return;
   }
 
+  // the type picks a `core` function, never call anything but an annotation
+  const type: AnnotationType = ANNOTATION_TYPES.includes(
+    options.annotationType as AnnotationType,
+  )
+    ? (options.annotationType as AnnotationType)
+    : 'warning';
+
+  core.startGroup('Annotations');
   try {
     const annotations = getAnnotations(coverage, addedLines, options);
-    const type = options.annotationType || 'warning';
 
-    core.startGroup('Annotations');
     if (!annotations.length) {
       core.info('No uncovered lines found in the changed code');
     }
@@ -181,12 +179,13 @@ export const annotateMissingLines = (
     const rest = annotations.slice(MAX_ANNOTATIONS);
     if (rest.length) {
       // prettier-ignore
-      core.info(`${rest.length} more uncovered ranges were not annotated, GitHub shows at most ${MAX_ANNOTATIONS} ${type} annotations per step:`);
+      core.info(`${rest.length} more annotations were not created, GitHub shows at most ${MAX_ANNOTATIONS} ${type} annotations per step:`);
       rest.forEach((a) => core.info(`${a.file}:${a.startLine} ${a.message}`));
     }
-    core.endGroup();
   } catch (error) {
     // prettier-ignore
     core.error(`Error creating annotations for missing lines. ${(error as Error).message}`);
+  } finally {
+    core.endGroup();
   }
 };

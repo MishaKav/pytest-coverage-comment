@@ -110,3 +110,15 @@ export const getCoverageColor = (
 
   return (found || rangeColors[0]).color;
 };
+
+// group sorted line numbers into consecutive runs, e.g. [4, 5, 9] -> [[4, 5], [9, 9]]
+export const toRuns = (lines: number[]): [number, number][] =>
+  lines.reduce((runs: [number, number][], line) => {
+    const last = runs[runs.length - 1];
+    if (last && line === last[1] + 1) {
+      last[1] = line;
+    } else {
+      runs.push([line, line]);
+    }
+    return runs;
+  }, []);
