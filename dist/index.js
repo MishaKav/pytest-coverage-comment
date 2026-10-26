@@ -39167,6 +39167,8 @@ const parseMissing = (missing) => {
 // like `changedFiles.all` (repo path without `coverage-path-prefix`)
 const getAnnotations = (coverage, addedLines, options) => {
     const annotations = [];
+    // xml reports can list one file in several classes, annotate a line once
+    const seen = new Set();
     for (const item of coverage) {
         const relative = (0, parse_1.toRelativePath)(item.name, options);
         // sorted and unique, see getAddedLines. Own keys only, a report file
@@ -39210,7 +39212,13 @@ const getAnnotations = (coverage, addedLines, options) => {
             });
         });
         fileAnnotations.sort((a, b) => a.startLine - b.startLine);
-        annotations.push(...fileAnnotations);
+        for (const a of fileAnnotations) {
+            const key = `${a.file}:${a.startLine}:${a.endLine}:${a.message}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                annotations.push(a);
+            }
+        }
     }
     return annotations;
 };
@@ -39239,7 +39247,9 @@ const annotateMissingLines = (coverage, options) => {
         if (rest.length) {
             // prettier-ignore
             core.info(`${rest.length} more annotations were not created, GitHub shows at most ${exports.MAX_ANNOTATIONS} ${type} annotations per step:`);
-            rest.forEach((a) => core.info(`${a.file}:${a.startLine} ${a.message}`));
+            // a file name can hold a newline, keep each entry on its own log line
+            // so it can't start a workflow command
+            rest.forEach((a) => core.info(`${JSON.stringify(a.file)}:${a.startLine} ${a.message}`));
         }
     }
     catch (error) {

@@ -407,6 +407,7 @@ Notes:
 
 - Works on `pull_request`, `pull_request_target` and `push` events, with txt, xml or json coverage (not `multiple-files`)
 - GitHub shows at most 10 annotations of each level per step, the rest are listed in the job log
+- txt reports merge missing ranges across blank lines and comments, so those can be annotated too. Use xml or json for exact lines
 - File paths in the coverage report must match the repo paths, use `coverage-path-prefix` (e.g. `src/`) when they don't
 - GitHub leaves out the diff of binary and very large files, those are not annotated, and the compare API lists at most 300 files
 - On `pull_request`, `actions/checkout` tests the merge commit by default. If the base branch changed the same file since the PR branched off, line numbers can shift; check out the PR head (`ref: ${{ github.event.pull_request.head.sha }}`) to keep them exact
