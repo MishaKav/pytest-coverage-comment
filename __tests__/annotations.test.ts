@@ -146,10 +146,12 @@ describe('getAnnotations', () => {
   });
 
   test('annotates a line once when a file is listed twice', () => {
-    const coverage = [line('a.py', ['2-3']), line('a.py', ['2-3'])];
-    const result = getAnnotations(coverage, { 'a.py': [2, 3] }, pathOptions);
+    const coverage = [line('a.py', ['2-3']), line('a.py', ['3-4'])];
+    const result = getAnnotations(coverage, { 'a.py': [2, 3, 4] }, pathOptions);
 
-    expect(result).toHaveLength(1);
+    expect(result).toEqual([
+      expect.objectContaining({ startLine: 2, endLine: 4 }),
+    ]);
   });
 
   test('keeps only numeric branch arcs, so messages stay inert', () => {
