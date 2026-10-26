@@ -108,7 +108,8 @@ export const getAnnotations = (
       continue;
     }
 
-    const file = `${options.pathPrefix}${relative}`;
+    // the diff uses `/`, a windows-style prefix would never match
+    const file = `${options.pathPrefix.replace(/\\/g, '/')}${relative}`;
     const addedSet = new Set(added);
     const { ranges, arcs } = parseMissing(missing);
     const uncovered = added.filter((line) =>
@@ -192,7 +193,9 @@ export const annotateMissingLines = (
       // a file name can hold a newline, keep each entry on its own log line
       // so it can't start a workflow command
       rest.forEach((a) =>
-        core.info(`${JSON.stringify(a.file)}:${a.startLine} ${a.message}`),
+        core.info(
+          `${JSON.stringify(a.file)}:${a.startLine} ${JSON.stringify(a.message)}`,
+        ),
       );
     }
   } catch (error) {

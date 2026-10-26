@@ -124,6 +124,18 @@ describe('getAnnotations', () => {
     expect(result[0].file).toBe('src/pkg/mod.py');
   });
 
+  test('normalizes a windows-style path prefix', () => {
+    const coverage = [line('pkg/mod.py', ['1'])];
+    const result = getAnnotations(
+      coverage,
+      // with and without the prefix, the key convention is set by the caller
+      { 'pkg/mod.py': [1], 'src/pkg/mod.py': [1] },
+      { prefix: '', pathPrefix: 'src\\' },
+    );
+
+    expect(result[0].file).toBe('src/pkg/mod.py');
+  });
+
   test('normalizes windows paths', () => {
     const coverage = [line('pkg\\mod.py', ['1'])];
     const result = getAnnotations(coverage, { 'pkg/mod.py': [1] }, pathOptions);
