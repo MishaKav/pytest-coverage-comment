@@ -39145,20 +39145,20 @@ exports.getAddedLines = getAddedLines;
 const parseMissing = (missing) => {
     const ranges = [];
     const arcs = new Map();
-    for (const entry of missing) {
-        const value = entry.trim();
-        if (value.includes('->')) {
-            const from = Number(value.split('->')[0]);
-            if (Number.isInteger(from)) {
-                const branches = arcs.get(from) || [];
-                branches.push(value);
-                arcs.set(from, branches);
-            }
+    // report values are untrusted, keep only well-formed entries so a message
+    // never carries anything but numbers (and `exit`)
+    for (const entry of new Set(missing.map((m) => String(m).trim()))) {
+        const arc = /^(\d+)->(\d+|exit)$/.exec(entry);
+        if (arc) {
+            const from = Number(arc[1]);
+            const branches = arcs.get(from) || [];
+            branches.push(entry);
+            arcs.set(from, branches);
             continue;
         }
-        const [start, end = start] = value.split('-').map(Number);
-        if (Number.isInteger(start) && Number.isInteger(end)) {
-            ranges.push([start, end]);
+        const range = /^(\d+)(?:-(\d+))?$/.exec(entry);
+        if (range) {
+            ranges.push([Number(range[1]), Number(range[2] ?? range[1])]);
         }
     }
     return { ranges, arcs };
@@ -39180,7 +39180,11 @@ const getAnnotations = (coverage, addedLines, options) => {
             continue;
         }
         const addedSet = new Set(added);
-        const { ranges, arcs } = parseMissing(item.missing);
+        // json reports keep arcs to missing lines out of `missing`, add them back
+        const { ranges, arcs } = parseMissing([
+            ...item.missing,
+            ...(item.missingBranches ?? []),
+        ]);
         const uncovered = added.filter((line) => ranges.some(([s, e]) => line >= s && line <= e));
         const uncoveredSet = new Set(uncovered);
         const fileAnnotations = [];
