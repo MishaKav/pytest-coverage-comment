@@ -1,5 +1,14 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.13.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.13.0)
+
+**Release Date:** 2026-10-26
+
+#### Changes
+
+- new `annotate-missing-lines` option: adds GitHub annotations on lines added in the pull request or push that aren't covered by tests (missing lines and partial branches), shown right below the code in the "Files changed" tab. Works with txt, xml and json coverage on `pull_request`, `pull_request_target` and `push` events. Combine it with `hide-comment: true` to get annotations without a PR comment, fixes #321
+- new `annotation-type` option to set the annotation level: `notice`, `warning` (default) or `error`
+
 ## [Pytest Coverage Comment 1.12.5](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.12.5)
 
 **Release Date:** 2026-10-24

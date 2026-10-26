@@ -12,6 +12,7 @@ pytest-coverage-comment is a GitHub Action that comments on pull requests with p
 - Maximum comment length: 65,536 characters (GitHub limit)
 - `report-only-changed-files` shows only files changed between the base and head of the PR or push (`pull_request`, `pull_request_target`, `push`, `workflow_run`, `workflow_dispatch`)
 - Report contents (file names, numbers) are untrusted, e.g. from a fork PR: escape them in generated HTML (`escapeValue` in parse.ts). The badge and table line starts with `<!-- pytest-coverage-comment -->`, so GitHub treats that one line as a raw HTML block: no markdown inside, and the next line renders as markdown again (a `<div>` block would run until a blank line)
+- `annotate-missing-lines` (annotations.ts) emits `core.warning`/`notice`/`error` annotations for lines added in the diff (parsed from the compare API `patch`, stored in `changedFiles.addedLines` keyed like `changedFiles.all`) that the report marks missing, using the `lines` the report functions return. Capped at 10 (GitHub's per-step limit per type), only on `pull_request`, `pull_request_target`, `push`
 - Can skip files with 100% coverage from XML and JSON reports (the `xml-skip-covered` input applies to both)
 - Handles both absolute and relative file paths for coverage inputs
 - Coverage parser precedence (index.ts, cli.ts, multiFiles.ts): JSON > XML > TXT. multiFiles picks the parser by file extension (`.json`/`.xml`, else txt). JSON and XML expose `coverage` as a `TotalLine` object; TXT exposes it as a string

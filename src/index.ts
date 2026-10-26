@@ -12,7 +12,18 @@ import {
   getSummaryReport,
 } from './junitXml';
 import { getMultipleReport } from './multiFiles';
-import type { Options, ChangedFiles } from './types';
+import {
+  ANNOTATION_EVENTS,
+  ANNOTATION_TYPES,
+  annotateMissingLines as annotate,
+  getAddedLines,
+} from './annotations';
+import type {
+  Options,
+  ChangedFiles,
+  AnnotationType,
+  CoverageLine,
+} from './types';
 
 export const MAX_COMMENT_LENGTH = 65536;
 const MAX_SUMMARY_LENGTH = 1024 * 1024; // 1MB limit for GitHub step summary
@@ -286,6 +297,22 @@ const main = async (): Promise<void> => {
   const multipleFiles = core.getMultilineInput('multiple-files', {
     required: false,
   });
+  const annotateMissingLines = core.getBooleanInput('annotate-missing-lines', {
+    required: false,
+  });
+  const annotationTypeInput = core.getInput('annotation-type', {
+    required: false,
+  });
+  const isAnnotationType = ANNOTATION_TYPES.includes(
+    annotationTypeInput as AnnotationType,
+  );
+  if (annotationTypeInput && !isAnnotationType) {
+    // prettier-ignore
+    core.warning(`Invalid "annotation-type" input "${annotationTypeInput}", should be one of ${ANNOTATION_TYPES.join(', ')}. Will use "warning"`);
+  }
+  const annotationType: AnnotationType = isAnnotationType
+    ? (annotationTypeInput as AnnotationType)
+    : 'warning';
   const { context } = github;
   const { repo, owner } = context.repo;
   const { eventName, payload } = context;
@@ -326,6 +353,8 @@ const main = async (): Promise<void> => {
     showFailedTests,
     maxFailedTests,
     multipleFiles,
+    annotateMissingLines,
+    annotationType,
   };
 
   options.repoUrl =
@@ -359,7 +388,13 @@ const main = async (): Promise<void> => {
     options.head = (payload as any).workflow_run.head_branch;
   }
 
-  if (options.reportOnlyChangedFiles) {
+  if (options.annotateMissingLines && !ANNOTATION_EVENTS.includes(eventName)) {
+    // prettier-ignore
+    core.warning(`\`annotate-missing-lines: true\` supports only ${ANNOTATION_EVENTS.map((e) => `\`${e}\``).join(', ')} events. \`${eventName}\` events are not supported.`);
+    options.annotateMissingLines = false;
+  }
+
+  if (options.reportOnlyChangedFiles || options.annotateMissingLines) {
     const changedFiles = await getChangedFiles(options, issueNumberInput);
     options.changedFiles = changedFiles;
 
@@ -380,6 +415,10 @@ const main = async (): Promise<void> => {
 
   if (!report) {
     report = { html: '', coverage: null, color: 'red' };
+  }
+
+  if (options.annotateMissingLines) {
+    annotate((report as { lines?: CoverageLine[] }).lines ?? [], options);
   }
 
   const { coverage, color } = report as {
@@ -666,6 +705,8 @@ const getChangedFiles = async (
   options: Options,
   pr_number: string,
 ): Promise<ChangedFiles | null> => {
+  // the diff is optional for annotations, don't fail the job when only they need it
+  const fail = options.reportOnlyChangedFiles ? core.setFailed : core.warning;
   try {
     const { context } = github;
     const { eventName, payload } = context;
@@ -730,7 +771,7 @@ const getChangedFiles = async (
 
     // Ensure that the request was successful.
     if (response.status !== 200) {
-      core.setFailed(
+      fail(
         `The GitHub API for comparing the base and head commits for this ${eventName} event returned ${response.status}, expected 200. ` +
           "Please submit an issue on this action's GitHub repo.",
       );
@@ -744,12 +785,18 @@ const getChangedFiles = async (
       removed: string[] = [],
       renamed: string[] = [],
       addedModified: string[] = [];
+    const addedLines: Record<string, number[]> = {};
 
     for (const file of files) {
       const { filename: filenameOriginal, status } = file;
       const filename = filenameOriginal.replace(options.pathPrefix, '');
 
       all.push(filename);
+
+      // github omits `patch` for binary and very large diffs
+      if (file.patch) {
+        addedLines[filename] = getAddedLines(file.patch);
+      }
 
       switch (status) {
         case FILE_STATUSES.ADDED:
@@ -768,7 +815,7 @@ const getChangedFiles = async (
           break;
         default:
           // prettier-ignore
-          core.setFailed(`One of your files includes an unsupported file status '${status}', expected ${Object.values(FILE_STATUSES).join(',')}.`);
+          fail(`One of your files includes an unsupported file status '${status}', expected ${Object.values(FILE_STATUSES).join(',')}.`);
       }
     }
 
@@ -788,9 +835,10 @@ const getChangedFiles = async (
       removed,
       renamed,
       AddedOrModified: addedModified,
+      addedLines,
     };
   } catch (error) {
-    core.setFailed((error as Error).message);
+    fail((error as Error).message);
     return null;
   }
 };

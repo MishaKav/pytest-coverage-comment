@@ -39062,6 +39062,201 @@ module.exports = {
 
 /***/ }),
 
+/***/ 105:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.annotateMissingLines = exports.getAnnotations = exports.getAddedLines = exports.ANNOTATION_EVENTS = exports.ANNOTATION_TYPES = exports.MAX_ANNOTATIONS = void 0;
+const core = __importStar(__nccwpck_require__(7484));
+const parse_1 = __nccwpck_require__(2828);
+// github shows at most 10 annotations of each type per step (50 per job)
+exports.MAX_ANNOTATIONS = 10;
+exports.ANNOTATION_TYPES = [
+    'notice',
+    'warning',
+    'error',
+];
+// annotations need a base..head diff of the commit the run belongs to
+exports.ANNOTATION_EVENTS = [
+    'pull_request',
+    'pull_request_target',
+    'push',
+];
+// line numbers added in the head version of a file, from its unified diff
+const getAddedLines = (patch) => {
+    const added = [];
+    let inHunk = false;
+    let line = 0;
+    for (const text of (patch || '').split('\n')) {
+        const hunk = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(text);
+        if (hunk) {
+            inHunk = true;
+            line = parseInt(hunk[1], 10);
+        }
+        else if (inHunk && text.startsWith('+')) {
+            added.push(line++);
+        }
+        else if (inHunk && text.startsWith(' ')) {
+            line++;
+        }
+        // `-` lines only exist in the base, `\ No newline at end of file` is a marker
+    }
+    return added;
+};
+exports.getAddedLines = getAddedLines;
+// split the "Missing" entries into line ranges and partial branch arcs
+// keyed by their source line, e.g. ["4", "10-12", "7->exit"]
+const parseMissing = (missing) => {
+    const ranges = [];
+    const arcs = new Map();
+    for (const entry of missing) {
+        const value = entry.trim();
+        if (value.includes('->')) {
+            const from = Number(value.split('->')[0]);
+            if (Number.isInteger(from)) {
+                const branches = arcs.get(from) || [];
+                branches.push(value);
+                arcs.set(from, branches);
+            }
+            continue;
+        }
+        const [start, end = start] = value.split('-').map(Number);
+        if (Number.isInteger(start) && Number.isInteger(end)) {
+            ranges.push([start, end]);
+        }
+    }
+    return { ranges, arcs };
+};
+// group sorted line numbers into consecutive runs, e.g. [4, 5, 9] -> [[4, 5], [9, 9]]
+const toRuns = (lines) => lines.reduce((runs, line) => {
+    const last = runs[runs.length - 1];
+    if (last && line === last[1] + 1) {
+        last[1] = line;
+    }
+    else {
+        runs.push([line, line]);
+    }
+    return runs;
+}, []);
+// annotations for uncovered lines that the diff added, `addedLines` is keyed
+// like `changedFiles.all` (repo path without `coverage-path-prefix`)
+const getAnnotations = (coverage, addedLines, options) => {
+    const annotations = [];
+    for (const item of coverage) {
+        const relative = (0, parse_1.toRelativePath)(item.name, options);
+        // sorted and unique, see getAddedLines
+        const added = addedLines[relative];
+        if (!item.missing?.length || !added?.length) {
+            continue;
+        }
+        const file = `${options.pathPrefix}${relative}`;
+        const addedSet = new Set(added);
+        const { ranges, arcs } = parseMissing(item.missing);
+        const uncovered = added.filter((line) => ranges.some(([s, e]) => line >= s && line <= e));
+        const uncoveredSet = new Set(uncovered);
+        const fileAnnotations = [];
+        toRuns(uncovered).forEach(([startLine, endLine]) => {
+            const lines = startLine === endLine
+                ? `Line ${startLine} is`
+                : `Lines ${startLine}-${endLine} are`;
+            fileAnnotations.push({
+                file,
+                startLine,
+                endLine,
+                title: 'Missing coverage',
+                message: `${lines} not covered by tests`,
+            });
+        });
+        // a branch from an uncovered line is already part of that annotation
+        arcs.forEach((branches, line) => {
+            if (!addedSet.has(line) || uncoveredSet.has(line)) {
+                return;
+            }
+            const noun = branches.length === 1 ? 'a branch' : 'branches';
+            fileAnnotations.push({
+                file,
+                startLine: line,
+                endLine: line,
+                title: 'Partial branch coverage',
+                message: `Line ${line} has ${noun} not covered by tests: ${branches.join(', ')}`,
+            });
+        });
+        fileAnnotations.sort((a, b) => a.startLine - b.startLine);
+        annotations.push(...fileAnnotations);
+    }
+    return annotations;
+};
+exports.getAnnotations = getAnnotations;
+// annotate the lines added in this diff that the coverage report marks as missing
+const annotateMissingLines = (coverage, options) => {
+    const addedLines = options.changedFiles?.addedLines;
+    if (!addedLines) {
+        return;
+    }
+    try {
+        const annotations = (0, exports.getAnnotations)(coverage, addedLines, options);
+        const type = options.annotationType || 'warning';
+        core.startGroup('Annotations');
+        if (!annotations.length) {
+            core.info('No uncovered lines found in the changed code');
+        }
+        annotations.slice(0, exports.MAX_ANNOTATIONS).forEach((a) => {
+            const { file, startLine, endLine, title, message } = a;
+            core[type](message, { title, file, startLine, endLine });
+        });
+        const rest = annotations.slice(exports.MAX_ANNOTATIONS);
+        if (rest.length) {
+            // prettier-ignore
+            core.info(`${rest.length} more uncovered ranges were not annotated, GitHub shows at most ${exports.MAX_ANNOTATIONS} ${type} annotations per step:`);
+            rest.forEach((a) => core.info(`${a.file}:${a.startLine} ${a.message}`));
+        }
+        core.endGroup();
+    }
+    catch (error) {
+        // prettier-ignore
+        core.error(`Error creating annotations for missing lines. ${error.message}`);
+    }
+};
+exports.annotateMissingLines = annotateMissingLines;
+
+
+/***/ }),
+
 /***/ 9407:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -39109,6 +39304,7 @@ const parseXml_1 = __nccwpck_require__(1775);
 const parseJson_1 = __nccwpck_require__(7258);
 const junitXml_1 = __nccwpck_require__(5394);
 const multiFiles_1 = __nccwpck_require__(6211);
+const annotations_1 = __nccwpck_require__(105);
 exports.MAX_COMMENT_LENGTH = 65536;
 const MAX_SUMMARY_LENGTH = 1024 * 1024; // 1MB limit for GitHub step summary
 const FILE_STATUSES = Object.freeze({
@@ -39305,6 +39501,20 @@ const main = async () => {
     const multipleFiles = core.getMultilineInput('multiple-files', {
         required: false,
     });
+    const annotateMissingLines = core.getBooleanInput('annotate-missing-lines', {
+        required: false,
+    });
+    const annotationTypeInput = core.getInput('annotation-type', {
+        required: false,
+    });
+    const isAnnotationType = annotations_1.ANNOTATION_TYPES.includes(annotationTypeInput);
+    if (annotationTypeInput && !isAnnotationType) {
+        // prettier-ignore
+        core.warning(`Invalid "annotation-type" input "${annotationTypeInput}", should be one of ${annotations_1.ANNOTATION_TYPES.join(', ')}. Will use "warning"`);
+    }
+    const annotationType = isAnnotationType
+        ? annotationTypeInput
+        : 'warning';
     const { context } = github;
     const { repo, owner } = context.repo;
     const { eventName, payload } = context;
@@ -39342,6 +39552,8 @@ const main = async () => {
         showFailedTests,
         maxFailedTests,
         multipleFiles,
+        annotateMissingLines,
+        annotationType,
     };
     options.repoUrl =
         payload.repository?.html_url || `${serverUrl}/${options.repository}`;
@@ -39368,7 +39580,12 @@ const main = async () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         options.head = payload.workflow_run.head_branch;
     }
-    if (options.reportOnlyChangedFiles) {
+    if (options.annotateMissingLines && !annotations_1.ANNOTATION_EVENTS.includes(eventName)) {
+        // prettier-ignore
+        core.warning(`\`annotate-missing-lines: true\` supports only ${annotations_1.ANNOTATION_EVENTS.map((e) => `\`${e}\``).join(', ')} events. \`${eventName}\` events are not supported.`);
+        options.annotateMissingLines = false;
+    }
+    if (options.reportOnlyChangedFiles || options.annotateMissingLines) {
         const changedFiles = await getChangedFiles(options, issueNumberInput);
         options.changedFiles = changedFiles;
         // when github event is different from `pull_request`, `workflow_dispatch`, `workflow_run` or `push`
@@ -39388,6 +39605,9 @@ const main = async () => {
     }
     if (!report) {
         report = { html: '', coverage: null, color: 'red' };
+    }
+    if (options.annotateMissingLines) {
+        (0, annotations_1.annotateMissingLines)(report.lines ?? [], options);
     }
     const { coverage, color } = report;
     let { html } = report;
@@ -39623,6 +39843,8 @@ const main = async () => {
 };
 // generate object of all files that changed based on commit through Github API
 const getChangedFiles = async (options, pr_number) => {
+    // the diff is optional for annotations, don't fail the job when only they need it
+    const fail = options.reportOnlyChangedFiles ? core.setFailed : core.warning;
     try {
         const { context } = github;
         const { eventName, payload } = context;
@@ -39682,16 +39904,21 @@ const getChangedFiles = async (options, pr_number) => {
         }
         // Ensure that the request was successful.
         if (response.status !== 200) {
-            core.setFailed(`The GitHub API for comparing the base and head commits for this ${eventName} event returned ${response.status}, expected 200. ` +
+            fail(`The GitHub API for comparing the base and head commits for this ${eventName} event returned ${response.status}, expected 200. ` +
                 "Please submit an issue on this action's GitHub repo.");
         }
         // Get the changed files from the response payload.
         const files = response.data.files || [];
         const all = [], added = [], modified = [], removed = [], renamed = [], addedModified = [];
+        const addedLines = {};
         for (const file of files) {
             const { filename: filenameOriginal, status } = file;
             const filename = filenameOriginal.replace(options.pathPrefix, '');
             all.push(filename);
+            // github omits `patch` for binary and very large diffs
+            if (file.patch) {
+                addedLines[filename] = (0, annotations_1.getAddedLines)(file.patch);
+            }
             switch (status) {
                 case FILE_STATUSES.ADDED:
                     added.push(filename);
@@ -39709,7 +39936,7 @@ const getChangedFiles = async (options, pr_number) => {
                     break;
                 default:
                     // prettier-ignore
-                    core.setFailed(`One of your files includes an unsupported file status '${status}', expected ${Object.values(FILE_STATUSES).join(',')}.`);
+                    fail(`One of your files includes an unsupported file status '${status}', expected ${Object.values(FILE_STATUSES).join(',')}.`);
             }
         }
         core.info(`All: ${all.join(',')}`);
@@ -39726,10 +39953,11 @@ const getChangedFiles = async (options, pr_number) => {
             removed,
             renamed,
             AddedOrModified: addedModified,
+            addedLines,
         };
     }
     catch (error) {
-        core.setFailed(error.message);
+        fail(error.message);
         return null;
     }
 };

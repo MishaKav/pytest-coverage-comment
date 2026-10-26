@@ -76,6 +76,16 @@ inputs:
     default: 'false'
     required: false
 
+  annotate-missing-lines:
+    description: 'Add annotations on lines added in the pull request or push that are not covered by tests'
+    default: 'false'
+    required: false
+
+  annotation-type:
+    description: 'Annotation level for `annotate-missing-lines`: notice, warning or error'
+    default: 'warning'
+    required: false
+
   junitxml-path:
     description: 'Path to JUnit XML file for test statistics (passed/failed/skipped)'
     default: ''
