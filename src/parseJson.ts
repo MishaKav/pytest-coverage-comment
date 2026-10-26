@@ -123,6 +123,9 @@ const parseFile = (
     miss: summary.missing_lines.toString(),
     cover,
     missing: getMissing(file),
+    missingBranches: (file.missing_branches || []).map(([from, to]) =>
+      to < 0 ? `${from}->exit` : `${from}->${to}`,
+    ),
   };
 
   if (numBranches > 0) {

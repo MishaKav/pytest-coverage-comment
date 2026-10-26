@@ -59,6 +59,8 @@ export interface CoverageLine {
   miss: string;
   cover: string;
   missing: string[] | null;
+  // every missing branch arc (json), `missing` leaves out arcs to missing lines
+  missingBranches?: string[];
   branch?: string;
   brpart?: string;
 }
