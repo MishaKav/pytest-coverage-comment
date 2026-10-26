@@ -39911,10 +39911,14 @@ const getChangedFiles = async (options, pr_number) => {
         const addedLines = {};
         for (const file of files) {
             const { filename: filenameOriginal, status } = file;
-            const filename = filenameOriginal.replace(options.pathPrefix, '');
+            // strip `coverage-path-prefix` only as a leading segment, a match in the
+            // middle of the path would key the file (and its added lines) wrongly
+            const filename = options.pathPrefix && filenameOriginal.startsWith(options.pathPrefix)
+                ? filenameOriginal.slice(options.pathPrefix.length)
+                : filenameOriginal;
             all.push(filename);
             // github omits `patch` for binary and very large diffs
-            if (file.patch) {
+            if (options.annotateMissingLines && file.patch) {
                 addedLines[filename] = (0, annotations_1.getAddedLines)(file.patch);
             }
             switch (status) {
