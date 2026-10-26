@@ -1,6 +1,6 @@
 import * as xml2js from 'xml2js';
 import * as core from '@actions/core';
-import { getContent, getCoverageColor } from './utils';
+import { getContent, getCoverageColor, toRuns } from './utils';
 import { toHtml } from './parse';
 import type {
   Options,
@@ -141,7 +141,7 @@ export const getCoverageXmlReport = (
       const html = toHtml(null, options, dataFromXml);
       const color = getCoverageColor(coverage ? coverage.cover : '0');
 
-      return { html, coverage, color };
+      return { html, coverage, color, lines: coverageObj };
     }
     return null;
   } catch (error) {
@@ -321,14 +321,7 @@ const parseLines = (lines: ParsedXml): ParsedLines => {
     }
   });
 
-  const missing = missingLines.reduce(
-    (arr: number[][], val: number, i: number, a: number[]) => {
-      if (!i || val !== a[i - 1] + 1) arr.push([]);
-      arr[arr.length - 1].push(val);
-      return arr;
-    },
-    [],
-  );
+  const missing = toRuns(missingLines);
 
   // Merge missing-line ranges and partial-branch arrows into a single list
   // ordered by line number, matching the order of `coverage report -m`.
@@ -336,7 +329,7 @@ const parseLines = (lines: ParsedXml): ParsedLines => {
   missing.forEach((m) => {
     missingEntries.push({
       sort: m[0],
-      text: m.length === 1 ? `${m[0]}` : `${m[0]}-${m[m.length - 1]}`,
+      text: m[0] === m[1] ? `${m[0]}` : `${m[0]}-${m[1]}`,
     });
   });
   partialBranches.forEach(({ line, target }) => {

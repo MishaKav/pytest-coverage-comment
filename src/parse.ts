@@ -63,7 +63,9 @@ export const getCoverageReport = (options: Options): CoverageReport => {
         const warnings = getWarnings(content);
         const color = getCoverageColor(toBadgeCover(total ? total.cover : '0'));
 
-        return { html, coverage, color, warnings: warnings ?? 0 };
+        const lines = parse(content) ?? [];
+
+        return { html, coverage, color, warnings: warnings ?? 0, lines };
       }
     } catch (error) {
       core.error(`Generating coverage report. ${(error as Error).message}`);
@@ -412,12 +414,17 @@ const toTotalRow = (item: TotalLine, options: Options): string => {
   return `<tr><td><b>${escapeValue(name)}</b></td><td><b>${escapeValue(stmts)}</b></td><td><b>${escapeValue(miss)}</b></td>${branchTd}<td><b>${escapeValue(cover)}</b></td>${missingTd}</tr>`;
 };
 
+// path of a report file relative to the workspace, with `/` separators
+// (windows reports use `\`, browsers treat it as `/` in links)
+export const toRelativePath = (
+  name: string,
+  options: Pick<Options, 'prefix'>,
+): string =>
+  name.replace(/\\/g, '/').replace(options.prefix.replace(/\\/g, '/'), '');
+
 // link to a file of the report in the repo, null when it can't be linked safely
 const toFileHref = (name: string, options: Options): string | null => {
-  // windows reports use `\`, browsers treat it as `/` in links
-  const relative = name
-    .replace(/\\/g, '/')
-    .replace(options.prefix.replace(/\\/g, '/'), '');
+  const relative = toRelativePath(name, options);
 
   return hasParentSegment(relative)
     ? null

@@ -123,6 +123,9 @@ const parseFile = (
     miss: summary.missing_lines.toString(),
     cover,
     missing: getMissing(file),
+    missingBranches: (file.missing_branches || []).map(([from, to]) =>
+      to < 0 ? `${from}->exit` : `${from}->${to}`,
+    ),
   };
 
   if (numBranches > 0) {
@@ -185,7 +188,7 @@ export const getCoverageJsonReport = (
       const html = toHtml(null, options, dataFromXml);
       const color = getCoverageColor(coverage.cover);
 
-      return { html, coverage, color };
+      return { html, coverage, color, lines: coverageObj };
     }
 
     return null;
