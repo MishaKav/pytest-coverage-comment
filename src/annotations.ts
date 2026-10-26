@@ -89,7 +89,9 @@ export const getAnnotations = (
   // json reports keep arcs to missing lines out of `missing`, add them back
   const missingByFile = new Map<string, string[]>();
   for (const item of coverage) {
-    const file = `${options.pathPrefix}${toRelativePath(item.name, options)}`;
+    // the diff uses `/`, a windows-style prefix would never match
+    const prefix = options.pathPrefix.replace(/\\/g, '/');
+    const file = `${prefix}${toRelativePath(item.name, options)}`;
     missingByFile.set(file, [
       ...(missingByFile.get(file) ?? []),
       ...(item.missing ?? []),
@@ -191,7 +193,9 @@ export const annotateMissingLines = (
       // a file name can hold a newline, keep each entry on its own log line
       // so it can't start a workflow command
       rest.forEach((a) =>
-        core.info(`${JSON.stringify(a.file)}:${a.startLine} ${a.message}`),
+        core.info(
+          `${JSON.stringify(a.file)}:${a.startLine} ${JSON.stringify(a.message)}`,
+        ),
       );
     }
   } catch (error) {
