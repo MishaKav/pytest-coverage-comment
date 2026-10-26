@@ -39062,6 +39062,212 @@ module.exports = {
 
 /***/ }),
 
+/***/ 105:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.annotateMissingLines = exports.getAnnotations = exports.getAddedLines = exports.ANNOTATION_EVENTS = exports.ANNOTATION_TYPES = exports.MAX_ANNOTATIONS = void 0;
+const core = __importStar(__nccwpck_require__(7484));
+const parse_1 = __nccwpck_require__(2828);
+const utils_1 = __nccwpck_require__(1798);
+// github shows at most 10 annotations of each type per step (50 per job)
+exports.MAX_ANNOTATIONS = 10;
+exports.ANNOTATION_TYPES = [
+    'notice',
+    'warning',
+    'error',
+];
+// annotations need a base..head diff of the commit the run belongs to
+exports.ANNOTATION_EVENTS = [
+    'pull_request',
+    'pull_request_target',
+    'push',
+];
+// line numbers added in the head version of a file, from its unified diff
+const getAddedLines = (patch) => {
+    const added = [];
+    let inHunk = false;
+    let line = 0;
+    for (const text of (patch || '').split('\n')) {
+        const hunk = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(text);
+        if (hunk) {
+            inHunk = true;
+            line = parseInt(hunk[1], 10);
+        }
+        else if (inHunk && text.startsWith('+')) {
+            added.push(line++);
+        }
+        else if (inHunk && text.startsWith(' ')) {
+            line++;
+        }
+        // `-` lines only exist in the base, `\ No newline at end of file` is a marker
+    }
+    return added;
+};
+exports.getAddedLines = getAddedLines;
+// split the "Missing" entries into line ranges and partial branch arcs
+// keyed by their source line, e.g. ["4", "10-12", "7->exit"]
+const parseMissing = (missing) => {
+    const ranges = [];
+    const arcs = new Map();
+    // report values are untrusted, keep only well-formed entries so a message
+    // never carries anything but numbers (and `exit`)
+    for (const entry of new Set(missing.map((m) => String(m).trim()))) {
+        const arc = /^(\d+)->(\d+|exit)$/.exec(entry);
+        if (arc) {
+            const from = Number(arc[1]);
+            const branches = arcs.get(from) || [];
+            branches.push(entry);
+            arcs.set(from, branches);
+            continue;
+        }
+        const range = /^(\d+)(?:-(\d+))?$/.exec(entry);
+        if (range) {
+            ranges.push([Number(range[1]), Number(range[2] ?? range[1])]);
+        }
+    }
+    return { ranges, arcs };
+};
+// annotations for uncovered lines that the diff added, `addedLines` is keyed
+// by the full repo path (with `coverage-path-prefix`)
+const getAnnotations = (coverage, addedLines, options) => {
+    const annotations = [];
+    // xml reports can list one file in several classes, merge them per file.
+    // json reports keep arcs to missing lines out of `missing`, add them back
+    const missingByFile = new Map();
+    for (const item of coverage) {
+        // the diff uses `/`, a windows-style prefix would never match
+        const prefix = options.pathPrefix.replace(/\\/g, '/');
+        const file = `${prefix}${(0, parse_1.toRelativePath)(item.name, options)}`;
+        missingByFile.set(file, [
+            ...(missingByFile.get(file) ?? []),
+            ...(item.missing ?? []),
+            ...(item.missingBranches ?? []),
+        ]);
+    }
+    for (const [file, missing] of missingByFile) {
+        // sorted and unique, see getAddedLines. Own keys only, a report file
+        // named e.g. `constructor` must not hit Object members
+        const added = Object.hasOwn(addedLines, file)
+            ? addedLines[file]
+            : undefined;
+        if (!missing.length || !added?.length) {
+            continue;
+        }
+        const addedSet = new Set(added);
+        const { ranges, arcs } = parseMissing(missing);
+        const uncovered = added.filter((line) => ranges.some(([s, e]) => line >= s && line <= e));
+        const uncoveredSet = new Set(uncovered);
+        const fileAnnotations = [];
+        (0, utils_1.toRuns)(uncovered).forEach(([startLine, endLine]) => {
+            const lines = startLine === endLine
+                ? `Line ${startLine} is`
+                : `Lines ${startLine}-${endLine} are`;
+            fileAnnotations.push({
+                file,
+                startLine,
+                endLine,
+                title: 'Missing coverage',
+                message: `${lines} not covered by tests`,
+            });
+        });
+        // a branch from an uncovered line is already part of that annotation
+        arcs.forEach((branches, line) => {
+            if (!addedSet.has(line) || uncoveredSet.has(line)) {
+                return;
+            }
+            const noun = branches.length === 1 ? 'a branch' : 'branches';
+            fileAnnotations.push({
+                file,
+                startLine: line,
+                endLine: line,
+                title: 'Partial branch coverage',
+                message: `Line ${line} has ${noun} not covered by tests: ${branches.join(', ')}`,
+            });
+        });
+        fileAnnotations.sort((a, b) => a.startLine - b.startLine);
+        annotations.push(...fileAnnotations);
+    }
+    return annotations;
+};
+exports.getAnnotations = getAnnotations;
+// annotate the lines added in this diff that the coverage report marks as missing
+const annotateMissingLines = (coverage, options) => {
+    const addedLines = options.changedFiles?.addedLines;
+    if (!addedLines) {
+        return;
+    }
+    // the type picks a `core` function, never call anything but an annotation
+    const type = exports.ANNOTATION_TYPES.includes(options.annotationType)
+        ? options.annotationType
+        : 'warning';
+    core.startGroup('Annotations');
+    try {
+        const annotations = (0, exports.getAnnotations)(coverage, addedLines, options);
+        if (!annotations.length) {
+            core.info('No uncovered lines found in the changed code');
+        }
+        annotations.slice(0, exports.MAX_ANNOTATIONS).forEach((a) => {
+            const { file, startLine, endLine, title, message } = a;
+            core[type](message, { title, file, startLine, endLine });
+        });
+        const rest = annotations.slice(exports.MAX_ANNOTATIONS);
+        if (rest.length) {
+            // prettier-ignore
+            core.info(`${rest.length} more annotations were not created, GitHub shows at most ${exports.MAX_ANNOTATIONS} ${type} annotations per step:`);
+            // a file name can hold a newline, keep each entry on its own log line
+            // so it can't start a workflow command
+            rest.forEach((a) => core.info(`${JSON.stringify(a.file)}:${a.startLine} ${JSON.stringify(a.message)}`));
+        }
+    }
+    catch (error) {
+        // prettier-ignore
+        core.error(`Error creating annotations for missing lines. ${error.message}`);
+    }
+    finally {
+        core.endGroup();
+    }
+};
+exports.annotateMissingLines = annotateMissingLines;
+
+
+/***/ }),
+
 /***/ 9407:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -39109,6 +39315,7 @@ const parseXml_1 = __nccwpck_require__(1775);
 const parseJson_1 = __nccwpck_require__(7258);
 const junitXml_1 = __nccwpck_require__(5394);
 const multiFiles_1 = __nccwpck_require__(6211);
+const annotations_1 = __nccwpck_require__(105);
 exports.MAX_COMMENT_LENGTH = 65536;
 const MAX_SUMMARY_LENGTH = 1024 * 1024; // 1MB limit for GitHub step summary
 const FILE_STATUSES = Object.freeze({
@@ -39305,6 +39512,20 @@ const main = async () => {
     const multipleFiles = core.getMultilineInput('multiple-files', {
         required: false,
     });
+    const annotateMissingLines = core.getBooleanInput('annotate-missing-lines', {
+        required: false,
+    });
+    const annotationTypeInput = core.getInput('annotation-type', {
+        required: false,
+    });
+    const isAnnotationType = annotations_1.ANNOTATION_TYPES.includes(annotationTypeInput);
+    if (annotationTypeInput && !isAnnotationType) {
+        // prettier-ignore
+        core.warning(`Invalid "annotation-type" input "${annotationTypeInput}", should be one of ${annotations_1.ANNOTATION_TYPES.join(', ')}. Will use "warning"`);
+    }
+    const annotationType = isAnnotationType
+        ? annotationTypeInput
+        : 'warning';
     const { context } = github;
     const { repo, owner } = context.repo;
     const { eventName, payload } = context;
@@ -39342,6 +39563,8 @@ const main = async () => {
         showFailedTests,
         maxFailedTests,
         multipleFiles,
+        annotateMissingLines,
+        annotationType,
     };
     options.repoUrl =
         payload.repository?.html_url || `${serverUrl}/${options.repository}`;
@@ -39368,7 +39591,12 @@ const main = async () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         options.head = payload.workflow_run.head_branch;
     }
-    if (options.reportOnlyChangedFiles) {
+    if (options.annotateMissingLines && !annotations_1.ANNOTATION_EVENTS.includes(eventName)) {
+        // prettier-ignore
+        core.warning(`\`annotate-missing-lines: true\` supports only ${annotations_1.ANNOTATION_EVENTS.map((e) => `\`${e}\``).join(', ')} events. \`${eventName}\` events are not supported.`);
+        options.annotateMissingLines = false;
+    }
+    if (options.reportOnlyChangedFiles || options.annotateMissingLines) {
         const changedFiles = await getChangedFiles(options, issueNumberInput);
         options.changedFiles = changedFiles;
         // when github event is different from `pull_request`, `workflow_dispatch`, `workflow_run` or `push`
@@ -39388,6 +39616,17 @@ const main = async () => {
     }
     if (!report) {
         report = { html: '', coverage: null, color: 'red' };
+    }
+    if (options.annotateMissingLines) {
+        const { lines } = report;
+        if (lines) {
+            (0, annotations_1.annotateMissingLines)(lines, options);
+        }
+        else {
+            // e.g. only `multiple-files`, don't report the new code as covered
+            // prettier-ignore
+            core.warning('`annotate-missing-lines: true` needs a coverage report from `pytest-coverage-path`, `pytest-xml-coverage-path` or `pytest-json-coverage-path`, no annotations were added. `multiple-files` reports are not annotated.');
+        }
     }
     const { coverage, color } = report;
     let { html } = report;
@@ -39623,6 +39862,8 @@ const main = async () => {
 };
 // generate object of all files that changed based on commit through Github API
 const getChangedFiles = async (options, pr_number) => {
+    // the diff is optional for annotations, don't fail the job when only they need it
+    const fail = options.reportOnlyChangedFiles ? core.setFailed : core.warning;
     try {
         const { context } = github;
         const { eventName, payload } = context;
@@ -39682,16 +39923,26 @@ const getChangedFiles = async (options, pr_number) => {
         }
         // Ensure that the request was successful.
         if (response.status !== 200) {
-            core.setFailed(`The GitHub API for comparing the base and head commits for this ${eventName} event returned ${response.status}, expected 200. ` +
+            fail(`The GitHub API for comparing the base and head commits for this ${eventName} event returned ${response.status}, expected 200. ` +
                 "Please submit an issue on this action's GitHub repo.");
         }
         // Get the changed files from the response payload.
         const files = response.data.files || [];
         const all = [], added = [], modified = [], removed = [], renamed = [], addedModified = [];
+        const addedLines = {};
         for (const file of files) {
             const { filename: filenameOriginal, status } = file;
-            const filename = filenameOriginal.replace(options.pathPrefix, '');
+            // strip `coverage-path-prefix` only as a leading segment, a match in the
+            // middle of the path would key the file (and its added lines) wrongly
+            const filename = options.pathPrefix && filenameOriginal.startsWith(options.pathPrefix)
+                ? filenameOriginal.slice(options.pathPrefix.length)
+                : filenameOriginal;
             all.push(filename);
+            // github omits `patch` for binary and very large diffs
+            if (options.annotateMissingLines && file.patch) {
+                // full path, a file outside the prefix can share the stripped name
+                addedLines[filenameOriginal] = (0, annotations_1.getAddedLines)(file.patch);
+            }
             switch (status) {
                 case FILE_STATUSES.ADDED:
                     added.push(filename);
@@ -39709,7 +39960,7 @@ const getChangedFiles = async (options, pr_number) => {
                     break;
                 default:
                     // prettier-ignore
-                    core.setFailed(`One of your files includes an unsupported file status '${status}', expected ${Object.values(FILE_STATUSES).join(',')}.`);
+                    fail(`One of your files includes an unsupported file status '${status}', expected ${Object.values(FILE_STATUSES).join(',')}.`);
             }
         }
         core.info(`All: ${all.join(',')}`);
@@ -39726,10 +39977,13 @@ const getChangedFiles = async (options, pr_number) => {
             removed,
             renamed,
             AddedOrModified: addedModified,
+            addedLines,
         };
     }
     catch (error) {
-        core.setFailed(error.message);
+        // the caller may go on (annotations only), don't leave the group open
+        core.endGroup();
+        fail(error.message);
         return null;
     }
 };

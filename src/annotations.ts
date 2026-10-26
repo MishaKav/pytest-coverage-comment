@@ -78,7 +78,7 @@ const parseMissing = (
 };
 
 // annotations for uncovered lines that the diff added, `addedLines` is keyed
-// like `changedFiles.all` (repo path without `coverage-path-prefix`)
+// by the full repo path (with `coverage-path-prefix`)
 export const getAnnotations = (
   coverage: CoverageLine[],
   addedLines: Record<string, number[]>,
@@ -89,27 +89,27 @@ export const getAnnotations = (
   // json reports keep arcs to missing lines out of `missing`, add them back
   const missingByFile = new Map<string, string[]>();
   for (const item of coverage) {
-    const relative = toRelativePath(item.name, options);
-    missingByFile.set(relative, [
-      ...(missingByFile.get(relative) ?? []),
+    // the diff uses `/`, a windows-style prefix would never match
+    const prefix = options.pathPrefix.replace(/\\/g, '/');
+    const file = `${prefix}${toRelativePath(item.name, options)}`;
+    missingByFile.set(file, [
+      ...(missingByFile.get(file) ?? []),
       ...(item.missing ?? []),
       ...(item.missingBranches ?? []),
     ]);
   }
 
-  for (const [relative, missing] of missingByFile) {
+  for (const [file, missing] of missingByFile) {
     // sorted and unique, see getAddedLines. Own keys only, a report file
     // named e.g. `constructor` must not hit Object members
-    const added = Object.hasOwn(addedLines, relative)
-      ? addedLines[relative]
+    const added = Object.hasOwn(addedLines, file)
+      ? addedLines[file]
       : undefined;
 
     if (!missing.length || !added?.length) {
       continue;
     }
 
-    // the diff uses `/`, a windows-style prefix would never match
-    const file = `${options.pathPrefix.replace(/\\/g, '/')}${relative}`;
     const addedSet = new Set(added);
     const { ranges, arcs } = parseMissing(missing);
     const uncovered = added.filter((line) =>

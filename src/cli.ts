@@ -81,6 +81,8 @@ const main = async (): Promise<void> => {
     removeLinksToLines: false,
     textInsteadBadge: false,
     multipleFiles,
+    annotateMissingLines: false,
+    annotationType: 'warning',
     changedFiles: {
       all: [
         'functions/example_completed/example_completed.py',

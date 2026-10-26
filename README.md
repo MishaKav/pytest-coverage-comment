@@ -37,6 +37,7 @@ A GitHub Action that adds pytest coverage reports as comments to your pull reque
     - [Coverage from XML](#coverage-from-xml)
     - [Show Failed Tests](#show-failed-tests)
     - [Monorepo Support](#monorepo-support)
+    - [Annotate Uncovered Lines](#annotate-uncovered-lines)
     - [Docker Workflows](#docker-workflows)
     - [Matrix Builds](#matrix-builds)
     - [Auto-update README Badge](#auto-update-readme-badge)
@@ -187,13 +188,15 @@ jobs:
 <details>
 <summary>🔧 Advanced Options</summary>
 
-| Name                    | Default | Description                                                                                            |
-| ----------------------- | ------- | ------------------------------------------------------------------------------------------------------ |
-| `create-new-comment`    | `false` | Create new comment on each run instead of updating existing comment                                    |
-| `unique-id-for-comment` |         | Unique identifier for matrix builds to update separate comments (e.g., `${{ matrix.python-version }}`) |
-| `default-branch`        | `main`  | Base branch name for file links in coverage report (e.g., main, master)                                |
-| `coverage-path-prefix`  |         | Prefix to add to file paths in coverage report links                                                   |
-| `multiple-files`        |         | Generate single comment with multiple coverage reports (useful for monorepos)                          |
+| Name                     | Default   | Description                                                                                                 |
+| ------------------------ | --------- | ----------------------------------------------------------------------------------------------------------- |
+| `create-new-comment`     | `false`   | Create new comment on each run instead of updating existing comment                                         |
+| `unique-id-for-comment`  |           | Unique identifier for matrix builds to update separate comments (e.g., `${{ matrix.python-version }}`)      |
+| `default-branch`         | `main`    | Base branch name for file links in coverage report (e.g., main, master)                                     |
+| `coverage-path-prefix`   |           | Prefix to add to file paths in coverage report links                                                        |
+| `multiple-files`         |           | Generate single comment with multiple coverage reports (useful for monorepos)                               |
+| `annotate-missing-lines` | `false`   | Annotate lines added in the PR or push that are not covered by tests ([details](#annotate-uncovered-lines)) |
+| `annotation-type`        | `warning` | Annotation level for `annotate-missing-lines`: `notice`, `warning` or `error`                               |
 
 </details>
 
@@ -374,6 +377,40 @@ This creates a consolidated table showing all coverage reports:
 | Tests | Skipped | Failures | Errors | Time |
 | ----- | ------- | -------- | ------ | ---- |
 | 109   | 2       | 1        | 0      | 0.583s |
+
+</details>
+
+### Annotate Uncovered Lines
+
+<details>
+<summary>Mark uncovered new lines in the "Files changed" tab, with or without a comment</summary>
+
+```yaml
+- name: Coverage annotations
+  uses: MishaKav/pytest-coverage-comment@v1
+  with:
+    pytest-xml-coverage-path: ./coverage.xml
+    annotate-missing-lines: true
+    hide-comment: true # optional: annotations only, no PR comment
+```
+
+Only lines added in the pull request (or push) that the coverage report marks as missing get an annotation, right below the code in the diff:
+
+```
+⚠ Missing coverage
+  Lines 42-45 are not covered by tests
+⚠ Partial branch coverage
+  Line 51 has a branch not covered by tests: 51->exit
+```
+
+Notes:
+
+- Works on `pull_request`, `pull_request_target` and `push` events, with txt, xml or json coverage (not `multiple-files`)
+- GitHub shows at most 10 annotations of each level per step, the rest are listed in the job log
+- txt reports merge missing ranges across blank lines and comments, so those can be annotated too. Use xml or json for exact lines
+- File paths in the coverage report must match the repo paths, use `coverage-path-prefix` (e.g. `src/`) when they don't
+- GitHub leaves out the diff of binary and very large files, those are not annotated, and the compare API lists at most 300 files
+- On `pull_request`, `actions/checkout` tests the merge commit by default. If the base branch changed the same file since the PR branched off, line numbers can shift; check out the PR head (`ref: ${{ github.event.pull_request.head.sha }}`) to keep them exact
 
 </details>
 
