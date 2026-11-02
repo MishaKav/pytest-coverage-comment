@@ -866,6 +866,20 @@ npm test
 npm run build
 ```
 
+### Dependency triage report
+
+Maintainers can run **Actions → Dependency triage report → Run workflow** to
+inspect the committed npm lockfile. Download `dependency-triage-report` from that
+run for a ranked HTML report, including runs that fail because findings remain.
+This manual workflow complements the coverage checks and monthly Dependabot
+updates; it does not install project dependencies or accept findings into a baseline.
+
+`npm audit` sends dependency metadata to the configured npm registry, and `npx`
+fetches and runs `zero-shelter@0.0.10`. A successful judgement exits 0 when no new
+findings are reported and 1 when findings need attention; exit 2 means the report
+could not be judged and must not be treated as clean. This report uses only the
+npm audit source and does not determine whether vulnerable code is reachable.
+
 ## 👥 Contributors
 
 <a href="https://github.com/MishaKav/pytest-coverage-comment/graphs/contributors">
