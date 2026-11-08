@@ -132,10 +132,12 @@ jobs:
           pip install pytest pytest-cov
 
       - name: Run tests with coverage
+        shell: bash
         run: |
           pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=src tests/ | tee pytest-coverage.txt
 
       - name: Pytest coverage comment
+        if: ${{ !cancelled() }}
         uses: MishaKav/pytest-coverage-comment@v1
         with:
           pytest-coverage-path: ./pytest-coverage.txt
@@ -231,10 +233,12 @@ jobs:
 
 ```yaml
 - name: Run tests
+  shell: bash
   run: |
     pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=src tests/ | tee pytest-coverage.txt
 
 - name: Coverage comment
+  if: ${{ !cancelled() }}
   uses: MishaKav/pytest-coverage-comment@v1
   with:
     pytest-coverage-path: ./pytest-coverage.txt
@@ -421,6 +425,7 @@ Notes:
 
 ```yaml
 - name: Run tests in Docker
+  shell: bash
   run: |
     docker run -v /tmp:/tmp $IMAGE_TAG \
       python -m pytest \
@@ -429,6 +434,7 @@ Notes:
         --cov=src tests/ | tee /tmp/pytest-coverage.txt
 
 - name: Coverage comment
+  if: ${{ !cancelled() }}
   uses: MishaKav/pytest-coverage-comment@v1
   with:
     pytest-coverage-path: /tmp/pytest-coverage.txt
@@ -493,6 +499,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run tests
+        shell: bash
         run: |
           pytest --junitxml=pytest.xml --cov-report=term-missing --cov=src tests/ | tee pytest-coverage.txt
 
