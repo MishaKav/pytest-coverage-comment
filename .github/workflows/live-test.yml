@@ -16,6 +16,9 @@ jobs:
 
       - name: Pytest coverage comment
         id: coverageComment
+        # fork PRs get a read-only GITHUB_TOKEN, so posting the comment fails there;
+        # keep the parsing and outputs tested without failing the job
+        continue-on-error: ${{ github.event.pull_request.head.repo.fork }}
         uses: MishaKav/pytest-coverage-comment@main
         with:
           pytest-coverage-path: ./data/pytest-coverage_4.txt
