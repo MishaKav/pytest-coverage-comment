@@ -133,6 +133,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
+          set -o pipefail
           pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=src tests/ | tee pytest-coverage.txt
 
       - name: Pytest coverage comment
@@ -232,6 +233,7 @@ jobs:
 ```yaml
 - name: Run tests
   run: |
+    set -o pipefail
     pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=src tests/ | tee pytest-coverage.txt
 
 - name: Coverage comment
@@ -422,6 +424,7 @@ Notes:
 ```yaml
 - name: Run tests in Docker
   run: |
+    set -o pipefail
     docker run -v /tmp:/tmp $IMAGE_TAG \
       python -m pytest \
         --cov-report=term-missing:skip-covered \
@@ -494,6 +497,7 @@ jobs:
 
       - name: Run tests
         run: |
+          set -o pipefail
           pytest --junitxml=pytest.xml --cov-report=term-missing --cov=src tests/ | tee pytest-coverage.txt
 
       - name: Coverage comment
