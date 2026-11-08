@@ -1,5 +1,14 @@
 # Changelog of the Pytest Coverage Comment
 
+## [Pytest Coverage Comment 1.13.1](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.13.1)
+
+**Release Date:** 2026-11-08
+
+#### Changes
+
+- fix the `multiple-files` table breaking when a component's coverage files are missing (e.g. its tox env failed) — a blank line was added inside the table, so GitHub rendered the following rows as plain text (#327), thanks to [@h0nIg](https://github.com/h0nIg) for contribution
+- README examples now fail the test step when pytest fails (`shell: bash` enables `pipefail`, so `pytest | tee` no longer hides the exit code) and still post the coverage comment with `if: ${{ !cancelled() }}` (#325, #329), thanks to [@ArturKlauser](https://github.com/ArturKlauser) for contribution
+
 ## [Pytest Coverage Comment 1.13.0](https://github.com/MishaKav/pytest-coverage-comment/tree/v1.13.0)
 
 **Release Date:** 2026-10-26

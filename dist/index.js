@@ -40499,6 +40499,7 @@ const getMultipleReport = (options, maxFailedTests = options.maxFailedTests) => 
                 report = (0, parse_1.getCoverageReport)(internalOptions);
             }
             const summary = (0, junitXml_1.getParsedXml)(internalOptions);
+            const rowStarted = (report && report.html) || !!summary;
             if (report && report.html) {
                 table += `| ${l.title} | ${report.html}`;
                 if (i === 0) {
@@ -40548,16 +40549,18 @@ const getMultipleReport = (options, maxFailedTests = options.maxFailedTests) => 
             else if (summary) {
                 table += `| ${l.title} |  `;
             }
-            if (hasXmlReports && summary) {
-                const { errors, failures, skipped, tests, time } = summary;
-                const displayTime = time > 60
-                    ? `${(time / 60) | 0}m ${(time % 60) | 0}s`
-                    : `${time.toFixed(3)}s`;
-                const e = (emoji) => options.hideEmoji ? '' : ` ${emoji}`;
-                table += `| ${tests} | ${skipped}${e(':zzz:')} | ${failures}${e(':x:')} | ${errors}${e(':fire:')} | ${displayTime}${e(':stopwatch:')} |\n`;
-            }
-            else {
-                table += '\n';
+            if (rowStarted) {
+                if (hasXmlReports && summary) {
+                    const { errors, failures, skipped, tests, time } = summary;
+                    const displayTime = time > 60
+                        ? `${(time / 60) | 0}m ${(time % 60) | 0}s`
+                        : `${time.toFixed(3)}s`;
+                    const e = (emoji) => options.hideEmoji ? '' : ` ${emoji}`;
+                    table += `| ${tests} | ${skipped}${e(':zzz:')} | ${failures}${e(':x:')} | ${errors}${e(':fire:')} | ${displayTime}${e(':stopwatch:')} |\n`;
+                }
+                else {
+                    table += '\n';
+                }
             }
             // the summary attributes tell whether the file has failures at all,
             // so green files and files past the budget skip the second parse

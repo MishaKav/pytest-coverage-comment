@@ -82,6 +82,59 @@ describe('getMultipleReport', () => {
     expect(result).toContain('| Title | Coverage |');
   });
 
+  test('should not have a blank line between table header and first data row', () => {
+    const options = {
+      ...baseOptions,
+      multipleFiles: [
+        `TXT Title, ${abs('pytest-coverage_4.txt')}`,
+      ],
+    };
+    const result = getMultipleReport(options);
+    // A blank line between the separator row and the first data row breaks
+    // GitHub's markdown table renderer — assert it is not present.
+    expect(result).not.toMatch(/\| ----- \| ----- \|\n\n/);
+  });
+
+  test('should not have a blank line between full table header and first data row', () => {
+    const options = {
+      ...baseOptions,
+      multipleFiles: [
+        `TXT Title, ${abs('pytest-coverage_4.txt')}, ${abs('pytest_1.xml')}`,
+      ],
+    };
+    const result = getMultipleReport(options);
+    expect(result).not.toMatch(/\| ------------------ \|\n\n/);
+  });
+
+  test('should not emit a blank table row when a component has no coverage files', () => {
+    // When the first entry has missing files, the action must not append a bare '\n'
+    // that becomes a blank line between the separator and the first real data row.
+    const options = {
+      ...baseOptions,
+      multipleFiles: [
+        `Missing, /nonexistent/coverage.txt, /nonexistent/pytest.xml`,
+        `TXT Title, ${abs('pytest-coverage_4.txt')}, ${abs('pytest_1.xml')}`,
+      ],
+    };
+    const result = getMultipleReport(options);
+    expect(result).not.toMatch(/\| ------------------ \|\n\n/);
+    expect(result).toMatch(/\| ------------------ \|\n\| TXT Title \|/);
+  });
+
+  test('should not emit a blank line between rows when a middle component has no coverage files', () => {
+    const options = {
+      ...baseOptions,
+      multipleFiles: [
+        `First, ${abs('pytest-coverage_4.txt')}, ${abs('pytest_1.xml')}`,
+        `Missing, /nonexistent/coverage.txt, /nonexistent/pytest.xml`,
+        `Third, ${abs('pytest-coverage_4.txt')}, ${abs('pytest_1.xml')}`,
+      ],
+    };
+    const result = getMultipleReport(options);
+    expect(result).toMatch(/\| First \|.*\n\| Third \|/);
+    expect(result).not.toContain('| Missing |');
+  });
+
   test('should generate report with TXT coverage files', () => {
     const options = {
       ...baseOptions,
