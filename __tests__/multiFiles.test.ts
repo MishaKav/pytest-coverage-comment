@@ -118,6 +118,21 @@ describe('getMultipleReport', () => {
     };
     const result = getMultipleReport(options);
     expect(result).not.toMatch(/\| ------------------ \|\n\n/);
+    expect(result).toMatch(/\| ------------------ \|\n\| TXT Title \|/);
+  });
+
+  test('should not emit a blank line between rows when a middle component has no coverage files', () => {
+    const options = {
+      ...baseOptions,
+      multipleFiles: [
+        `First, ${abs('pytest-coverage_4.txt')}, ${abs('pytest_1.xml')}`,
+        `Missing, /nonexistent/coverage.txt, /nonexistent/pytest.xml`,
+        `Third, ${abs('pytest-coverage_4.txt')}, ${abs('pytest_1.xml')}`,
+      ],
+    };
+    const result = getMultipleReport(options);
+    expect(result).toMatch(/\|\n\| Third \|/);
+    expect(result).not.toContain('| Missing |');
   });
 
   test('should generate report with TXT coverage files', () => {
