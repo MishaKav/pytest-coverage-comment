@@ -80,6 +80,7 @@ export const getMultipleReport = (
       }
       const summary = getParsedXml(internalOptions);
 
+      const rowStarted = (report && report.html) || !!summary;
       if (report && report.html) {
         table += `| ${l.title} | ${report.html}`;
 
@@ -140,17 +141,19 @@ export const getMultipleReport = (
         table += `| ${l.title} |  `;
       }
 
-      if (hasXmlReports && summary) {
-        const { errors, failures, skipped, tests, time } = summary;
-        const displayTime =
-          time > 60
-            ? `${(time / 60) | 0}m ${(time % 60) | 0}s`
-            : `${time.toFixed(3)}s`;
-        const e = (emoji: string): string =>
-          options.hideEmoji ? '' : ` ${emoji}`;
-        table += `| ${tests} | ${skipped}${e(':zzz:')} | ${failures}${e(':x:')} | ${errors}${e(':fire:')} | ${displayTime}${e(':stopwatch:')} |\n`;
-      } else {
-        table += '\n';
+      if (rowStarted) {
+        if (hasXmlReports && summary) {
+          const { errors, failures, skipped, tests, time } = summary;
+          const displayTime =
+            time > 60
+              ? `${(time / 60) | 0}m ${(time % 60) | 0}s`
+              : `${time.toFixed(3)}s`;
+          const e = (emoji: string): string =>
+            options.hideEmoji ? '' : ` ${emoji}`;
+          table += `| ${tests} | ${skipped}${e(':zzz:')} | ${failures}${e(':x:')} | ${errors}${e(':fire:')} | ${displayTime}${e(':stopwatch:')} |\n`;
+        } else {
+          table += '\n';
+        }
       }
 
       // the summary attributes tell whether the file has failures at all,
