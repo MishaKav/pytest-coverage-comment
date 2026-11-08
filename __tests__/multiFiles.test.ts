@@ -131,7 +131,7 @@ describe('getMultipleReport', () => {
       ],
     };
     const result = getMultipleReport(options);
-    expect(result).toMatch(/\|\n\| Third \|/);
+    expect(result).toMatch(/\| First \|.*\n\| Third \|/);
     expect(result).not.toContain('| Missing |');
   });
 
